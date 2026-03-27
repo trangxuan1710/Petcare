@@ -1,0 +1,30 @@
+.staff-notifications-page {
+    min-height: 100vh;
+    background: #e9f2f1;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+}
+
+.staff-notifications-shell {
+    width: min(1536px, calc(100% - 72px));
+    margin: 0 auto;
+    padding: 58px 0 48px;
+}
+
+.staff-notifications-list {
+    margin-top: 34px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+@media (max-width: 640px) {
+    .staff-notifications-shell {
+        width: calc(100% - 24px);
+        padding-top: 20px;
+    }
+
+    .staff-notifications-list {
+        margin-top: 20px;
+        gap: 16px;
+    }
+}

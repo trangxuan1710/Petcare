@@ -1,0 +1,45 @@
+.tech-record-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 12px;
+    background: #ffffff;
+    border-bottom: 1px solid #e7eeec;
+}
+
+.tech-record-header h1 {
+    margin: 0;
+    text-align: center;
+    color: #1f2937;
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.tech-record-back {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: #1f2937;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.tech-record-spacer {
+    width: 36px;
+    height: 36px;
+}
+
+@media (max-width: 768px) {
+    .tech-record-header h1 {
+        font-size: 20px;
+    }
+}

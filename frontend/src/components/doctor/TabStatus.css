@@ -1,0 +1,94 @@
+/* TabStatus.css */
+.tab-status-wrapper {
+    width: 100%;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+}
+
+.tab-status-wrapper::-webkit-scrollbar {
+    display: none;
+}
+
+.tab-status-container {
+    display: inline-flex;
+    align-items: center;
+    background-color: #eaf1ef;
+    border-radius: 999px;
+    padding: 6px;
+    gap: 2px;
+    min-width: max-content;
+}
+
+.tab-status-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+}
+
+.tab-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #2c3438;
+    margin: 0;
+    white-space: nowrap;
+    line-height: 1;
+}
+
+.tab-badge {
+    min-width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    background-color: #dfe5e5;
+    color: #3e4a50;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* Active State */
+.tab-status-item.active {
+    background-color: #f5f9f8;
+    box-shadow: inset 0 0 0 1px #dbe5e2;
+}
+
+.tab-status-item.active .tab-label {
+    color: #14a085;
+    font-weight: 600;
+}
+
+.tab-status-item.active .tab-badge {
+    background-color: #d7eee8;
+    color: #14a085;
+}
+
+@media (max-width: 768px) {
+    .tab-label {
+        font-size: 14px;
+    }
+
+    .tab-badge {
+        min-width: 22px;
+        height: 22px;
+        font-size: 12px;
+        padding: 0 7px;
+    }
+
+    .tab-status-item {
+        padding: 8px 12px;
+        gap: 8px;
+    }
+}

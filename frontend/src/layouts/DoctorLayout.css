@@ -1,0 +1,21 @@
+.doctor-layout-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #f5f5f5;
+    /* matches general light app background */
+    position: relative;
+    max-width: 480px;
+    /* target mobile layout consistency */
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.doctor-main-content {
+    flex: 1;
+    /* Khoảng trống ở dưới cùng để nội dung không bị che khuất bởi NavBar (chiều cao 72px + khoảng nổi của nút quét mã) */
+    padding-bottom: 96px;
+    overflow-y: auto;
+    height: 100vh;
+    /* enable scrolling internally if you want */
+}

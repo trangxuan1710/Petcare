@@ -1,0 +1,229 @@
+.cs-page {
+    min-height: 100vh;
+    background: #ecf1ef;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+}
+
+.cs-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px 10px;
+    background: #fff;
+}
+
+.cs-icon-btn {
+    border: none;
+    background: transparent;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.cs-title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #2b2b2b;
+}
+
+.cs-search-wrap {
+    padding: 10px 18px 14px;
+    background: #fff;
+    border-bottom: 1px solid #dfe7e4;
+}
+
+.cs-search-box {
+    height: 44px;
+    border: 1px solid #d3ddd9;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    background: #fff;
+}
+
+.cs-search-input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 16px;
+    color: #2d2d2d;
+    background: transparent;
+}
+
+.cs-search-input::placeholder {
+    color: #c0c9c5;
+}
+
+.cs-content {
+    flex: 1;
+    padding: 16px 18px 100px;
+}
+
+.cs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cs-item {
+    width: 100%;
+    border: none;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    box-shadow: 0 2px 8px rgba(5, 42, 32, 0.08);
+    text-align: left;
+}
+
+.cs-item-main {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    text-align: left;
+}
+
+.cs-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid #a7afb4;
+    border-radius: 6px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    background: #fff;
+}
+
+.cs-checkbox.checked {
+    border-color: #0e9a80;
+    background: #0e9a80;
+    position: relative;
+}
+
+.cs-checkbox.checked::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.cs-name {
+    font-size: 17px;
+    color: #2d2d2d;
+    font-weight: 600;
+    flex: 1;
+}
+
+.cs-price {
+    color: #0a9880;
+    font-size: 16px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.cs-unit {
+    color: #7b8b87;
+    font-weight: 500;
+}
+
+.cs-item-extra {
+    margin-top: 8px;
+    margin-left: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.cs-assignee-label {
+    color: #7a8480;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.cs-assignee-label span {
+    color: #e14c4c;
+}
+
+.cs-assignee-select-wrap {
+    position: relative;
+    border: 1px solid #d7dfdc;
+    border-radius: 10px;
+    background: #f4f6f5;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding-right: 12px;
+}
+
+.cs-assignee-select {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 0 38px 0 14px;
+    color: #333;
+    font-size: 16px;
+    appearance: none;
+}
+
+.cs-assignee-select:invalid {
+    color: #9aa5a1;
+}
+
+.cs-bottom-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #eff2f1;
+    border-top: 1px solid #dde5e2;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 12px;
+}
+
+.cs-btn-skip,
+.cs-btn-confirm {
+    flex: 1;
+    height: 44px;
+    border-radius: 14px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.cs-btn-skip {
+    background: #fff;
+    border: 1px solid #0f9a80;
+    color: #0f9a80;
+}
+
+.cs-btn-confirm {
+    background: #dfe1e3;
+    color: #b4b8bc;
+}
+
+.cs-btn-confirm:not(:disabled) {
+    background: #0f9a80;
+    color: #fff;
+    cursor: pointer;
+}

@@ -1,0 +1,190 @@
+.received-card {
+    background-color: #fff;
+    border-radius: 0 0 16px 16px;
+    padding: 14px 16px 16px;
+    box-shadow: 0 2px 10px rgba(13, 148, 136, 0.08);
+}
+
+.rc-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 6px;
+}
+
+.rc-card-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2b2b2b;
+    margin: 0;
+    line-height: 1.1;
+}
+
+.rc-card-status-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.rc-card-sub-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.rc-card-phone {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 16px;
+    color: #209d80;
+    font-weight: 500;
+}
+
+.rc-card-status {
+    font-size: 14px;
+    font-weight: 500;
+    color: #FFAA0F;
+}
+
+.rc-card-created {
+    font-size: 13px;
+    color: #8f949b;
+    margin: 0 0 12px 0;
+}
+
+.rc-card-summary-chip {
+    font-size: 12px;
+    color: #ffffff;
+    background: #8b5cf6;
+    border-radius: 4px;
+    padding: 2px 8px;
+}
+
+.rc-divider {
+    border: none;
+    border-top: 1px solid #e6e6e6;
+    margin: 12px 0;
+}
+
+.rc-card-pets {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rc-card-pet-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border: 1px solid #d4d7dc;
+    border-radius: 12px;
+    font-size: 14px;
+    flex-wrap: wrap;
+}
+
+.rc-card-pet-name {
+    font-weight: 700;
+    color: #111111;
+    font-size: 30px;
+}
+
+.rc-card-pet-detail {
+    color: #5d6066;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.rc-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.rc-card-footer.full-btn {
+    justify-content: center;
+}
+
+.rc-card-amount {
+    font-size: 32px;
+    line-height: 1;
+    color: #f04438;
+    font-weight: 700;
+}
+
+.rc-card-source {
+    font-size: 15px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.rc-card-source-id {
+    color: #209d80;
+    font-weight: 600;
+}
+
+.rc-card-pay-btn {
+    min-width: 140px;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    background-color: #209d80;
+    color: #fff;
+    transition: opacity 0.2s;
+}
+
+.rc-card-pay-btn.full-width {
+    width: 100%;
+    padding: 14px;
+}
+
+.rc-card-pay-btn.disabled {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: default;
+}
+
+@media (max-width: 768px) {
+    .rc-card-name {
+        font-size: 18px;
+    }
+
+    .rc-card-phone {
+        font-size: 16px;
+    }
+
+    .rc-card-status {
+        font-size: 14px;
+    }
+
+    .rc-card-summary-chip {
+        font-size: 12px;
+    }
+
+    .rc-card-created {
+        font-size: 13px;
+    }
+
+    .rc-card-pet-row {
+        font-size: 14px;
+    }
+
+    .rc-card-pet-name {
+        font-size: 30px;
+    }
+
+    .rc-card-amount {
+        font-size: 32px;
+    }
+
+    .rc-card-pay-btn {
+        font-size: 16px;
+    }
+}

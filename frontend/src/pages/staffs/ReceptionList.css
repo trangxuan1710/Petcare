@@ -1,0 +1,246 @@
+.staff-page {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #ffffff 0%, #f4faf9 45%, #f1f7f8 100%);
+    padding-bottom: 110px;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    color: #1f2a2e;
+}
+
+.staff-content {
+    width: min(480px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 26px 0 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.staff-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #ffffff;
+    border: 1px solid #e6eeeb;
+    border-radius: 16px;
+    padding: 14px 16px;
+}
+
+.staff-header-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.staff-header-texts {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.staff-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: url('https://randomuser.me/api/portraits/women/68.jpg') center/cover no-repeat;
+    border: 1px solid #e6eeeb;
+}
+
+.staff-header-greeting {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.2;
+    font-weight: 500;
+    color: #1f2937;
+}
+
+.staff-header-name {
+    margin: 0;
+    font-size: 17px;
+    line-height: 1.15;
+    font-weight: 700;
+    color: #111827;
+}
+
+.staff-header-bell-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.staff-search-row {
+    margin-top: -2px;
+}
+
+.staff-search-box {
+    display: flex;
+    align-items: center;
+    border: 1px solid #d1d5db;
+    border-radius: 16px;
+    padding: 11px 16px;
+    background-color: #fff;
+    gap: 10px;
+}
+
+.staff-search-input {
+    border: none;
+    outline: none;
+    font-size: 16px;
+    flex: 1;
+    color: #333;
+    background-color: transparent;
+}
+
+.staff-search-input::placeholder {
+    color: #c8ccd2;
+}
+
+.staff-calendar-section {
+    margin-bottom: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.staff-month-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.staff-month-nav-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.staff-month-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.staff-month-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: #209d80;
+}
+
+.staff-day-header-row {
+    margin-bottom: 4px !important;
+}
+
+.staff-week-strip {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.staff-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px 0;
+    width: 100%;
+    justify-items: center;
+    margin-bottom: 8px;
+}
+
+.staff-day-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.staff-day-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #888;
+}
+
+.staff-day-circle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fff;
+    border: 1px solid #d1d5db;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.staff-day-circle.empty {
+    border-color: transparent;
+    background-color: transparent;
+    cursor: default;
+}
+
+.staff-day-circle.active {
+    background-color: #24b8a3;
+    border-color: #24b8a3;
+}
+
+.staff-day-circle.active .staff-day-number {
+    color: #fff;
+    font-weight: 700;
+}
+
+.staff-day-number {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+}
+
+.staff-collapse-indicator {
+    padding: 4px;
+    cursor: pointer;
+}
+
+.staff-tabs-wrap {
+    padding: 8px 0 4px;
+}
+
+.staff-inline-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.staff-inline-filter input {
+    width: 14px;
+    height: 14px;
+}
+
+.staff-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.staff-empty {
+    background: #ffffff;
+    border: 1px dashed #d1d5db;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    font-size: 14px;
+    color: #64748b;
+}

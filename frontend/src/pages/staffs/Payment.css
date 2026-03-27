@@ -1,0 +1,29 @@
+.staff-payment-page {
+    min-height: 100vh;
+    background: #edf4f3;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    color: #1f2328;
+    padding-bottom: 190px;
+}
+
+.staff-payment-shell {
+    width: min(480px, calc(100% - 20px));
+    margin: 0 auto;
+    padding-top: 12px;
+}
+
+.staff-payment-content {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.staff-payment-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: url('https://randomuser.me/api/portraits/men/32.jpg') center/cover no-repeat;
+    border: 2px solid #ffffff;
+    box-shadow: 0 8px 16px rgba(16, 24, 40, 0.16);
+}

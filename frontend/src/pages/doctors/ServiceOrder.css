@@ -1,0 +1,585 @@
+.service-order-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #fff;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+}
+
+.so-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background-color: #fff;
+}
+
+.so-btn-icon {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.so-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.so-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 90px; /* space for bottom actions */
+}
+
+/* Customer card */
+.so-customer-card {
+    padding: 16px;
+    border-top: 1px solid #f0f4f8;
+}
+
+.so-customer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.so-customer-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 6px 0;
+}
+
+.so-customer-phone {
+    display: flex;
+    align-items: center;
+    color: #209D80;
+    font-size: 13px;
+    gap: 4px;
+}
+
+.so-icon-phone {
+    color: #209D80;
+}
+
+.so-payment-info {
+    text-align: right;
+    font-size: 14px;
+}
+
+.so-paid {
+    color: #f05252; /* redish orange */
+    font-weight: 600;
+}
+
+.so-total {
+    color: #4b5563;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.so-created-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 16px;
+}
+
+.so-time {
+    color: #209D80;
+    font-weight: 500;
+}
+
+.so-icon-eye {
+    color: #209D80;
+    cursor: pointer;
+}
+
+/* Inline Pet Info */
+.so-pet-info-inline {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    background-color: #fbfbfb;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.so-pet-name {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.so-pet-breed {
+    color: #666;
+    display: flex;
+    align-items: center;
+}
+
+.so-pet-stat {
+    display: flex;
+    align-items: center;
+    color: #666;
+    gap: 4px;
+}
+
+/* Tabs */
+.so-tabs {
+    display: flex;
+    border-bottom: 1px solid #eaeaea;
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 16px;
+}
+.so-tabs::-webkit-scrollbar {
+    display: none;
+}
+
+.so-tab {
+    padding: 12px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #888;
+    white-space: nowrap;
+    cursor: pointer;
+    position: relative;
+}
+
+.so-tab.active {
+    color: #209D80;
+}
+
+.so-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: #209D80;
+}
+
+/* Accordions */
+.so-sections {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.so-accordion {
+    background-color: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.so-accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    cursor: pointer;
+}
+
+.so-accordion-header h3 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+}
+
+.so-accordion-content {
+    padding: 0 16px 16px 16px;
+    border-top: 1px solid #eaeaea;
+    padding-top: 16px;
+}
+
+
+/* Removed border top from content to add to header if expanded, but this is simpler: */
+.so-accordion-content {
+    border-top: 1px solid #f0f0f0;
+}
+
+.so-service-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.so-service-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.so-service-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+}
+
+.so-service-status {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.so-service-status.pending {
+    color: #d97706; /* orangeish yellow */
+}
+
+.so-service-price {
+    font-size: 14px;
+}
+
+.so-price-val {
+    color: #f05252;
+    font-weight: 600;
+}
+
+.so-price-unit {
+    color: #666;
+    font-size: 13px;
+}
+
+.so-service-executor {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.so-exec-label {
+    color: #888;
+}
+
+.so-exec-name {
+    color: #444;
+}
+
+.so-add-service-card {
+    width: 100%;
+    border: 1px solid #cfd3d8;
+    background: #ffffff;
+    color: #ffffff;
+    border-radius: 26px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.so-add-service-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 999px;
+    border: none;
+    background: #d5d7db;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #f6f7f8;
+}
+
+.so-conclusion-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.so-result-summary-card {
+    border: 1px solid #d9dfdc;
+    border-radius: 14px;
+    background: #fff;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.so-result-summary-label {
+    font-size: 18px;
+    color: #2f3533;
+    font-weight: 700;
+}
+
+.so-result-summary-btn {
+    min-width: 144px;
+    height: 38px;
+    border-radius: 999px;
+    border: 1px solid #22a187;
+    background: #e9f5f1;
+    color: #15957a;
+    font-size: 16px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.so-conclusion-block {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.so-conclusion-title {
+    margin: 0;
+    font-size: 18px;
+    color: #2f3533;
+    font-weight: 600;
+}
+
+.so-conclusion-title span {
+    color: #e55454;
+}
+
+.so-conclusion-box {
+    min-height: 100px;
+    border: 1px solid #d9dfdc;
+    border-radius: 16px;
+    background: #fff;
+    padding: 14px;
+    position: relative;
+}
+
+.so-conclusion-box p {
+    margin: 0;
+    color: #2f3533;
+    font-size: 16px;
+    line-height: 1.4;
+}
+
+.so-conclusion-count {
+    position: absolute;
+    right: 12px;
+    bottom: 10px;
+    color: #c4c9c7;
+    font-size: 13px;
+}
+
+.so-conclusion-options {
+    border-radius: 14px;
+    border: 1px solid #dce3e0;
+    background: #edf3f1;
+    padding: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 10px;
+}
+
+.so-option-item {
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    color: #4f5955;
+    font-size: 14px;
+}
+
+.so-option-dot {
+    width: 17px;
+    height: 17px;
+    border-radius: 999px;
+    border: 1.5px solid #9ea7a3;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.so-option-item.active .so-option-dot {
+    border-color: #17997d;
+    box-shadow: inset 0 0 0 4px #fff;
+    background: #17997d;
+}
+
+.empty-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 24px 0;
+    border-top: 1px solid #f0f0f0;
+}
+
+/* Bottom Actions */
+.so-bottom-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background-color: #fff;
+    display: flex;
+    gap: 12px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+}
+
+.so-btn-cancel, .so-btn-execute {
+    flex: 1;
+    padding: 14px;
+    border-radius: 20px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+}
+
+.so-btn-cancel {
+    background-color: #fff;
+    border: 1px solid #209D80;
+    color: #209D80;
+}
+
+.so-btn-execute {
+    background-color: #209D80;
+    color: #fff;
+}
+
+.so-bottom-actions-single {
+    justify-content: center;
+}
+
+.so-btn-finish {
+    width: 100%;
+    max-width: 360px;
+    padding: 14px;
+    border-radius: 20px;
+    border: none;
+    background-color: #209D80;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Meds List */
+.so-accordion-content.meds-list-container {
+    padding: 16px 0 !important;
+}
+
+.so-meds-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 0 16px;
+}
+
+.so-med-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+/* Custom Checkbox */
+.so-med-checkbox {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 18px; /* aligns vertically with image */
+}
+
+.so-med-checkbox input[type="checkbox"] {
+    display: none;
+}
+
+.so-med-checkbox label {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid #a1a1aa;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: transparent;
+    transition: all 0.2s;
+    display: inline-block;
+    position: relative;
+}
+
+.so-med-checkbox input[type="checkbox"]:checked + label {
+    background-color: #209D80;
+    border-color: #209D80;
+}
+
+.so-med-checkbox input[type="checkbox"]:checked + label::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 2px;
+    width: 5px;
+    height: 10px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.so-med-image {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    border-radius: 4px;
+    background-color: transparent;
+}
+
+.so-med-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.so-med-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #3f3f46;
+    margin: 0 0 6px 0;
+}
+
+.so-med-desc {
+    font-size: 14px;
+    color: #888;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+}
+
+.so-med-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.so-med-price-box .so-med-price {
+    font-size: 16px;
+    font-weight: 700;
+    color: #209D80;
+}
+
+.so-med-price-box .so-med-unit {
+    font-size: 14px;
+    color: #666;
+}
+
+.so-med-stock {
+    font-size: 14px;
+    color: #666;
+}
+
+.so-med-stock strong {
+    color: #4a4a4a;
+    font-weight: 600;
+}

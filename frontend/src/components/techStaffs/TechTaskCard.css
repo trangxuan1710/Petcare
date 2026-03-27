@@ -1,0 +1,73 @@
+.tech-task-card {
+    background: #ffffff;
+    border: 1px solid #e5eceb;
+    border-radius: 22px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tech-task-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+}
+
+.tech-task-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.tech-task-head h3 {
+    margin: 0;
+    color: #1f2937;
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.tech-task-status {
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.tech-task-body-grid {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 6px 16px;
+    padding-top: 2px;
+}
+
+.tech-task-body-grid span {
+    color: #6b7280;
+    font-size: 15px;
+}
+
+.tech-task-body-grid strong {
+    color: #4b5563;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.tech-pet-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+@media (max-width: 768px) {
+    .tech-task-head h3 {
+        font-size: 18px;
+    }
+
+    .tech-task-status,
+    .tech-task-body-grid span,
+    .tech-task-body-grid strong {
+        font-size: 14px;
+    }
+}

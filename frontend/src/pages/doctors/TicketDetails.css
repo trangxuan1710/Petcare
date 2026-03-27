@@ -1,0 +1,294 @@
+/* TicketDetails.css */
+.ticket-details-page {
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    background-color: #f7fdfb;
+    /* Light teal tint */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    /* very subtle shadow or border */
+    z-index: 10;
+}
+
+.icon-btn-back,
+.icon-btn-more {
+    background: transparent;
+    border: none;
+    padding: 4px;
+    margin: -4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.details-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+    flex: 1;
+    text-align: left;
+    margin-left: 12px;
+}
+
+.details-content {
+    padding: 16px;
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 96px;
+    /* Space for bottom action bar */
+}
+
+/* Card layout wrapper */
+.info-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+}
+
+.customer-name-lg {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 6px 0;
+}
+
+.customer-phone {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #209D80;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.payment-info {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+}
+
+.paid-val {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ef4444;
+    /* Đỏ */
+    margin-bottom: 2px;
+}
+
+.total-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: #666;
+}
+
+/* Alert Box */
+.customer-alert-box {
+    background-color: #fffbeb;
+    /* Light yellow/orange */
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+}
+
+.alert-box-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #d97706;
+    /* Dark orange */
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+.alert-box-text {
+    margin: 0;
+    font-size: 13px;
+    color: #d97706;
+    /* Dark orange */
+    line-height: 1.5;
+}
+
+/* Exam info list */
+.exam-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.exam-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.exam-info-row.align-top {
+    align-items: flex-start;
+}
+
+.exam-info-label {
+    font-size: 14px;
+    color: #6b7280;
+    /* Gray */
+    width: 35%;
+}
+
+.exam-info-value {
+    font-size: 14px;
+    color: #374151;
+    /* Dark gray */
+    font-weight: 400;
+    width: 65%;
+}
+
+.exam-info-value.text-right {
+    text-align: right;
+}
+
+.exam-info-value.multi-line {
+    line-height: 1.5;
+}
+
+/* Footer note */
+.card-footer-info {
+    border-top: 1px solid #f3f4f6;
+    padding-top: 16px;
+    font-size: 11px;
+    color: #9ca3af;
+    text-align: left;
+}
+
+/* Bottom Action Bar */
+.bottom-action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #ffffff;
+    padding: 16px 20px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+    z-index: 1000;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.primary-action-btn {
+    width: 100%;
+    background-color: #209D80;
+    /* Teal primary */
+    color: #ffffff;
+    border: none;
+    border-radius: 30px;
+    height: 56px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.primary-action-btn:active {
+    background-color: #1b856c;
+}
+
+/* Note Modal */
+.note-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(30, 41, 59, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    padding: 0 16px;
+}
+
+.note-modal-content {
+    background-color: #ffffff;
+    border-radius: 20px;
+    padding: 24px;
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.note-modal-icon-container {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background-color: #FFF6EB;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.note-modal-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #2D205A;
+    margin: 0 0 16px 0;
+}
+
+.note-modal-text-box {
+    background-color: #FFF6EB;
+    border-radius: 8px;
+    padding: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    color: #C07F00;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 24px;
+    font-weight: 500;
+}
+
+.note-modal-btn {
+    background-color: #1F997E;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    border-radius: 12px;
+    width: 60%;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.note-modal-btn:active {
+    background-color: #187D67;
+}

@@ -1,0 +1,68 @@
+.tech-status-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    background: #e7f1ee;
+    margin: 0 -10px;
+    padding: 8px 10px;
+}
+
+.tech-status-wrap::-webkit-scrollbar {
+    display: none;
+}
+
+.tech-status-track {
+    display: inline-flex;
+    gap: 8px;
+    padding: 0;
+    border-radius: 999px;
+    background: transparent;
+    min-width: max-content;
+}
+
+.tech-status-item {
+    border: none;
+    background: transparent;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+}
+
+.tech-status-label {
+    color: #2c3438;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.tech-status-count {
+    min-width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: #dfe5e5;
+    color: #3e4a50;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.tech-status-item.active {
+    background: #ffffff;
+    box-shadow: 0 3px 8px rgba(15, 23, 42, 0.06);
+}
+
+.tech-status-item.active .tech-status-label {
+    color: #14a085;
+}
+
+.tech-status-item.active .tech-status-count {
+    background: #d7eee8;
+    color: #14a085;
+}

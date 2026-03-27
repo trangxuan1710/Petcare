@@ -1,0 +1,551 @@
+.new-reception-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #f5f5f5;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+/* Header */
+.nr-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    background-color: #fff;
+    border-bottom: 1px solid #f0f4f8;
+}
+
+.nr-btn-icon {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nr-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.nr-header-avatar img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* Content */
+.nr-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 100px;
+}
+
+/* Customer Section */
+.nr-customer-section {
+    margin-bottom: 16px;
+}
+
+.nr-customer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.nr-customer-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+.nr-debt-amount {
+    font-size: 16px;
+    font-weight: 700;
+    color: #ef4444;
+}
+
+.nr-customer-sub-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nr-customer-phone {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: #209D80;
+}
+
+.nr-order-count {
+    font-size: 13px;
+    color: #888;
+}
+
+/* Pet Chips */
+.nr-pet-chips {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.nr-pet-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    background-color: #fff;
+    color: #666;
+    transition: all 0.2s;
+}
+
+.nr-pet-chip.active {
+    background-color: #209D80;
+    border-color: #209D80;
+    color: #fff;
+}
+
+.nr-pet-chip-add {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px dashed #209D80;
+    background: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Form Section */
+.nr-form-section {
+    background-color: #fff;
+    border-radius: 16px;
+    padding: 20px 16px;
+}
+
+.nr-form-title {
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 16px 0;
+}
+
+/* Pet Info Bar */
+.nr-pet-info-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background-color: #f7fbf9;
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.nr-pet-info-details {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.nr-pet-info-name {
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.nr-pet-info-breed {
+    color: #666;
+    display: flex;
+    align-items: center;
+}
+
+.nr-pet-info-stat {
+    display: flex;
+    align-items: center;
+    color: #666;
+    gap: 3px;
+}
+
+.nr-pet-edit-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Form Fields */
+.nr-field {
+    margin-bottom: 22px;
+    position: relative;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #fff;
+    transition: border-color 0.2s;
+}
+
+.nr-field:focus-within {
+    border-color: #209D80;
+}
+
+.nr-field-label {
+    position: absolute;
+    top: -8px;
+    left: 12px;
+    font-size: 12px;
+    color: #888;
+    background: #fff;
+    padding: 0 4px;
+    margin: 0;
+    z-index: 2;
+    line-height: 1;
+}
+
+.nr-required {
+    color: #ef4444;
+}
+
+.nr-input-with-suffix {
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.nr-input-wrapper {
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.nr-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 14px 16px;
+    font-size: 15px;
+    color: #333;
+    background-color: transparent;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.nr-input-suffix {
+    padding: 14px 16px 14px 0;
+    font-size: 15px;
+    color: #aaa;
+}
+
+.nr-select-wrapper {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.nr-select {
+    width: 100%;
+    padding: 14px 40px 14px 16px;
+    border: none;
+    font-size: 15px;
+    color: #333;
+    background-color: transparent;
+    appearance: none;
+    cursor: pointer;
+    outline: none;
+}
+
+.nr-select-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.nr-textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    color: #333;
+    resize: none;
+    outline: none;
+    font-family: inherit;
+    background-color: transparent;
+    box-sizing: border-box;
+}
+
+.nr-assigned-row {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.nr-assigned-field {
+    flex: 1;
+    margin-bottom: 20px;
+}
+
+.nr-shift-select-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #FFFBEB;
+    color: #D97706;
+    border-radius: 8px;
+    border: 1px solid #FDE68A;
+    height: 48px;
+    min-width: 94px;
+    margin-top: 0;
+}
+
+.nr-shift-select {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #D97706;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 0 30px 0 14px;
+    appearance: none;
+    cursor: pointer;
+}
+
+.nr-shift-select-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+/* Toggle */
+.nr-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.nr-toggle {
+    width: 48px;
+    height: 28px;
+    border-radius: 14px;
+    background-color: #e5e7eb;
+    cursor: pointer;
+    position: relative;
+    transition: background-color 0.25s;
+}
+
+.nr-toggle.active {
+    background-color: #E43700;
+}
+
+.nr-toggle-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: #fff;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+.nr-toggle.active .nr-toggle-thumb {
+    transform: translateX(20px);
+}
+
+.nr-toggle-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Bottom Actions */
+.nr-bottom-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background-color: #fff;
+    display: flex;
+    gap: 12px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.nr-btn-cancel, .nr-btn-submit {
+    flex: 1;
+    padding: 14px;
+    border-radius: 20px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+}
+
+.nr-btn-cancel {
+    background-color: #fff;
+    border: 1px solid #209D80;
+    color: #209D80;
+}
+
+.nr-btn-submit {
+    background-color: #209D80;
+    color: #fff;
+}
+
+/* Add Pet Modal */
+.nr-pet-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 1100;
+}
+
+.nr-pet-modal {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: min(100%, 480px);
+    background: #fff;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    z-index: 1101;
+    padding: 8px 8px 12px;
+    box-sizing: border-box;
+}
+
+.nr-pet-modal-handle {
+    width: 38px;
+    height: 4px;
+    border-radius: 999px;
+    background: #d1d5db;
+    margin: 0 auto 8px;
+}
+
+.nr-pet-modal-title {
+    margin: 0 0 12px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.nr-pet-modal-form-row {
+    display: flex;
+    gap: 8px;
+}
+
+.nr-pet-modal-field {
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    padding: 6px 10px 8px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.nr-pet-modal-field-half {
+    flex: 1;
+}
+
+.nr-pet-modal-label {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+
+.nr-pet-modal-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    color: #111827;
+    background: transparent;
+    padding: 0;
+}
+
+.nr-pet-modal-select-wrapper {
+    position: relative;
+}
+
+.nr-pet-modal-select {
+    width: 100%;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    color: #111827;
+    background: transparent;
+    appearance: none;
+    padding: 0 18px 0 0;
+}
+
+.nr-pet-modal-select-icon {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.nr-pet-modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.nr-pet-modal-btn-cancel,
+.nr-pet-modal-btn-submit {
+    flex: 1;
+    border-radius: 12px;
+    border: none;
+    font-size: 20px;
+    font-weight: 700;
+    padding: 10px 12px;
+    cursor: pointer;
+}
+
+.nr-pet-modal-btn-cancel {
+    background: #f3f4f6;
+    color: #0ea68b;
+    border: 1px solid #0ea68b;
+}
+
+.nr-pet-modal-btn-submit {
+    background: #0ea68b;
+    color: #fff;
+}

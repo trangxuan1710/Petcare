@@ -1,0 +1,69 @@
+.clinical-queue-page {
+    padding: 16px;
+}
+
+.clinical-queue-page h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.cq-subtitle {
+    margin: 8px 0 16px;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.cq-controls {
+    display: grid;
+    grid-template-columns: 1fr 170px;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.cq-controls input,
+.cq-controls select {
+    border: 1px solid #dbe1e8;
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.cq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.cq-item-wrap {
+    background: #fff;
+    border-radius: 12px;
+}
+
+.cq-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px 0;
+}
+
+.cq-queue {
+    background: #eaf6f4;
+    color: #047857;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.cq-doctor {
+    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.cq-empty {
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    padding: 14px;
+    text-align: center;
+    color: #64748b;
+}

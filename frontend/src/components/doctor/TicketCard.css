@@ -1,0 +1,118 @@
+/* TicketCard.css */
+.ticket-card {
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.customer-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 6px 0;
+}
+
+.datetime {
+    font-size: 14px;
+    color: #888;
+    margin: 0;
+}
+
+.ticket-info-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+}
+
+.paid-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ef4444;
+    /* Đỏ */
+    margin-bottom: 2px;
+}
+
+.total-amount {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+}
+
+.pet-info-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #f3f4f6;
+    border-radius: 12px;
+    background-color: #f9fafb;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+}
+
+.pet-info-box.has-alert {
+    border-color: #fca5a5;
+    background-color: #fef2f2;
+}
+
+.pet-details {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.pet-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-right: 2px;
+}
+
+.pet-breed {
+    display: flex;
+    align-items: center;
+}
+
+.pet-stat {
+    display: flex;
+    align-items: center;
+}
+
+.pet-alert-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 8px;
+}
+
+.services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.service-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+}
+
+.service-name {
+    color: #4b5563;
+}
+
+.service-status {
+    font-weight: 500;
+}
