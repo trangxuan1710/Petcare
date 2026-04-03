@@ -1,0 +1,53 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: petical-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: petical
+      MYSQL_USER: petical
+      MYSQL_PASSWORD: petical
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+      start_period: 60s
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: petical-app
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/petical?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: petical
+      SPRING_DATASOURCE_PASSWORD: petical
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      JWT_SECRET: replace-with-a-long-random-secret
+      JWT_EXPIRATION: 86400000
+      JWT_ISSUER: petical
+      PORT: 8080
+      LOGGING_FILE_PATH: ./logs
+      STORAGE: ./storage
+      APP_SEED_MOCK_ENABLED: "true"
+    ports:
+      - "8080:8080"
+    volumes:
+      - app_storage:/app/storage
+      - app_logs:/app/logs
+
+volumes:
+  mysql_data:
+  app_storage:
+  app_logs:

@@ -1,0 +1,50 @@
+.tech-exec-card {
+    background: #ffffff;
+    border: 1px solid #e5eceb;
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 88px;
+}
+
+.tech-exec-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.tech-exec-head h3 {
+    margin: 0;
+    color: #374151;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.tech-exec-head span {
+    color: #2563eb;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.tech-exec-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+}
+
+.tech-exec-row span {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.tech-exec-row b {
+    color: #4b5563;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.tech-exec-mute {
+    color: #c0c9d4 !important;
+}

@@ -1,0 +1,824 @@
+.record-result-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #fbfbfb;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+}
+
+.rr-header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 16px;
+    background-color: #fff;
+    border-bottom: 1px solid #f0f4f8;
+}
+
+.rr-btn-icon {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rr-title {
+    font-family: "Roboto", sans-serif !important;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.rr-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 90px; /* space for bottom actions */
+}
+
+/* Customer card */
+.rr-customer-card {
+    background: #fff;
+    margin-bottom: 16px;
+    /* using transparent border or layout match */
+}
+
+.rr-customer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.rr-customer-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #3f3f46;
+    margin: 0 0 6px 0;
+}
+
+.rr-customer-phone {
+    display: flex;
+    align-items: center;
+    color: #209D80;
+    font-size: 13px;
+    gap: 4px;
+}
+
+.rr-icon-phone {
+    color: #209D80;
+}
+
+.rr-payment-info {
+    text-align: right;
+    font-size: 14px;
+}
+
+.rr-paid {
+    color: #ef4444; /* red */
+    font-weight: 700;
+}
+
+.rr-total {
+    color: #6b7280;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.rr-ticket-type-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    font-size: 14px;
+}
+
+.rr-ticket-type {
+    color: #6b7280;
+}
+
+.rr-ticket-id {
+    color: #209D80;
+    font-weight: 500;
+}
+
+/* Inline Pet Info */
+.rr-pet-info-inline {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    background-color: #fbfbfb;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.rr-pet-name {
+    font-weight: 600;
+    color: #1a1a1a;
+}
+
+.rr-pet-breed {
+    color: #666;
+    display: flex;
+    align-items: center;
+}
+
+.rr-pet-stat {
+    display: flex;
+    align-items: center;
+    color: #666;
+    gap: 4px;
+}
+
+.rr-emergency-tag {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* Exam Details Card */
+.rr-exam-details-card {
+    background: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.rr-exam-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    /* margin-bottom: 16px; */
+    /* border-bottom: 1px solid #f0f0f0; */
+    padding-bottom: 16px;
+}
+
+.rr-exam-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: #4a4a4a;
+    display: block;
+    margin-bottom: 6px;
+}
+
+.rr-exam-id {
+    color: #209D80;
+    font-size: 14px;
+}
+
+.rr-exam-status-box {
+    text-align: right;
+}
+
+.rr-exam-status {
+    display: block;
+    color: #3b82f6; /* blue */
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.rr-exam-time {
+    color: #888;
+    font-size: 12px;
+}
+
+.rr-exam-info-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 14px;
+}
+
+.rr-exam-info-row:last-child {
+    margin-bottom: 0;
+}
+
+.rr-exam-label {
+    color: #6b7280;
+}
+
+.rr-exam-value {
+    color: #4a4a4a;
+    font-weight: 500;
+}
+
+.rr-service-list {
+    margin-top: 14px;
+    border-top: 1px solid #f3f4f6;
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.rr-service-item {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+}
+
+.rr-service-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.rr-service-meta {
+    margin-top: 6px;
+    color: #6b7280;
+    font-size: 12px;
+}
+
+.rr-service-name {
+    color: #1f2937;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.rr-service-status {
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.rr-status-pending {
+    color: #92400e;
+    background: #fef3c7;
+}
+
+.rr-status-in-progress {
+    color: #1d4ed8;
+    background: #dbeafe;
+}
+
+.rr-status-completed {
+    color: #166534;
+    background: #dcfce7;
+}
+
+/* Section block */
+.rr-section-block {
+    margin-bottom: 16px;
+}
+
+.rr-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin: 0 0 12px 0;
+    font-family: "Roboto", sans-serif !important;
+}
+
+.rr-required {
+    color: #ef4444;
+}
+
+/* General Result Text Area */
+.rr-textarea-wrapper {
+    position: relative;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    background-color: #fff;
+    overflow: hidden;
+}
+
+.rr-textarea {
+    width: 100%;
+    border: none;
+    padding: 16px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    resize: none;
+    box-sizing: border-box;
+    background-color: transparent;
+}
+
+.rr-textarea:focus {
+    outline: none;
+}
+
+.rr-char-count {
+    position: absolute;
+    bottom: 12px;
+    right: 16px;
+    font-size: 12px;
+    color: #d1d5db;
+}
+
+/* Upload Button */
+.rr-upload-btn {
+    width: 100%;
+    padding: 14px;
+    background-color: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+    margin-bottom: 24px;
+    cursor: pointer;
+}
+
+.rr-upload-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Accordion Meds */
+.rr-accordion {
+    background-color: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.rr-accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    cursor: pointer;
+}
+
+.rr-accordion-header h3 {
+    margin: 0;
+    font-size: 13px;
+    font-family: "Roboto", sans-serif !important;
+    font-weight: 500;
+    color: #333;
+}
+
+.rr-accordion-content {
+    border-top: 1px solid #f0f0f0;
+    padding: 24px 16px;
+}
+
+.rr-meds-empty {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.rr-add-btn-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.rr-add-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #e5e7eb;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.rr-add-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Radio Grid */
+.rr-radio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    background-color: #F5FBFA !important;
+    padding: 16px;
+    border-radius: 12px;
+}
+
+.rr-radio-label {
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: #4a4a4a;
+    cursor: pointer;
+}
+
+.rr-radio-label input[type="radio"] {
+    display: none;
+}
+
+.rr-radio-label input[type="radio"]:disabled + .rr-radio-custom {
+    opacity: 0.55;
+}
+
+.rr-radio-label input[type="radio"]:disabled ~ span,
+.rr-radio-label input[type="radio"]:disabled + .rr-radio-custom {
+    cursor: not-allowed;
+}
+
+.rr-radio-custom {
+    width: 18px;
+    height: 18px;
+    border: 1.5px solid #a1a1aa;
+    border-radius: 50%;
+    margin-right: 8px;
+    position: relative;
+    background-color: #fff;
+}
+
+.rr-radio-label input[type="radio"]:checked + .rr-radio-custom {
+    border-color: #209D80;
+}
+
+.rr-radio-label input[type="radio"]:checked + .rr-radio-custom::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 10px;
+    height: 10px;
+    background-color: #209D80;
+    border-radius: 50%;
+}
+
+.rr-mb-extra {
+    margin-bottom: 40px;
+}
+
+/* Bottom Actions */
+.rr-bottom-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background-color: #fff;
+    display: flex;
+    gap: 12px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+}
+
+.rr-btn-cancel, .rr-btn-confirm {
+    flex: 1;
+    padding: 14px;
+    border-radius: 20px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+}
+
+.rr-btn-cancel {
+    background-color: #fff;
+    border: 1px solid #209D80;
+    color: #209D80;
+}
+
+.rr-btn-confirm {
+    background-color: #209D80;
+    color: #fff;
+}
+
+.rr-btn-cancel:disabled,
+.rr-btn-confirm:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Meds List */
+.rr-accordion-content.rr-meds-list-container {
+    padding: 16px 0;
+}
+
+.rr-meds-list-minimal {
+    display: flex;
+    flex-direction: column;
+}
+
+.rr-med-item-minimal {
+    padding: 16px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rr-med-item-minimal:last-child {
+    border-bottom: none;
+}
+
+.rr-med-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rr-med-name-min {
+    font-size: 15px;
+    font-family: "Roboto", sans-serif !important;
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+}
+
+.rr-med-edit-icon {
+    cursor: pointer;
+}
+
+.rr-med-edit-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.rr-med-edit-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.rr-med-row-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rr-med-price-min {
+    font-size: 15px;
+    font-weight: 700;
+    color: #209D80;
+}
+
+.rr-med-unit-min {
+    font-size: 14px;
+    color: #666;
+}
+
+.rr-med-qty-min {
+    font-size: 14px;
+    color: #666;
+}
+
+.rr-med-row-dosage {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rr-dosage-lbl {
+    font-size: 14px;
+    color: #666;
+}
+
+.rr-dosage-val {
+    font-size: 14px;
+    color: #666;
+}
+
+.rr-med-row-note {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rr-note-lbl {
+    font-size: 14px;
+    color: #666;
+}
+
+.rr-note-val {
+    font-size: 14px;
+    color: #666;
+}
+/* === DOSAGE MODAL === */
+.rr-dosage-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+}
+
+.rr-dosage-modal-content {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+    animation: slideUp 0.3s ease-out;
+}
+
+.rr-dosage-modal-handle {
+    width: 40px;
+    height: 4px;
+    background-color: #d1d5db;
+    border-radius: 2px;
+    margin: 12px auto 8px auto;
+}
+
+.rr-dosage-modal-title {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 16px 0;
+}
+
+.rr-dosage-main-area {
+    padding: 0 16px 16px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.rr-dosage-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.rr-dosage-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #555;
+    width: 100px;
+}
+
+.rr-dosage-controls {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+}
+
+.rr-dosage-stepper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.rr-dosage-step-btn {
+    background: none;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rr-dosage-step-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.rr-dosage-step-val {
+    flex: 1;
+    text-align: center;
+    font-size: 15px;
+    color: #444;
+}
+
+.rr-dosage-unit {
+    width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #444;
+    cursor: pointer;
+    background-color: #fff;
+}
+
+.rr-dosage-note-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+.rr-dosage-note-row .rr-dosage-label {
+    margin-top: 8px;
+}
+
+.rr-dosage-textarea-box {
+    flex: 1;
+    position: relative;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.rr-dosage-textarea {
+    width: 100%;
+    min-height: 90px;
+    border: none;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    resize: none;
+    outline: none;
+}
+
+.rr-dosage-char-count {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 12px;
+    color: #d1d5db;
+}
+
+.rr-dosage-bottom-action {
+    padding: 16px;
+    background-color: #fff;
+    border-top: 1px solid #f0f0f0;
+}
+
+.rr-dosage-btn-confirm-final {
+    width: 100%;
+    padding: 14px;
+    background-color: #209D80;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+}
+
+.rr-dosage-btn-confirm-final:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.rr-toast {
+    position: fixed;
+    left: 50%;
+    top: calc(16px + env(safe-area-inset-top));
+    transform: translateX(-50%);
+    min-width: 260px;
+    max-width: calc(100% - 32px);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
+    z-index: 1100;
+}
+
+.rr-toast-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #6ee7b7;
+}
+
+.rr-toast-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fca5a5;
+}

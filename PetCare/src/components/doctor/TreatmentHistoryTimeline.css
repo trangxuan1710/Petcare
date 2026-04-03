@@ -1,0 +1,257 @@
+.th-wrapper {
+    background: #ffffff;
+    border: 1px solid #E2E2E2;
+    border-radius: 16px;
+    padding: 14px 12px 12px;
+}
+
+.th-header {
+    font-family: "Roboto", sans-serif !important;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.th-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #242424;
+}
+
+.th-header-status {
+    color: #0b68f0;
+    font-size: 13px;
+    font-weight: 400;
+}
+
+.th-date-range,
+.th-summary {
+    margin: 8px 0 0;
+    color: #555;
+    font-size: 14px;
+}
+
+.th-summary {
+    padding-bottom: 10px;
+    border-bottom: 1px solid #d5d5d8;
+}
+
+.th-timeline {
+    margin-top: 8px;
+    position: relative;
+}
+
+.th-timeline::before {
+    content: '';
+    position: absolute;
+    left: 39px;
+    top: 10px;
+    bottom: 10px;
+    width: 1px;
+    background: #21a287;
+}
+
+.th-block {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    column-gap: 8px;
+    margin-bottom: 18px;
+}
+
+.th-time {
+    color: #666;
+    font-size: 13px;
+    line-height: 1.25;
+    padding-top: 10px;
+    white-space: pre-line;
+}
+
+.th-body {
+    position: relative;
+    padding-left: 14px;
+}
+
+.th-node {
+    position: absolute;
+    left: -18px;
+    top: 13px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #119982;
+}
+
+.th-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
+}
+
+.th-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+}
+
+.th-tag {
+    border: 1px solid #1aa48a;
+    color: #139179;
+    background-color: #F5FBFA;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 700;
+    padding: 6px 12px;
+}
+
+.th-status {
+    font-size: 14px;
+    font-weight: 400;
+}
+
+.th-details-label {
+    font-size: 11px;
+    color: #7c7c7c;
+    font-weight: 500;
+}
+
+.th-status.in-progress {
+    color: #0b68f0;
+}
+
+.th-status.pending {
+    color: #b96d00;
+}
+
+.th-status.done {
+    color: #15994f;
+}
+
+.th-doctors {
+    background: #f6f6f6;
+    border-radius: 8px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.th-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    column-gap: 16px;
+    color: #626262;
+    font-size: 12px;
+    margin-top: 6px;
+}
+
+.th-row > span:first-child {
+    min-width: 0;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.th-row strong {
+    color: #555;
+    font-weight: 400;
+    text-align: right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+.th-collapse-btn {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 10px 0 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #7c7c7c;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.th-services {
+    border-top: 1px solid #ececec;
+    margin-top: 4px;
+    padding-top: 2px;
+}
+
+.th-service {
+    padding: 10px 0;
+    border-bottom: 1px solid #efefef;
+}
+
+.th-service:last-child {
+    border-bottom: none;
+}
+
+.th-service-title-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 8px;
+    align-items: start;
+}
+
+.th-service-title-row h4 {
+    margin: 0;
+    font-size: 16px;
+    font-family: "Roboto", sans-serif !important;
+    font-weight: 600;
+    color: #222;
+    min-width: 0;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.th-service-title-row .th-status {
+    white-space: nowrap;
+    text-align: right;
+}
+
+.th-sub-list {
+    margin-top: 4px;
+}
+
+.th-sub-list p {
+    margin: 8px 0 2px;
+    font-size: 15px;
+    color: #555;
+    font-weight: 600;
+}
+
+.th-result-btn {
+    margin-top: 10px;
+    width: 100%;
+    background: #e7f2ef;
+    border: 1px solid #1aa58b;
+    color: #008c70;
+    height: 40px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+@media (max-width: 400px) {
+    .th-block {
+        grid-template-columns: 42px 1fr;
+    }
+
+    .th-timeline::before {
+        left: 37px;
+    }
+
+    .th-tag {
+        font-size: 14px;
+    }
+}

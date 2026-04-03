@@ -1,0 +1,126 @@
+/* TicketCard.css */
+.ticket-card {
+    font-family: "Roboto", sans-serif;
+    background-color: #ffffff;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.customer-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 14px 0;
+}
+
+.datetime {
+    font-size: 13px;
+    color: #888;
+    margin-top: 10px;
+}
+
+.ticket-info-right {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+}
+
+/* .paid-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #ef4444;
+    margin-bottom: 2px;
+}
+
+.total-amount {
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+} */
+
+.ticket-pet-info-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid #f3f4f6;
+    border-radius: 10px;
+    background-color: #f9fafb;
+    padding: 12px;
+    margin-bottom: 16px;
+}
+
+.ticket-pet-info-box.has-alert {
+    border-color: #fca5a5;
+    background-color: #fef2f2;
+}
+
+.ticket-pet-details {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+    color: #4b5563;
+}
+
+.ticket-pet-name {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-right: 2px;
+}
+
+.ticket-pet-breed {
+    font-size: 12px !important;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.ticket-pet-stat {
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.ticket-pet-alert-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 10px;
+    flex-shrink: 0;
+}
+
+.services-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.service-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 15px;
+}
+
+.service-name {
+    color: #4b5563;
+    font-size: 13px;
+}
+
+.service-status {
+    font-size: 13px;
+    font-weight: 400;
+}

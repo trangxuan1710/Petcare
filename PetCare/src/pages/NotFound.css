@@ -1,0 +1,65 @@
+.not-found-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: linear-gradient(160deg, #f6fffb 0%, #edf6ff 100%);
+}
+
+.not-found-card {
+    width: min(520px, 100%);
+    background: #ffffff;
+    border: 1px solid #dbe7e4;
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 12px 30px rgba(14, 32, 41, 0.08);
+    text-align: center;
+}
+
+.not-found-code {
+    margin: 0;
+    font-size: 56px;
+    font-weight: 700;
+    color: #1da088;
+    line-height: 1;
+}
+
+.not-found-card h1 {
+    margin: 12px 0 8px;
+    font-size: 28px;
+    color: #0f172a;
+}
+
+.not-found-card p {
+    margin: 0;
+    color: #52606d;
+    font-size: 15px;
+}
+
+.not-found-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.not-found-btn {
+    text-decoration: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.not-found-btn-primary {
+    background: #1da088;
+    color: #ffffff;
+}
+
+.not-found-btn-outline {
+    border: 1px solid #1da088;
+    color: #1da088;
+    background: #ffffff;
+}

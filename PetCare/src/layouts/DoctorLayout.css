@@ -1,0 +1,17 @@
+.doctor-layout-container {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #F8FEFB   ;
+    position: relative;
+    max-width: 480px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.doctor-main-content {
+    flex: 1;
+    padding-bottom: 0;
+    overflow-y: auto;
+    height: 100vh;
+}

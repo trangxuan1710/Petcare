@@ -1,0 +1,248 @@
+.rod-page {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+}
+
+.rod-inner {
+    background: #fff;
+    border: 1px solid #e5ece9;
+    border-radius: 16px;
+    padding: 12px;
+}
+
+.rod-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #fff;
+    width: 100%;
+    min-width: 2.5rem;
+    box-sizing: border-box;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.rod-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: #effcf5;
+    padding: 0 12px;;
+
+}
+.rod-back {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: none;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.rod-header h3 {
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.rod-summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 10px;
+    gap: 10px;
+    width: 100%;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.06);
+}
+
+.rod-name {
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: #1f2937;
+    margin-bottom: 8px;
+}
+
+.rod-phone {
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    color: #209d80;
+    gap: 10px;
+}
+
+.rod-amount {
+    font-size: 12px;
+    color: #ef4444;
+    font-weight: 700;
+}
+
+.rod-pet-chips {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.rod-pet-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid #e5e7eb;
+    background-color: #fff;
+    color: #666;
+}
+
+.rod-pet-chip:disabled {
+    cursor: not-allowed;
+    opacity: 1;
+}
+
+.rod-pet-chip.active {
+    background-color: #209d80;
+    border-color: #209d80;
+    color: #fff;
+}
+
+.rod-card {
+    border: 1px solid #dbe6e2;
+    border-radius: 12px;
+    padding: 10px;
+    background: #f8fcfa;
+}
+
+.rod-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.rod-pet-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 1px solid #dce4e1;
+    border-radius: 10px;
+    background: #f4f7f6;
+    padding: 7px 8px;
+    margin-bottom: 10px;
+}
+
+.rod-pet-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    white-space: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.rod-pet-meta::-webkit-scrollbar {
+    display: none;
+}
+
+.rod-pet-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.rod-pet-breed {
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.rod-pet-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 11px;
+    color: #6b7280;
+}
+
+.rod-pet-action {
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1px solid #dbe6e2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    flex-shrink: 0;
+}
+
+.rod-field {
+    padding: 4px 0;
+}
+
+.rod-label {
+    display: block;
+    font-size: 12px;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+
+.rod-value {
+    display: block;
+    font-size: 14px;
+    line-height: 1.2;
+    color: #1f2937;
+    font-weight: 600;
+}
+
+.rod-value-wrap {
+    white-space: normal;
+}
+
+.rod-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid #e5ece9;
+    padding: 10px;
+}
+
+.rod-btn-cancel,
+.rod-btn-submit {
+    flex: 1;
+    height: 42px;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 700;
+    border: none;
+}
+
+.rod-btn-cancel {
+    background: #fff;
+    color: #179b7d;
+    border: 1px solid #179b7d;
+}
+
+.rod-btn-submit {
+    background: #179b7d;
+    color: #fff;
+}

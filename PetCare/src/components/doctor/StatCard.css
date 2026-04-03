@@ -1,0 +1,80 @@
+.stat-card {
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 120px;
+    position: relative;
+    box-sizing: border-box;
+}
+
+.stat-card.danger {
+    background-color: #FFF5F2;
+    /* Light red/orange */
+}
+
+.stat-card.success {
+    background-color: #E6F4F1;
+    /* Light teal */
+}
+
+.stat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.stat-card-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #101828;
+    line-height: 1.4;
+    max-width: 80%;
+}
+
+.stat-card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-card-icon svg {
+    width: 20px;
+    height: 20px;
+}
+
+.stat-card.danger .stat-card-icon svg {
+    color: #F04438;
+}
+
+.stat-card.success .stat-card-icon svg {
+    color: #0D8977;
+}
+
+.stat-card-content {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-top: 16px;
+}
+
+.stat-card-number {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-card.danger .stat-card-number {
+    color: #F04438;
+}
+
+.stat-card.success .stat-card-number {
+    color: #0D8977;
+}
+
+.stat-card-unit {
+    font-size: 14px;
+    font-weight: 500;
+    color: #667085;
+}

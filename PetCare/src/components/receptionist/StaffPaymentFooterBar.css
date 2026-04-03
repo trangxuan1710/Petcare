@@ -1,0 +1,84 @@
+.staff-payment-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 250;
+    display: flex;
+    justify-content: center;
+    background: transparent;
+    pointer-events: none;
+}
+
+.staff-payment-footer-shell {
+    width: min(480px, 100%);
+    background: #ffffff;
+    border-top-left-radius: 24px;
+    border-top-right-radius: 24px;
+    border-top: 1px solid #dbe7e4;
+    box-shadow: 0 -10px 24px rgba(14, 32, 41, 0.08);
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px));
+    pointer-events: auto;
+}
+
+.remain-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 12px;
+    color: #252a2f;
+}
+
+.remain-row span {
+    font-size: 16px;
+}
+
+.remain-row strong {
+    font-size: 24px;
+}
+
+.footer-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.footer-actions .btn-base {
+    margin: 0;
+    height: 60px;
+    border-radius: 18px;
+    font-size: 20px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+}
+
+.footer-actions .btn-outline {
+    border: 2px solid #1da088;
+    background: #ffffff;
+    color: #1da088;
+}
+
+.footer-actions .btn-primary {
+    background: #1da088;
+    color: #ffffff;
+}
+
+.footer-actions .btn-base.is-pressed {
+    transform: scale(0.98);
+}
+
+@media (max-width: 640px) {
+    .remain-row span {
+        font-size: 15px;
+    }
+
+    .remain-row strong {
+        font-size: 22px;
+    }
+
+    .footer-actions .btn-base {
+        height: 52px;
+        font-size: 18px;
+    }
+}

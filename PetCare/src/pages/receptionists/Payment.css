@@ -1,0 +1,109 @@
+.staff-payment-page {
+    min-height: 100vh;
+    background: #F8FEFB;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    color: #1f2328;
+    padding-bottom: 190px;
+}
+
+.staff-payment-shell {
+    width: min(480px, calc(100% - 20px));
+    margin: 0 auto;
+    padding-top: 12px;
+}
+
+.staff-payment-content {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.staff-payment-error {
+    margin: 10px 4px 0;
+    color: #b42318;
+    font-size: 13px;
+}
+
+.staff-payment-error-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.staff-payment-retry-btn {
+    border: none;
+    background: transparent;
+    color: #0f8a70;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.staff-payment-skeleton-card {
+    background-color: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 0 1px 4px 0 rgba(28, 155, 132, 0.06), 0 2px 12px 0 rgba(28, 155, 132, 0.1);
+}
+
+.staff-payment-skeleton-line {
+    height: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #eef2f1 20%, #f8fbfa 45%, #eef2f1 80%);
+    background-size: 200% 100%;
+    animation: payment-shimmer 1.2s infinite;
+}
+
+.staff-payment-skeleton-line-lg {
+    width: 70%;
+    height: 16px;
+}
+
+.staff-payment-skeleton-line-sm {
+    width: 45%;
+}
+
+.staff-payment-toast {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(420px, calc(100% - 32px));
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 1000;
+    box-shadow: 0 10px 24px rgba(16, 24, 40, 0.18);
+}
+
+.staff-payment-toast-error {
+    background: #c43232;
+}
+
+.staff-payment-toast-success {
+    background: #188f75;
+}
+
+@keyframes payment-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.staff-payment-avatar {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: url('https://randomuser.me/api/portraits/men/32.jpg') center/cover no-repeat;
+    border: 2px solid #ffffff;
+    box-shadow: 0 8px 16px rgba(16, 24, 40, 0.16);
+}

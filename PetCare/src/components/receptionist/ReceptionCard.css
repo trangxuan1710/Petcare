@@ -1,0 +1,69 @@
+.reception-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background-color: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+}
+
+.reception-card-clickable {
+    cursor: pointer;
+}
+
+.reception-card-avatar img {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.reception-card-avatar-placeholder {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background-color: #e0f2ef;
+    color: #209D80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.reception-card-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reception-card-name {
+    font-size: 16px;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    font-weight: 600;
+    line-height: 1.25;
+    color: #1a1a1a;
+    margin: 0;
+}
+
+.reception-card-phone {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    line-height: 1.3;
+    color: #209D80;
+}
+
+.reception-card-add-btn {
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}

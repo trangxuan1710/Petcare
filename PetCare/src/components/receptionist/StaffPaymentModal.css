@@ -1,0 +1,215 @@
+.staff-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.staff-modal-content {
+    background: #ffffff;
+    width: min(480px, 100%);
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    padding: 12px 20px 24px;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.staff-modal-handle {
+    width: 40px;
+    height: 4px;
+    background: #d1d5db;
+    border-radius: 4px;
+    margin: 0 auto 16px;
+}
+
+.staff-modal-title {
+    text-align: center;
+    margin: 0 0 20px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.staff-modal-remain-box {
+    background: #f8faf9;
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.staff-modal-remain-box span {
+    color: #4b5563;
+    font-size: 15px;
+}
+
+.staff-modal-remain-box strong {
+    color: #179a82;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.staff-modal-radio-group {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+.action-type-group {
+    justify-content: flex-start;
+}
+
+.payment-method-group {
+    justify-content: space-between;
+}
+
+.radio-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    color: #374151;
+}
+
+.radio-label input[type="radio"] {
+    display: none;
+}
+
+.custom-radio {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #d1d5db;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.radio-label input[type="radio"]:checked + .custom-radio {
+    border-color: #179a82;
+}
+
+.radio-label input[type="radio"]:checked + .custom-radio::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #179a82;
+}
+
+.staff-modal-field {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.field-label {
+    position: absolute;
+    top: -10px;
+    left: 12px;
+    background: #ffffff;
+    padding: 0 4px;
+    font-size: 13px;
+    color: #6b7280;
+    z-index: 1;
+}
+
+.field-label span {
+    color: #ef4444;
+}
+
+.input-with-currency {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    height: 48px;
+}
+
+.input-with-currency input,
+.full-width-input {
+    flex: 1;
+    border: none;
+    padding: 0 16px;
+    font-size: 16px;
+    color: #1a1a1a;
+    outline: none;
+}
+
+.full-width-input {
+    width: 100%;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    height: 48px;
+}
+
+.input-with-currency input:focus,
+.full-width-input:focus {
+    border-color: #179a82;
+}
+
+.input-with-currency:focus-within {
+    border-color: #179a82;
+}
+
+.currency-selector {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 16px;
+    border-left: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #4b5563;
+    font-weight: 500;
+}
+
+.staff-modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 32px;
+}
+
+.staff-modal-actions .ui.button {
+    margin: 0;
+    height: 52px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.staff-modal-actions .btn-cancel.ui.button {
+    background: #ffffff;
+    border: 2px solid #179a82;
+    color: #179a82;
+}
+
+.staff-modal-actions .btn-confirm.ui.button {
+    background: #179a82;
+    color: #ffffff;
+}

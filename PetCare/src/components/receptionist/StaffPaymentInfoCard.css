@@ -1,0 +1,252 @@
+.staff-payment-info-card {
+    background: #ffffff;
+    border: 1px solid #eceeef;
+    border-radius: 28px;
+    padding: 24px;
+    /* Sử dụng grid để chia 2 cột rõ rệt */
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 32px;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.02);
+    align-items: start;
+}
+
+.staff-payment-qr-box {
+    /* Hộp QR bên trái */
+    border: 1.5px solid #e2e4e3;
+    border-radius: 24px;
+    padding: 40px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.staff-payment-qr-box.has-image {
+    padding: 0;
+    overflow: hidden;
+    justify-content: center;
+}
+
+.staff-payment-qr-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+}
+
+.qr-title {
+    margin: 0;
+    font-size: 19px;
+    color: #586166;
+    font-weight: 500;
+}
+
+.qr-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 1px solid #e0e3e5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 40px 0;
+    color: #121517;
+    position: relative;
+    box-shadow: 
+        0 0 0 6px #ffffff,
+        0 0 0 7.5px #f1f3f4,
+        0 0 0 14px #ffffff,
+        0 0 0 15.5px #f5f7f8,
+        0 0 0 22px #ffffff,
+        0 0 0 23.5px #f9fafb;
+}
+
+.qr-note {
+    margin: 0;
+    color: #636c72;
+    font-size: 18px;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.print-btn {
+    margin-top: 40px;
+    border: none;
+    background: transparent;
+    color: #14a085;
+    font-weight: 700;
+    font-size: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.print-btn span {
+    border-bottom: 2px solid transparent;
+}
+
+.print-btn:hover span {
+    border-bottom-color: #14a085;
+}
+
+.print-btn:active {
+    transform: scale(0.96);
+}
+
+.staff-payment-order-info {
+    /* Phần thông tin bên phải */
+    display: flex;
+    flex-direction: column;
+    padding-top: 8px;
+}
+
+.created-time {
+    margin: 0 0 12px;
+    color: #93a0a8;
+    font-size: 20px;
+    font-weight: 400;
+}
+
+.status-pill {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: #e9efff;
+    color: #2b6df5;
+    padding: 8px 20px;
+    font-size: 17px;
+    font-weight: 600;
+}
+
+.order-id-title {
+    margin: 20px 0 24px;
+    font-size: 38px;
+    font-weight: 700;
+    line-height: 1;
+    color: #1d2126;
+    letter-spacing: -0.8px;
+}
+
+.info-group {
+    margin-top: 16px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.group-label {
+    color: #707981;
+    font-size: 18px;
+    font-weight: 400;
+}
+
+.group-value {
+    color: #4a5157;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.group-sub {
+    color: #707981;
+    font-size: 18px;
+    font-weight: 400;
+    /* text-align: left; */
+    margin-left: 0 !important;
+}
+
+/* Tablet Layout */
+@media (max-width: 992px) {
+    .staff-payment-info-card {
+        grid-template-columns: 280px 1fr; /* Keep 2 columns but narrower QR */
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .staff-payment-qr-box {
+        padding: 32px 16px;
+    }
+
+    .order-id-title {
+        font-size: 30px;
+    }
+}
+
+/* Mobile Layout - Keeping side-by-side as requested */
+@media (max-width: 600px) {
+    .staff-payment-info-card {
+        grid-template-columns: 160px 1fr; /* Narrow QR box for mobile */
+        gap: 16px;
+        padding: 16px;
+        border-radius: 20px;
+    }
+
+    .staff-payment-qr-box {
+        padding: 20px 12px;
+        border-radius: 16px;
+    }
+
+    .qr-title {
+        font-size: 14px;
+    }
+
+    .qr-circle {
+        margin: 20px 0;
+        width: 48px;
+        height: 48px;
+        box-shadow: 
+            0 0 0 4px #ffffff,
+            0 0 0 5px #f1f3f4,
+            0 0 0 9px #ffffff,
+            0 0 0 10px #f5f7f8;
+    }
+
+    .qr-note {
+        font-size: 12px;
+        line-height: 1.3;
+    }
+
+    .print-btn {
+        margin-top: 20px;
+        font-size: 16px;
+        gap: 6px;
+    }
+
+    .print-btn svg {
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    .created-time {
+        font-size: 14px;
+        margin-bottom: 8px;
+    }
+
+    .status-pill {
+        padding: 4px 12px;
+        font-size: 13px;
+    }
+
+    .order-id-title {
+        font-size: 20px;
+        margin: 12px 0 16px;
+    }
+
+    .info-group {
+        margin-top: 8px;
+        gap: 2px;
+    }
+
+    .group-label, .group-sub {
+        font-size: 13px;
+    }
+
+    .group-value {
+        font-size: 15px;
+    }
+}

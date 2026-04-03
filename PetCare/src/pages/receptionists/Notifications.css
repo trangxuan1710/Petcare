@@ -1,0 +1,186 @@
+.rnotif-page {
+    padding: 0 0 20px;
+    background: #f6f8f8;
+    min-height: 100%;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+}
+
+.rnotif-header {
+    background: #ffffff;
+    border-bottom: 1px solid #e6ecea;
+    padding: 22px 20px 26px;
+    margin-bottom: 16px;
+}
+
+.rnotif-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+}
+
+.rnotif-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 0 16px;
+    background-color: #f8fefb;
+}
+
+.rnotif-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background-color: #fff;
+    border-radius: 12px;
+    border: 1px solid rgba(28, 155, 132, 0.18);
+    box-shadow: 0 1px 4px 0 rgba(28, 155, 132, 0.06),
+        0 2px 12px 0 rgba(28, 155, 132, 0.10);
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+}
+
+.rnotif-card:focus-visible {
+    outline: 2px solid #209d80;
+    outline-offset: 2px;
+}
+
+.rnotif-icon-wrap {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    border-radius: 50%;
+    background-color: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+.rnotif-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.rnotif-head-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.rnotif-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0;
+    line-height: 1.3;
+}
+
+.rnotif-time {
+    font-size: 12px;
+    color: #a1a1aa;
+    white-space: nowrap;
+}
+
+.rnotif-desc {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+    line-height: 1.5;
+}
+
+.rnotif-desc strong {
+    color: #209d80;
+    font-weight: 400;
+}
+
+.rnotif-error-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 2px 0 8px;
+}
+
+.rnotif-retry-btn {
+    border: none;
+    background: transparent;
+    color: #0f8a70;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.rnotif-skeleton-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rnotif-skeleton-card {
+    background-color: #fff;
+    border-radius: 12px;
+    border: 1px solid rgba(28, 155, 132, 0.12);
+    padding: 16px;
+}
+
+.rnotif-skeleton-line {
+    height: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #eef2f1 20%, #f8fbfa 45%, #eef2f1 80%);
+    background-size: 200% 100%;
+    animation: rnotif-shimmer 1.2s infinite;
+}
+
+.rnotif-skeleton-line-lg {
+    width: 66%;
+    height: 16px;
+}
+
+.rnotif-skeleton-line-sm {
+    width: 42%;
+}
+
+.rnotif-toast {
+    position: fixed;
+    top: calc(16px + env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(420px, calc(100% - 32px));
+    border-radius: 12px;
+    padding: 12px 14px;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 1000;
+    box-shadow: 0 10px 24px rgba(16, 24, 40, 0.18);
+}
+
+.rnotif-toast-error {
+    background: #c43232;
+}
+
+.rnotif-toast-success {
+    background: #188f75;
+}
+
+@keyframes rnotif-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .rnotif-header {
+        padding: 18px 16px 20px;
+        margin-bottom: 12px;
+    }
+}

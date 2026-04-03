@@ -1,0 +1,72 @@
+.tech-med-panel {
+    background: #ffffff;
+    border: 1px solid #e5eceb;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.tech-med-header {
+    padding: 14px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.tech-med-header h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #374151;
+    font-weight: 700;
+}
+
+.tech-med-list {
+    padding: 4px 14px 10px;
+}
+
+.tech-med-item {
+    padding: 12px 0;
+}
+
+.tech-med-item + .tech-med-item {
+    border-top: 1px solid #edf2f7;
+}
+
+.tech-med-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.tech-med-top strong {
+    color: #2f3742;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.tech-med-price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.tech-med-price {
+    color: #14a085;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.tech-med-unit,
+.tech-med-qty {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.tech-med-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #6b7280;
+    font-size: 14px;
+    padding: 4px 0;
+    gap: 12px;
+}

@@ -1,0 +1,236 @@
+.cs-page {
+    min-height: 100vh;
+    background: #f3f5f4;
+    font-family: "Roboto", sans-serif !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.cs-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 16px 10px;
+    background: #fff;
+}
+
+.cs-icon-btn {
+    border: none;
+    background: transparent;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.cs-title {
+    margin: 0;
+    font-family: "Roboto", sans-serif !important;
+    font-size: 20px;
+    font-weight: 700;
+    color: #2b2b2b;
+}
+
+.cs-search-wrap {
+    padding: 10px 18px 14px;
+    background: #fff;
+    border-bottom: 1px solid #dfe7e4;
+}
+
+.cs-search-box {
+    height: 44px;
+    border: 1px solid #d3ddd9;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 14px;
+    background: #fff;
+}
+
+.cs-search-input {
+    border: none;
+    outline: none;
+    flex: 1;
+    font-size: 16px;
+    color: #2d2d2d;
+    background: transparent;
+}
+
+.cs-search-input::placeholder {
+    color: #c0c9c5;
+}
+
+.cs-content {
+    flex: 1;
+    padding: 16px 18px 100px;
+}
+
+.cs-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.cs-item {
+    width: 100%;
+    border: 1px solid #f3f4f6;
+    background: #fff;
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    text-align: left;
+}
+
+.cs-item.checked {
+    border-color: #e5e7eb;
+}
+
+.cs-item-main {
+    width: 100%;
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    text-align: left;
+}
+
+.cs-checkbox {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 6px;
+    margin-right: 14px;
+    flex-shrink: 0;
+    background: #fff;
+}
+
+.cs-checkbox.checked {
+    border-color: #0e9a80;
+    background: #0e9a80;
+    position: relative;
+}
+
+.cs-checkbox.checked::after {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 3px;
+    width: 5px;
+    height: 10px;
+    border: solid #fff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.cs-name {
+    font-size: 16px;
+    color: #1a1a1a;
+    font-weight: 600;
+    flex: 1;
+    line-height: 1.35;
+}
+
+.cs-price {
+    color: #1C9B84;
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+    margin-left: 10px;
+}
+
+.cs-unit {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.cs-item-extra {
+    margin-top: 12px;
+    margin-left: 34px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cs-assignee-label {
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.cs-assignee-label span {
+    color: #e14c4c;
+}
+
+.cs-assignee-select-wrap {
+    position: relative;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    padding-right: 12px;
+}
+
+.cs-assignee-select {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 0 38px 0 14px;
+    color: #1f2937;
+    font-size: 14px;
+    appearance: none;
+}
+
+.cs-assignee-select:invalid {
+    color: #9aa5a1;
+}
+
+.cs-bottom-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #eff2f1;
+    border-top: 1px solid #dde5e2;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 12px;
+}
+
+.cs-btn-skip,
+.cs-btn-confirm {
+    flex: 1;
+    height: 44px;
+    border-radius: 14px;
+    border: none;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.cs-btn-skip {
+    background: #fff;
+    border: 1px solid #0f9a80;
+    color: #0f9a80;
+}
+
+.cs-btn-confirm {
+    background: #dfe1e3;
+    color: #b4b8bc;
+}
+
+.cs-btn-confirm:not(:disabled) {
+    background: #0f9a80;
+    color: #fff;
+    cursor: pointer;
+}

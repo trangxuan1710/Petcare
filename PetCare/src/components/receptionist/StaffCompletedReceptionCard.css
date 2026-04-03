@@ -1,0 +1,188 @@
+.completed-reception-card {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    border: 1px solid #f0f2f5;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.customer-name {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1e23;
+}
+
+.phone-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.phone-icon {
+    color: #14a085;
+}
+
+.phone-number {
+    font-size: 18px;
+    color: #14a085;
+    font-weight: 500;
+}
+
+.header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+}
+
+.order-code {
+    color: #8c959c;
+    font-size: 18px;
+    font-weight: 400;
+}
+
+.status-label {
+    color: #2b6df5;
+    font-size: 17px;
+    font-weight: 500;
+}
+
+.admission-time {
+    margin: 12px 0;
+    color: #93a0a8;
+    font-size: 15px;
+    font-weight: 400;
+}
+
+.divider {
+    height: 1px;
+    background-color: #f0f2f5;
+    margin: 0 -24px;
+}
+
+.pet-info-box {
+    background-color: #f8f9fa;
+    border-radius: 20px;
+    padding: 14px 20px;
+    margin: 16px 0;
+    border: 1px solid #ebedef;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pet-tag {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.pet-name {
+    font-size: 20px;
+    font-weight: 700;
+    color: #212529;
+    margin-right: 2px;
+}
+
+.pet-breed {
+    font-size: 16px;
+    color: #6c757d;
+    font-weight: 400;
+}
+
+.gender-icon {
+    stroke-width: 2.5px;
+    width: 16px !important;
+    height: 16px !important;
+}
+
+.gender-icon.male {
+    color: #316cf4;
+}
+
+.gender-icon.female {
+    color: #ec4899;
+}
+
+.pet-detail-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #6c757d;
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.detail-icon {
+    color: #adb5bd;
+    width: 14px !important;
+    height: 14px !important;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 10px;
+}
+
+.amount-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.total-amount {
+    color: #14a085;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.sub-amount {
+    color: #4a5157;
+    font-size: 18px;
+    font-weight: 400;
+}
+
+@media (max-width: 480px) {
+    .completed-reception-card {
+        padding: 16px;
+    }
+    
+    .customer-name {
+        font-size: 18px;
+    }
+    
+    .phone-number {
+        font-size: 16px;
+    }
+    
+    .order-code {
+        font-size: 15px;
+    }
+    
+    .pet-name {
+        font-size: 17px;
+    }
+    
+    .pet-details {
+        font-size: 13px;
+        gap: 6px;
+    }
+    
+    .total-amount {
+        font-size: 20px;
+    }
+}

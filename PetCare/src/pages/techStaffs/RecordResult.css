@@ -1,0 +1,370 @@
+.trs-page {
+    min-height: 100vh;
+    background: #ffffff;
+    color: #272a2c;
+    font-family: "Roboto", sans-serif !important;
+}
+
+.trs-header {
+    height: 86px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    background: #fff;
+    border-bottom: 1px solid #e0e7e4;
+}
+
+.trs-header h1 {
+    margin: 0;
+    font-size: 24px;
+    font-family: "Roboto", sans-serif !important;
+    font-weight: 600;
+}
+
+.trs-icon-btn {
+    border: none;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.trs-content {
+    padding: 16px;
+    padding-bottom: 104px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.trs-card {
+    background: #fff;
+    border: 1px solid #d8e0dd;
+    border-radius: 18px;
+    padding: 14px;
+}
+
+.trs-card-title-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.trs-card-title-row h3 {
+    margin: 0;
+    font-size: 14px;
+    font-family: "Roboto", sans-serif !important;
+    font-weight: 600;
+}
+
+.trs-subtitle {
+    margin: 2px 0 0;
+    color: #7a8380;
+    font-size: 12px;
+    font-family: "Roboto", sans-serif !important;
+}
+
+.trs-divider {
+    margin: 10px 0;
+    border-top: 1px solid #dde4e1;
+}
+
+.trs-block h4 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a5250;
+    padding-top: 24px;
+}
+
+.trs-block-files-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4a5250;
+    padding-top: 24px;
+}
+
+.trs-block p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    font-family: "Roboto", sans-serif !important;
+    color: #656f6b;
+}
+
+.trs-images {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.trs-image-card {
+    border: 1px solid #d9e0dd;
+    border-radius: 18px;
+    padding: 8px;
+}
+
+.trs-image-card strong {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 8px;
+    color: #3b4340;
+}
+
+.trs-image-card img {
+    width: 100%;
+    height: 180px;
+    border-radius: 14px;
+    object-fit: cover;
+}
+
+.trs-files {
+    margin-top: 10px;
+    border: 1px solid #d9e0dd;
+    border-radius: 16px;
+    padding: 10px 12px;
+    color: #4a5250;
+    font-size: 16px;
+}
+
+.trs-med-list {
+    margin-top: 10px;
+}
+
+.trs-med-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #e2e7e5;
+    display: flex;
+    gap: 10px;
+}
+
+.trs-block-title {
+    margin: 0;
+    font-family: "Roboto", sans-serif !important;
+    font-size: 16px !important;
+    font-weight: 600;
+    color: #4a5250;
+}
+
+.trs-med-item:last-child {
+    border-bottom: none;
+}
+
+.trs-med-item img {
+    width: 64px;
+    height: 64px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.trs-med-info strong {
+    font-family: "Roboto", sans-serif !important;
+    font-size: 15px;
+    color: #3a4340;
+}
+
+.trs-med-info p {
+    margin: 2px 0 0;
+    color: #7b8581;
+    font-size: 13px;
+    padding-top: 4px;
+    font-family: "Roboto", sans-serif !important;
+}
+
+.trs-med-stats {
+    margin-top: 8px;
+    display: flex;
+    gap: 24px;
+    color: #707a76;
+    font-size: 13px;
+}
+
+.trs-med-stats b {
+    color: #4a5250;
+}
+
+.trs-accordion {
+    background-color: #fff;
+    border: 1px solid #eaeaea;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-top: 16px;
+}
+
+.trs-accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    cursor: pointer;
+}
+
+.trs-accordion-header h3 {
+    margin: 0;
+    font-size: 13px;
+    font-family: "Roboto", sans-serif !important;
+    font-weight: 500;
+    color: #333;
+}
+
+.trs-accordion-content {
+    border-top: 1px solid #f0f0f0;
+    padding: 24px 16px;
+}
+
+.trs-meds-empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.trs-add-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #e5e7eb;
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.trs-accordion-content.trs-meds-list-container {
+    padding: 16px 0;
+}
+
+.trs-meds-list-minimal {
+    display: flex;
+    flex-direction: column;
+}
+
+.trs-med-item-minimal {
+    padding: 16px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.trs-med-item-minimal:last-child {
+    border-bottom: none;
+}
+
+.trs-med-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trs-med-name-min {
+    font-size: 15px;
+    font-family: "Roboto", sans-serif !important;
+    font-weight: 500;
+    color: #333;
+    margin: 0;
+}
+
+.trs-med-edit-icon {
+    cursor: pointer;
+}
+
+.trs-med-row-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trs-med-price-min {
+    font-size: 15px;
+    font-weight: 700;
+    color: #209d80;
+}
+
+.trs-med-unit-min {
+    font-size: 14px;
+    color: #666;
+}
+
+.trs-med-qty-min {
+    font-size: 14px;
+    color: #666;
+}
+
+.trs-med-row-dosage {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trs-dosage-lbl,
+.trs-dosage-val,
+.trs-note-lbl,
+.trs-note-val {
+    font-size: 14px;
+    color: #666;
+}
+
+.trs-med-row-note {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.trs-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 14px 16px;
+    background: #eff3f1;
+    border-top: 1px solid #dfe5e2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.trs-btn-outline,
+.trs-btn-primary {
+    height: 62px;
+    border-radius: 18px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.trs-btn-outline {
+    border: 2px solid #1f9f86;
+    background: #ffffff;
+    color: #1f9f86;
+}
+
+.trs-btn-primary {
+    border: none;
+    background: #1f9f86;
+    color: #ffffff;
+}
+
+@media (max-width: 768px) {
+    .trs-header h1 {
+        font-size: 22px;
+    }
+
+    .trs-content {
+        padding-bottom: 112px;
+    }
+
+    .trs-footer {
+        padding: 12px 14px max(12px, env(safe-area-inset-bottom));
+    }
+
+    .trs-btn-outline,
+    .trs-btn-primary {
+        height: 56px;
+    }
+}

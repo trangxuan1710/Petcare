@@ -1,0 +1,140 @@
+/* Tickets.css */
+.tickets-page {
+    font-family: "Roboto", sans-serif;
+    font-weight: 400;
+    background-color: #f7fdfb;
+    min-height: 100%;
+}
+
+.tickets-header-area {
+    background-color: #ffffff;
+    padding: 20px 16px 16px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.tickets-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.tickets-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tickets-back-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.tickets-page-title-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.tickets-title {
+    font-family: "Roboto", sans-serif;
+    font-size: 24px;
+    font-weight: 500;
+    color: #111827;
+    margin: 0;
+    /* letter-spacing: -0.5px;   */
+}
+
+.tickets-subtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.notification-btn {
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.notification-btn:active {
+    background: #f3f4f6;
+}
+
+.search-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    border: 1px solid #d7dce2;
+    border-radius: 16px;
+    height: 42px;
+    padding: 0 14px;
+    background-color: #ffffff;
+    transition: all 0.2s;
+}
+
+.search-box:focus-within {
+    border-color: #209D80;
+    box-shadow: 0 0 0 2px rgba(32, 157, 128, 0.08);
+}
+
+.search-icon {
+    display: flex;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    color: #1a1a1a;
+    background: transparent;
+    width: 100%;
+}
+
+.search-input::placeholder {
+    color: #d1d5db;
+}
+
+.tickets-content-area {
+    padding: 24px 16px;
+    height: calc(100vh - 180px);
+    overflow-y: auto;
+}
+
+.tickets-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+    align-items: start;
+}
+
+.tickets-empty-state {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    color: #64748b;
+    text-align: center;
+    font-size: 14px;
+    background: #fff;
+}

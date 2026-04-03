@@ -1,0 +1,66 @@
+.tech-home-page {
+    min-height: 100vh;
+    background: #f8fefb;
+    padding: 16px;
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+}
+
+.tech-home-shell {
+    width: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tech-home-header-area {
+    background-color: #ffffff;
+    width: auto;
+    position: relative;
+    margin: -16px -16px 16px -16px;
+    padding: 20px 16px 16px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 4px 0 rgba(28, 155, 132, 0.06), 0 2px 12px 0 rgba(28, 155, 132, 0.1);
+    z-index: 10;
+}
+
+.tech-search-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 50px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 20px;
+    padding: 11px 16px;
+}
+
+.tech-search-box input {
+    border: none;
+    outline: none;
+    width: 100%;
+    background: transparent;
+    color: #111827;
+    font-size: 16px;
+}
+
+.tech-search-box input::placeholder {
+    color: #c8ccd2;
+}
+
+.tech-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 18px;
+}
+
+.tech-empty-state {
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 16px;
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+    padding: 24px 16px;
+}
