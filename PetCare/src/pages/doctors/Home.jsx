@@ -7,6 +7,7 @@ import DoctorLayout from '../../layouts/DoctorLayout';
 import dashboardService from '../../api/dashboardService';
 import authService from '../../api/authService';
 import useHeaderProfile from '../../hooks/useHeaderProfile';
+import FeatureDevelopingModal from '../../components/common/FeatureDevelopingModal';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -18,6 +19,7 @@ const Home = () => {
     const [summary, setSummary] = useState({});
     const [isLoadingSummary, setIsLoadingSummary] = useState(true);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [isFeatureModalOpen, setIsFeatureModalOpen] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -57,28 +59,32 @@ const Home = () => {
             title: 'Ca cấp cứu',
             count: readMetric(['emergencyCases', 'emergency', 'urgentCases']),
             unit: 'ca',
-            variant: 'danger'
+            variant: 'danger',
+            onClick: () => navigate('/doctors/tickets', { state: { initialTab: 'pending' } })
         },
         {
             id: 2,
             title: 'Ca khám cần thực hiện',
             count: readMetric(['pendingExaminationCases', 'pendingCases', 'waitingExams', 'pending']),
             unit: 'ca',
-            variant: 'success'
+            variant: 'success',
+            onClick: () => navigate('/doctors/tickets', { state: { initialTab: 'pending' } })
         },
         {
             id: 3,
             title: 'Ca khám cần kết luận',
             count: readMetric(['waitingConclusionCases', 'pendingConclusion', 'needConclusion']),
             unit: 'đơn',
-            variant: 'success'
+            variant: 'success',
+            onClick: () => navigate('/doctors/tickets', { state: { initialTab: 'in_progress' } })
         },
         {
             id: 4,
             title: 'Ca khám đang chủ trì',
-            count: readMetric(['waitingTreatmentCases', 'inProgressCases', 'inProgress', 'activeCases']),
+            count: 0,
             unit: 'đơn',
-            variant: 'success'
+            variant: 'success',
+            onClick: () => setIsFeatureModalOpen(true)
         }
     ], [readMetric]);
 
@@ -174,12 +180,16 @@ const Home = () => {
                                 unit={stat.unit}
                                 variant={stat.variant}
                                 icon={<TargetIcon />}
-                                onClick={() => navigate('/doctors/tickets')}
+                                onClick={stat.onClick}
                             />
                         ))}
                     </div>
                 </div>
             </div>
+            <FeatureDevelopingModal
+                open={isFeatureModalOpen}
+                onClose={() => setIsFeatureModalOpen(false)}
+            />
         </DoctorLayout>
     );
 };

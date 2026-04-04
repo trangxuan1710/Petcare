@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Phone, Mars, Cake, Weight, ChevronUp, ChevronDown, Plus, Upload, Minus, PencilLine } from 'lucide-react';
+import { ChevronLeft, Phone, Mars, Weight, ChevronUp, ChevronDown, Plus, Upload, Minus, PencilLine } from 'lucide-react';
 import receptionService from '../../api/receptionService';
 import treatmentService from '../../api/treatmentService';
 import './RecordResult.css';
@@ -44,19 +44,6 @@ const getPriceNumber = (item) => {
 };
 
 const formatVnd = (value) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
-
-const calcAgeLabel = (dateOfBirth) => {
-    if (!dateOfBirth) return '-- Tuổi';
-    const birth = new Date(dateOfBirth);
-    if (Number.isNaN(birth.getTime())) return '-- Tuổi';
-    const now = new Date();
-    let years = now.getFullYear() - birth.getFullYear();
-    const monthDiff = now.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-        years -= 1;
-    }
-    return `${Math.max(years, 0)} Tuổi`;
-};
 
 const normalizeServiceStatus = (rawStatus) => {
     const status = String(rawStatus || '').trim().toLowerCase();
@@ -216,7 +203,6 @@ export const RecordResult = () => {
         return {
             name: pet?.name || '---',
             breed: pet?.breed || pet?.species || '---',
-            age: calcAgeLabel(pet?.dateOfBirth),
             weight: receptionDetail?.weight ? `${receptionDetail.weight}kg` : (pet?.weight ? `${pet.weight}kg` : '--kg'),
         };
     }, [receptionDetail]);
@@ -370,7 +356,7 @@ export const RecordResult = () => {
     return (
         <div className="record-result-page">
             <header className="rr-header">
-                <button className="rr-btn-icon" onClick={() => navigate(`/doctors/service-order/${id ?? 1}`)}><ChevronLeft size={24} color="#1a1a1a" /></button>
+                <button className="rr-btn-icon" onClick={() => navigate(-1)}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="rr-title">Ghi nhận kết quả</h1>
             </header>
 
@@ -393,7 +379,6 @@ export const RecordResult = () => {
                     <div className="rr-pet-info-inline">
                         <span className="rr-pet-name">{petInfo.name}</span>
                         <span className="rr-pet-breed">{petInfo.breed} <Mars size={12} color="#3b82f6" style={{ display: 'inline', marginLeft: '2px' }} /></span>
-                        <span className="rr-pet-stat"><Cake size={14} color="#888" /> {petInfo.age}</span>
                         <span className="rr-pet-stat"><Weight size={14} color="#888" /> {petInfo.weight}</span>
                     </div>
                 </div>
@@ -585,7 +570,7 @@ export const RecordResult = () => {
             </div>
 
             <div className="rr-bottom-actions">
-                <button className="rr-btn-cancel" onClick={() => navigate(`/doctors/service-order/${id ?? 1}`)} disabled={isReadonlyMode}>Hủy bỏ</button>
+                <button className="rr-btn-cancel" onClick={() => navigate(-1)} disabled={isReadonlyMode}>Hủy bỏ</button>
                 <button className="rr-btn-confirm" onClick={handleConfirm} disabled={isReadonlyMode || isSaving}>{isSaving ? 'Đang lưu...' : 'Xác nhận'}</button>
             </div>
 

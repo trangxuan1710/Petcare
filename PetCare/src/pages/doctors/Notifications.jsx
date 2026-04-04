@@ -31,7 +31,7 @@ const Notifications = () => {
         <DoctorLayout>
             <div className="notifications-page">
                 <header className="notif-page-header">
-                    <button className="notif-back-btn" type="button" onClick={() => navigate('/doctors/tickets')} aria-label="Quay lai danh sach phieu">
+                    <button className="notif-back-btn" type="button" onClick={() => navigate(-1)} aria-label="Quay lai trang truoc">
                         <ChevronLeft size={22} color="#1f2937" />
                     </button>
                     <h1 className="notif-page-title">Thông báo</h1>

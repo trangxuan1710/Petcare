@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, Mars, Venus, Calendar, Weight } from 'lucide-react';
+import { Phone, Mars, Venus, Weight } from 'lucide-react';
 import './ReceivedCard.css';
 
 const ReceivedCard = ({
@@ -55,10 +55,6 @@ const ReceivedCard = ({
                                 {pet.gender === 'female' && (
                                     <Venus size={12} color="#ec4899" style={{ marginLeft: '4px' }} />
                                 )}
-                            </span>
-                            <span className="rc-card-pet-stat">
-                                <Calendar size={14} color="#888" />
-                                {pet.age}
                             </span>
                         </span>
                     </div>

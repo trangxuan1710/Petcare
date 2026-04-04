@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, MoreVertical, Phone, Eye, Mars, Calendar, Weight, Plus, TriangleAlert } from 'lucide-react';
+import { ChevronLeft, MoreVertical, Phone, Eye, Mars, Weight, Plus, TriangleAlert } from 'lucide-react';
 import ServiceAccordion from '../../components/doctor/ServiceAccordion';
 import TreatmentHistoryTimeline from '../../components/doctor/TreatmentHistoryTimeline';
 import FeatureDevelopingModal from '../../components/common/FeatureDevelopingModal';
@@ -14,19 +14,6 @@ import receptionService from '../../api/receptionService';
 import treatmentService from '../../api/treatmentService';
 
 const AlertBadgeIcon = () => <TriangleAlert size={24} color="#ef4444" strokeWidth={2} />;
-
-const calcAgeLabel = (dateOfBirth) => {
-    if (!dateOfBirth) return '-- Tuổi';
-    const birth = new Date(dateOfBirth);
-    if (Number.isNaN(birth.getTime())) return '-- Tuổi';
-    const now = new Date();
-    let years = now.getFullYear() - birth.getFullYear();
-    const monthDiff = now.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-        years -= 1;
-    }
-    return `${Math.max(years, 0)} Tuổi`;
-};
 
 const normalizeReceptionStatus = (rawStatus) => {
     const status = String(rawStatus || '').trim().toLowerCase();
@@ -236,7 +223,6 @@ export default function ServiceOrder() {
             name: pet?.name || '---',
             breed: pet?.breed || pet?.species || '---',
             gender: (pet?.gender || '').toLowerCase() === 'female' ? 'female' : 'male',
-            age: calcAgeLabel(pet?.dateOfBirth),
             weight: receptionDetail?.weight ? `${receptionDetail.weight}kg` : (pet?.weight ? `${pet.weight}kg` : '--kg'),
             hasAlert: isEmergencyCase(receptionDetail)
         };
@@ -355,7 +341,7 @@ export default function ServiceOrder() {
         <div className="service-order-page">
             {/* Header */}
             <header className="so-header">
-                <button className="so-btn-icon" onClick={() => navigate(`/doctors/tickets/${id ?? 1}`)}><ChevronLeft size={24} color="#1a1a1a" /></button>
+                <button className="so-btn-icon" onClick={() => navigate(-1)}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="so-title">Đơn dịch vụ</h1>
                 {/* <button className="so-btn-icon"><MoreVertical size={24} color="#1a1a1a" /></button> */}
             </header>
@@ -395,7 +381,6 @@ export default function ServiceOrder() {
                                     {petInfo.breed}
                                     {petInfo.gender === 'male' ? <Mars size={12} color="#3b82f6" style={{ display: 'inline', marginLeft: '4px' }} /> : null}
                                 </span>
-                                <span className="ticket-pet-stat"><Calendar size={14} color="#888" style={{ marginRight: '4px' }} /> {petInfo.age}</span>
                                 <span className="ticket-pet-stat"><Weight size={14} color="#888" style={{ marginRight: '4px' }} /> {petInfo.weight}</span>
                             </div>
                             <div className="ticket-pet-alert-icon">
@@ -410,7 +395,6 @@ export default function ServiceOrder() {
                                     {petInfo.breed}
                                     {petInfo.gender === 'male' ? <Mars size={12} color="#3b82f6" style={{ display: 'inline', marginLeft: '4px' }} /> : null}
                                 </span>
-                                <span className="ticket-pet-stat"><Calendar size={14} color="#888" style={{ marginRight: '4px' }} /> {petInfo.age}</span>
                                 <span className="ticket-pet-stat"><Weight size={14} color="#888" style={{ marginRight: '4px' }} /> {petInfo.weight}</span>
                             </div>
                         </div>
@@ -554,7 +538,7 @@ export default function ServiceOrder() {
                 </div>
             ) : (
                 <div className="so-bottom-actions">
-                    <button className="so-btn-cancel" onClick={() => navigate(`/doctors/tickets/${id ?? 1}`)} disabled={isReadonlyMode}>Hủy bỏ</button>
+                    <button className="so-btn-cancel" onClick={() => navigate(-1)} disabled={isReadonlyMode}>Hủy bỏ</button>
                     <button
                         className="so-btn-execute"
                         disabled={isReadonlyMode || isDefaultServiceCompleted || isStartingService}

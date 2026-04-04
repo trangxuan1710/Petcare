@@ -1,15 +1,9 @@
 import React from 'react';
 import './TicketCard.css';
-import { Mars, Venus, Calendar, Weight, AlertTriangle } from 'lucide-react';
+import { Mars, Venus, Weight, AlertTriangle } from 'lucide-react';
 
 const MaleIcon = () => <Mars size={12} color="#3b82f6" style={{ display: 'inline', marginLeft: '4px' }} />;
 const FemaleIcon = () => <Venus size={12} color="#ec4899" style={{ display: 'inline', marginLeft: '4px' }} />;
-
-const AgeIcon = () => (
-    <span style={{ display: 'inline-flex', alignItems: 'center', margin: '0 4px', color: '#888' }}>
-        <Calendar size={14} strokeWidth={2} />
-    </span>
-);
 
 const WeightIcon = () => (
     <span style={{ display: 'inline-flex', alignItems: 'center', margin: '0 4px', color: '#888' }}>
@@ -64,9 +58,6 @@ const TicketCard = ({
                     <span className="ticket-pet-breed">
                         {pet.breed}
                         {pet.gender === 'male' ? <MaleIcon /> : <FemaleIcon />}
-                    </span>
-                    <span className="ticket-pet-stat">
-                        <AgeIcon /> {pet.age}
                     </span>
                     <span className="ticket-pet-stat">
                         <WeightIcon /> {pet.weight}

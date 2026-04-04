@@ -111,6 +111,10 @@ const Payment = () => {
         navigate(RECEPTIONIST_PATHS.TODAY_ORDERS);
     };
 
+    const goBack = () => {
+        navigate(-1);
+    };
+
     const formatCurrency = (amount) => `${Number(amount || 0).toLocaleString('vi-VN')}đ`;
 
     const paymentSummary = useMemo(() => {
@@ -202,7 +206,7 @@ const Payment = () => {
             <div className="staff-payment-shell">
                 <StaffTopHeader
                     title="Thanh toán"
-                    onBack={goToTodayOrders}
+                    onBack={goBack}
                     size="normal"
                     rightNode={<div className="staff-payment-avatar" aria-label="Nhân viên" />}
                 />
@@ -257,7 +261,7 @@ const Payment = () => {
 
             <StaffPaymentFooterBar
                 onPayClick={() => setIsModalOpen(true)}
-                onBackClick={goToTodayOrders}
+                onBackClick={goBack}
                 remainAmount={formatCurrency(paymentSummary.total)}
             />
 

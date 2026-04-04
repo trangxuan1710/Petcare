@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { ChevronLeft, Mars, Venus, Cake, Phone, ClipboardList, PawPrint } from 'lucide-react';
+import { ChevronLeft, Mars, Venus, Phone, ClipboardList, PawPrint } from 'lucide-react';
 import './ReceivedDetailLayout.css';
 
 const toPetKey = (pet) => String(pet?.id || pet?.name || '');
@@ -22,7 +22,6 @@ const ReceivedDetailLayout = ({ order, onBack, onSubmit }) => {
             name: receptionRecord.pet.name || 'Thú cưng',
             breed: receptionRecord.pet.breed || receptionRecord.pet.species || '--',
             gender: String(receptionRecord.pet.gender || '').toLowerCase() === 'female' ? 'female' : 'male',
-            age: '-- Tuổi',
         }];
     }, [order?.pets, receptionRecord]);
 
@@ -86,7 +85,6 @@ const ReceivedDetailLayout = ({ order, onBack, onSubmit }) => {
                             {isFemale
                                 ? <Venus size={12} color="#ec4899" />
                                 : <Mars size={12} color="#3b82f6" />}
-                            <span className="rod-pet-stat"><Cake size={12} color="#9ca3af" /> {selectedPet?.age || '-- Tuổi'}</span>
                         </div>
                         <span className="rod-pet-action" aria-hidden="true">
                             <ClipboardList size={13} color="#179b7d" />

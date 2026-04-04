@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './StaffReceptionCard.css';
-import { Phone, PawPrint, Cake, Weight, ShieldCheck } from 'lucide-react';
+import { Phone, PawPrint, Weight, ShieldCheck } from 'lucide-react';
 import { Button } from 'semantic-ui-react';
 
 const statusStyles = {
@@ -56,7 +56,6 @@ const StaffReceptionCard = ({
                         <span className="pet-name">{pet.name}</span>
                         <span className="pet-breed">{pet.breed}</span>
                         <span className="pet-meta"><PawPrint size={14} /> {pet.type}</span>
-                        <span className="pet-meta"><Cake size={14} /> {pet.age}</span>
                         <span className="pet-meta"><Weight size={14} /> {pet.weight}</span>
                         {pet.alert && (
                             <span className="pet-alert"><ShieldCheck size={14} /> Cảnh báo</span>

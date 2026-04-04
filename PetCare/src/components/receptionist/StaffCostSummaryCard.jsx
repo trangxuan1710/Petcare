@@ -1,6 +1,6 @@
 import React from 'react';
 import './StaffCostSummaryCard.css';
-import { Mars, Calendar, Weight, ChevronDown } from 'lucide-react';
+import { Mars, Weight, ChevronDown } from 'lucide-react';
 
 const defaultFeeRows = [
     {
@@ -35,7 +35,6 @@ const StaffCostSummaryCard = ({
     petInfo = {
         name: 'Kuro',
         breed: 'Chó Poodle',
-        age: '3 Tuổi',
         weight: '4.5kg',
     },
     feeRows = defaultFeeRows,
@@ -57,10 +56,6 @@ const StaffCostSummaryCard = ({
                     <span className="pet-chip-breed">
                         {petInfo?.breed || '--'}
                         <Mars size={12} color="#3b82f6" style={{ marginLeft: '4px' }} />
-                    </span>
-                    <span className="pet-chip-stat">
-                        <Calendar size={14} color="#888" />
-                        {petInfo?.age || '--'}
                     </span>
                     <span className="pet-chip-stat">
                         <Weight size={14} color="#888" />

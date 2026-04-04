@@ -5,18 +5,13 @@ import '../../components/doctor/TicketCard.css';
 import "@fontsource/roboto/600.css";
 import receptionService from '../../api/receptionService';
 
-import { ChevronLeft, MoreVertical, Phone, TriangleAlert, Cake, Weight, Mars } from 'lucide-react';
+import { ChevronLeft, MoreVertical, Phone, TriangleAlert, Weight, Mars } from 'lucide-react';
 
 const BackIcon = () => <ChevronLeft size={24} color="#1a1a1a" />;
 const MoreVerticalIcon = () => <MoreVertical size={24} color="#1a1a1a" />;
 const PhoneIcon = () => <Phone size={14} color="#209D80" />;
 const WarningIcon = () => <TriangleAlert size={16} color="#d97706" />;
 const MaleIcon = () => <Mars size={12} color="#3b82f6" style={{ display: 'inline', marginLeft: '4px' }} />;
-const AgeIcon = () => (
-    <span style={{ display: 'inline-flex', alignItems: 'center', margin: '0 4px', color: '#888' }}>
-        <Cake size={14} color="currentColor" />
-    </span>
-);
 const WeightIcon = () => (
     <span style={{ display: 'inline-flex', alignItems: 'center', margin: '0 4px', color: '#888' }}>
         <Weight size={14} color="currentColor" />
@@ -24,19 +19,6 @@ const WeightIcon = () => (
 );
 const AlertBadgeIcon = () => <TriangleAlert size={24} color="#ef4444" />;
 const NoteModalIcon = () => <TriangleAlert size={24} color="#C07F00" />;
-
-const calcAgeLabel = (dateOfBirth) => {
-    if (!dateOfBirth) return '-- Tuổi';
-    const birth = new Date(dateOfBirth);
-    if (Number.isNaN(birth.getTime())) return '-- Tuổi';
-    const now = new Date();
-    let years = now.getFullYear() - birth.getFullYear();
-    const monthDiff = now.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-        years -= 1;
-    }
-    return `${Math.max(years, 0)} Tuổi`;
-};
 
 const isEmergencyCase = (record) => Boolean(
     record?.isEmergency
@@ -116,7 +98,6 @@ const TicketDetails = () => {
             name: pet?.name || '---',
             breed: pet?.breed || pet?.species || '---',
             gender: (pet?.gender || '').toLowerCase() === 'female' ? 'female' : 'male',
-            age: calcAgeLabel(pet?.dateOfBirth),
             weight: ticketDetail?.weight ? `${ticketDetail.weight}kg` : (pet?.weight ? `${pet.weight}kg` : '--kg'),
             hasAlert: isEmergencyCase(ticketDetail)
         };
@@ -162,7 +143,7 @@ const TicketDetails = () => {
             {showModal && <NoteModal note={displayNote} onClose={handleCloseModal} />}
             {/* Header */}
             <div className="details-header">
-                <button className="icon-btn-back" onClick={() => navigate('/doctors/tickets')}><BackIcon /></button>
+                <button className="icon-btn-back" onClick={() => navigate(-1)}><BackIcon /></button>
                 <h1 className="details-title">Chi tiết phiếu khám</h1>
                 {/* <button className="icon-btn-more"><MoreVerticalIcon /></button> */}
             </div>
@@ -209,9 +190,6 @@ const TicketDetails = () => {
                                     {petInfo.gender === 'male' ? <MaleIcon /> : null}
                                 </span>
                                 <span className="ticket-pet-stat">
-                                    <AgeIcon /> {petInfo.age}
-                                </span>
-                                <span className="ticket-pet-stat">
                                     <WeightIcon /> {petInfo.weight}
                                 </span>
                             </div>
@@ -226,9 +204,6 @@ const TicketDetails = () => {
                                 <span className="ticket-pet-breed">
                                     {petInfo.breed}
                                     {petInfo.gender === 'male' ? <MaleIcon /> : null}
-                                </span>
-                                <span className="ticket-pet-stat">
-                                    <AgeIcon /> {petInfo.age}
                                 </span>
                                 <span className="ticket-pet-stat">
                                     <WeightIcon /> {petInfo.weight}

@@ -39,7 +39,10 @@
     justify-content: center;
     cursor: pointer;
 }
-
+.tickets-back-btn svg {
+    width: 20px;
+    height: 20px;
+}
 .tickets-page-title-group {
     display: flex;
     flex-direction: column;

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronDown, Phone, PawPrint, CirclePlus, UserRound, Cake, Weight, Mars, Venus } from 'lucide-react';
+import { ChevronLeft, ChevronDown, Phone, PawPrint, CirclePlus, UserRound, Weight, Mars, Venus } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ReceptionistLayout from '../../layouts/ReceptionistLayout';
 import { RECEPTIONIST_PATHS } from '../../routes/receptionistPaths';
@@ -52,21 +52,6 @@ const SPECIES_LABELS = {
     cho: 'Chó',
     meo: 'Mèo',
     khac: 'Khác',
-};
-
-const calcAgeLabel = (dateOfBirth) => {
-    if (!dateOfBirth) return '-- Tuổi';
-    const birth = new Date(dateOfBirth);
-    if (Number.isNaN(birth.getTime())) return '-- Tuổi';
-
-    const now = new Date();
-    let years = now.getFullYear() - birth.getFullYear();
-    const monthDiff = now.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-        years -= 1;
-    }
-
-    return `${Math.max(years, 0)} Tuổi`;
 };
 
 const formatPetWeight = (pet) => {
@@ -216,7 +201,6 @@ const NewReception = () => {
             species: pet?.species || '',
             breed: pet?.breed || '',
             dateOfBirth: pet?.dateOfBirth || '',
-            age: pet?.age || '',
             weight: pet?.weight || '',
             gender: pet?.gender || '',
         }));
@@ -297,7 +281,6 @@ const NewReception = () => {
             species: pet?.species || '',
             breed: pet?.breed || '',
             dateOfBirth: pet?.dateOfBirth || '',
-            age: pet?.age || '',
             weight: pet?.weight || '',
             gender: pet?.gender || '',
         }));
@@ -307,8 +290,8 @@ const NewReception = () => {
         }
     };
 
-    const goToTodayOrders = () => {
-        navigate(RECEPTIONIST_PATHS.TODAY_ORDERS);
+    const goBack = () => {
+        navigate(-1);
     };
 
     const handleCreatePet = async () => {
@@ -341,7 +324,6 @@ const NewReception = () => {
                 species: pet.species || newPetSpecies,
                 breed: pet.breed || newPetBreed.trim(),
                 dateOfBirth: pet.dateOfBirth || newPetDateOfBirth,
-                age: pet.age || '',
                 weight: pet.weight || '',
                 gender: pet.gender || '',
             };
@@ -425,7 +407,7 @@ const NewReception = () => {
         <ReceptionistLayout>
             <div className="new-reception-page">
                 <header className="nr-header">
-                    <button className="nr-btn-icon" type="button" onClick={goToTodayOrders}>
+                    <button className="nr-btn-icon" type="button" onClick={goBack}>
                         <ChevronLeft size={24} color="#1a1a1a" />
                     </button>
                     <h1 className="nr-title">Tiếp đón mới</h1>
@@ -480,7 +462,6 @@ const NewReception = () => {
                                             : <Mars size={12} color="#3b82f6" />}
                                     </span>
                                 )}
-                                <span className="nr-pet-info-stat"><Cake size={13} color="#888" /> {selectedPetInfo?.age || calcAgeLabel(selectedPetInfo?.dateOfBirth)}</span>
                             </div>
                         </div>
                     )}
@@ -595,7 +576,7 @@ const NewReception = () => {
                 </div>
 
                 <div className="nr-bottom-actions">
-                    <button className="nr-btn-cancel" type="button" onClick={goToTodayOrders}>Hủy bỏ</button>
+                    <button className="nr-btn-cancel" type="button" onClick={goBack}>Hủy bỏ</button>
                     <button className="nr-btn-submit" type="button" onClick={handleCreateReception} disabled={isSubmitting}>
                         {isSubmitting ? 'Đang tạo...' : 'Tạo phiếu'}
                     </button>

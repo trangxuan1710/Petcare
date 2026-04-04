@@ -47,7 +47,7 @@ const initialOrders = [
     //     date: 20,
     //     species: 'cho',
     //     hasAdvance: true,
-    //     pets: [{ name: 'Kuro', breed: 'Chó Poodle', gender: 'male', age: '3 Tuổi', weight: '4.5kg' }],
+    //     pets: [{ name: 'Kuro', breed: 'Chó Poodle', gender: 'male', weight: '4.5kg' }],
     //     sourceOrder: '2141441',
     //     paymentEnabled: true,
     //     hideSource: false,
@@ -64,7 +64,7 @@ const initialOrders = [
     //     date: 20,
     //     species: 'meo',
     //     hasAdvance: false,
-    //     pets: [{ name: 'Mike', breed: 'Mèo Anh lông ngắn', gender: 'male', age: '2 Tuổi', weight: '2.5kg' }],
+    //     pets: [{ name: 'Mike', breed: 'Mèo Anh lông ngắn', gender: 'male', weight: '2.5kg' }],
     //     sourceOrder: null,
     //     paymentEnabled: true,
     //     hideSource: false,
@@ -81,7 +81,7 @@ const initialOrders = [
     //     date: 20,
     //     species: 'cho',
     //     hasAdvance: true,
-    //     pets: [{ name: 'Milo', breed: 'Chó Corgi', gender: 'male', age: '4 Tuổi', weight: '7kg' }],
+    //     pets: [{ name: 'Milo', breed: 'Chó Corgi', gender: 'male', weight: '7kg' }],
     //     sourceOrder: null,
     //     serviceSummary: '82 Hug × 16 Hug',
     //     totalAmount: '251.000đ',
@@ -100,7 +100,7 @@ const initialOrders = [
     //     date: 20,
     //     species: 'khac',
     //     hasAdvance: false,
-    //     pets: [{ name: 'Peach', breed: 'Thỏ Mini', gender: 'female', age: '1 Tuổi', weight: '1.1kg' }],
+    //     pets: [{ name: 'Peach', breed: 'Thỏ Mini', gender: 'female', weight: '1.1kg' }],
     //     sourceOrder: null,
     //     serviceSummary: '12 Hug × 04 Hug',
     //     totalAmount: '179.000đ',
@@ -119,7 +119,7 @@ const initialOrders = [
     //     date: 20,
     //     species: 'cho',
     //     hasAdvance: true,
-    //     pets: [{ name: 'Pika', breed: 'Chó Phốc sóc', gender: 'female', age: '5 Tuổi', weight: '2.3kg' }],
+    //     pets: [{ name: 'Pika', breed: 'Chó Phốc sóc', gender: 'female', weight: '2.3kg' }],
     //     sourceOrder: '2141333',
     //     serviceSummary: '64 Hug × 08 Hug',
     //     totalAmount: '368.000đ',
@@ -138,7 +138,7 @@ const initialOrders = [
     //     date: 20,
     //     species: 'meo',
     //     hasAdvance: true,
-    //     pets: [{ name: 'Bông', breed: 'Mèo Ba Tư', gender: 'female', age: '3 Tuổi', weight: '3.2kg' }],
+    //     pets: [{ name: 'Bông', breed: 'Mèo Ba Tư', gender: 'female', weight: '3.2kg' }],
     //     sourceOrder: null,
     //     serviceSummary: '31 Hug × 06 Hug',
     //     totalAmount: '205.000đ',
@@ -168,20 +168,6 @@ const normalizeClient = (client = {}) => ({
 });
 
 const formatCurrency = (amount) => `${Number(amount || 0).toLocaleString('vi-VN')}đ`;
-
-const calcPetAgeLabel = (dateOfBirth) => {
-    if (!dateOfBirth) return '-- Tuổi';
-    const birth = new Date(dateOfBirth);
-    if (Number.isNaN(birth.getTime())) return '-- Tuổi';
-
-    const now = new Date();
-    let years = now.getFullYear() - birth.getFullYear();
-    const monthDiff = now.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-        years -= 1;
-    }
-    return `${Math.max(years, 0)} Tuổi`;
-};
 
 const TodayOrders = () => {
     const navigate = useNavigate();
@@ -322,7 +308,6 @@ const TodayOrders = () => {
                         name: record?.pet?.name || 'Chưa có tên',
                         breed: record?.pet?.breed || record?.pet?.species || '--',
                         gender: String(record?.pet?.gender || '').toLowerCase() === 'female' ? 'female' : 'male',
-                        age: calcPetAgeLabel(record?.pet?.dateOfBirth),
                         weight: record?.pet?.weight ? `${record?.pet?.weight}kg` : '--',
                     },
                 ],

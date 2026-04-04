@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import DoctorLayout from '../../layouts/DoctorLayout';
 import TicketCard from '../../components/doctor/TicketCard';
 import TabStatus from '../../components/doctor/TabStatus';
@@ -52,42 +52,6 @@ const isEmergencyCase = (record) => Boolean(
     ?? record?.examForm?.emergency
 );
 
-const calcAgeLabel = (dateOfBirth) => {
-    if (!dateOfBirth) return '-- Tuổi';
-    const birth = new Date(dateOfBirth);
-    if (Number.isNaN(birth.getTime())) return '-- Tuổi';
-    const now = new Date();
-    let years = now.getFullYear() - birth.getFullYear();
-    const monthDiff = now.getMonth() - birth.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < birth.getDate())) {
-        years -= 1;
-    }
-    return `${Math.max(years, 0)} Tuổi`;
-};
-
-const resolvePetAgeLabel = (pet) => {
-    const dob = pet?.dateOfBirth || pet?.birthDate || pet?.dob;
-    if (dob) {
-        return calcAgeLabel(dob);
-    }
-
-    const numericAge = Number(
-        pet?.ageYears
-        ?? pet?.age
-        ?? pet?.yearOld
-    );
-    if (Number.isFinite(numericAge) && numericAge >= 0) {
-        return `${numericAge} Tuổi`;
-    }
-
-    const textAge = pet?.ageLabel || pet?.ageText;
-    if (typeof textAge === 'string' && textAge.trim()) {
-        return textAge.trim();
-    }
-
-    return '-- Tuổi';
-};
-
 const resolvePetWeightLabel = (record) => {
     const rawWeight = record?.weight
         ?? record?.weightKg
@@ -105,14 +69,28 @@ const resolvePetWeightLabel = (record) => {
 
 const Tickets = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const normalizeTabId = (rawTab) => {
+        const tab = String(rawTab || '').trim().toLowerCase();
+        if (tab === 'pending' || tab === 'in_progress' || tab === 'completed' || tab === 'all') {
+            return tab;
+        }
+        return 'pending';
+    };
+
     const { profile } = useHeaderProfile({
         fallbackName: 'Bác sĩ',
         fallbackRoleLabel: 'Bác sĩ',
     });
-    const [activeTab, setActiveTab] = useState('pending');
+    const [activeTab, setActiveTab] = useState(() => normalizeTabId(location.state?.initialTab));
     const [searchTerm, setSearchTerm] = useState('');
     const [tickets, setTickets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        setActiveTab(normalizeTabId(location.state?.initialTab));
+    }, [location.state?.initialTab]);
 
     useEffect(() => {
         let isMounted = true;
@@ -172,13 +150,13 @@ const Tickets = () => {
                     return {
                         id: record?.id,
                         code: `PK${record?.id || ''}`,
+                        status: mappedStatus,
                         customerName: record?.client?.fullName || 'Khách hàng',
                         dateTime: displayDate,
                         pet: {
                             name: petName,
                             breed: record?.pet?.breed || record?.pet?.species || 'Chưa rõ giống',
                             gender: (record?.pet?.gender || '').toLowerCase() === 'female' ? 'female' : 'male',
-                            age: resolvePetAgeLabel(record?.pet),
                             weight: resolvePetWeightLabel(record),
                             hasAlert: isEmergencyCase(record)
                         },
@@ -203,21 +181,11 @@ const Tickets = () => {
         };
     }, []);
 
-    const inferStatus = (services) => {
-        if (services.length === 0) return 'pending';
-        const hasPending = services.some((service) => service.status === 'pending');
-        const hasInProgress = services.some((service) => service.status === 'in_progress');
-        const hasCompleted = services.some((service) => service.status === 'completed');
-        if (hasInProgress || (hasPending && hasCompleted)) return 'in_progress';
-        if (hasPending) return 'pending';
-        return 'completed';
-    };
-
     const filteredTickets = useMemo(() => {
         const keyword = searchTerm.trim().toLowerCase();
 
         return tickets.filter((ticket) => {
-            const status = inferStatus(ticket.services);
+            const status = ticket?.status || 'pending';
             const matchesTab = activeTab === 'all' || status === activeTab;
 
             const text = `${ticket.customerName} ${ticket.pet.name} ${ticket.pet.breed} ${ticket.code}`.toLowerCase();
@@ -227,9 +195,19 @@ const Tickets = () => {
         });
     }, [activeTab, searchTerm, tickets]);
 
+    const handleOpenTicket = (ticket) => {
+        console.log('Opening ticket', ticket);
+        const status = ticket?.status || 'pending';
+        if (status === 'in_progress'||status === 'completed') {
+            navigate(`/doctors/service-order/${ticket.id}`);
+            return;
+        }
+        navigate(`/doctors/tickets/${ticket.id}`);
+    };
+
     const tabItems = useMemo(() => {
         const counts = tickets.reduce((acc, ticket) => {
-            const status = inferStatus(ticket.services);
+            const status = ticket?.status || 'pending';
             acc[status] = (acc[status] || 0) + 1;
             acc.all += 1;
             return acc;
@@ -249,7 +227,7 @@ const Tickets = () => {
                 <div className="tickets-header-area">
                     <div className="tickets-top-bar">
                         <div className="tickets-title-wrap">
-                            <button className="tickets-back-btn" type="button" onClick={() => navigate('/doctors/home')} aria-label="Ve trang chu">
+                            <button className="tickets-back-btn" type="button" onClick={() => navigate('/doctors/home')} aria-label="Ve trang truoc">
                                 <BackIcon />
                             </button>
                             <div className="tickets-page-title-group">
@@ -289,7 +267,7 @@ const Tickets = () => {
                             <TicketCard
                                 key={ticket.id}
                                 {...ticket}
-                                onClick={() => navigate(`/doctors/tickets/${ticket.id}`)}
+                                onClick={() => handleOpenTicket(ticket)}
                             />
                         ))}
                         {!isLoading && filteredTickets.length === 0 && (

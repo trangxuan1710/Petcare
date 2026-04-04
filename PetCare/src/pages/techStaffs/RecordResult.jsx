@@ -67,7 +67,7 @@ const TechRecordResult = () => {
     return (
         <div className="trs-page">
             <header className="trs-header">
-                <button className="trs-icon-btn" type="button" onClick={() => navigate(TECH_PATHS.HOME)} aria-label="Quay lai">
+                <button className="trs-icon-btn" type="button" onClick={() => navigate(-1)} aria-label="Quay lai">
                     <ChevronLeft size={24} />
                 </button>
                 <h1>Ghi nhận kết quả</h1>
@@ -171,7 +171,7 @@ const TechRecordResult = () => {
             </main>
 
             <footer className="trs-footer">
-                <button type="button" className="trs-btn-outline" onClick={() => navigate(TECH_PATHS.HOME)}>
+                <button type="button" className="trs-btn-outline" onClick={() => navigate(-1)}>
                     Trở lại
                 </button>
                 <button type="button" className="trs-btn-primary" onClick={() => navigate(TECH_PATHS.HOME)}>
