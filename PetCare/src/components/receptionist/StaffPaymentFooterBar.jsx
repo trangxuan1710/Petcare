@@ -19,7 +19,7 @@ const StaffPaymentFooterBar = ({ onPayClick, onBackClick, remainAmount = '0đ' }
         <footer className="staff-payment-footer">
             <div className="staff-payment-footer-shell">
                 <div className="remain-row">
-                    <span>Còn lại phải thu</span>
+                    <span style={{fontSize:1.2+'rem'}}>Tổng tiền</span>
                     <strong>{remainAmount}</strong>
                 </div>
                 <div className="footer-actions">

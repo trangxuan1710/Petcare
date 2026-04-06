@@ -60,7 +60,12 @@ const Home = () => {
             count: readMetric(['emergencyCases', 'emergency', 'urgentCases']),
             unit: 'ca',
             variant: 'danger',
-            onClick: () => navigate('/doctors/tickets', { state: { initialTab: 'pending' } })
+            onClick: () => navigate('/doctors/tickets', {
+                state: {
+                    initialTab: 'pending',
+                    emergencyOnly: true,
+                },
+            })
         },
         {
             id: 2,
@@ -73,7 +78,7 @@ const Home = () => {
         {
             id: 3,
             title: 'Ca khám cần kết luận',
-            count: readMetric(['waitingConclusionCases', 'pendingConclusion', 'needConclusion']),
+            count: readMetric(['waitingTreatmentCases', 'inProgressCases', 'activeTreatmentCases', 'waitingConclusionCases']),
             unit: 'đơn',
             variant: 'success',
             onClick: () => navigate('/doctors/tickets', { state: { initialTab: 'in_progress' } })

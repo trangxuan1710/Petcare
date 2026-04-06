@@ -4,6 +4,7 @@ import { ChevronLeft, Search, SlidersHorizontal, Minus, Plus, ChevronDown } from
 import MedicineCard from '../../components/doctor/MedicineCard';
 import './MedicineSelector.css';
 import medicineService from '../../api/medicineService';
+import treatmentService from '../../api/treatmentService';
 
 const toArray = (raw) => {
     if (Array.isArray(raw)) return raw;
@@ -24,39 +25,171 @@ const getPriceNumber = (item) => {
     if (rawPrice == null || rawPrice === '') return 0;
     if (typeof rawPrice === 'number') return rawPrice;
 
-    const normalized = String(rawPrice).replace(/[^\d.-]/g, '');
+    const rawText = String(rawPrice).trim();
+    if (!rawText) return 0;
+
+    const digitsAndSeparators = rawText.replace(/[^\d,.-]/g, '');
+    if (!digitsAndSeparators) return 0;
+
+    // Handle common VN currency formatting, e.g. 12.000 or 12.000,50.
+    if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(digitsAndSeparators)) {
+        const normalizedVn = digitsAndSeparators.replace(/\./g, '').replace(',', '.');
+        const parsedVn = Number(normalizedVn);
+        return Number.isFinite(parsedVn) ? parsedVn : 0;
+    }
+
+    // Handle EN-style grouping, e.g. 12,000 or 12,000.50.
+    if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(digitsAndSeparators)) {
+        const normalizedEn = digitsAndSeparators.replace(/,/g, '');
+        const parsedEn = Number(normalizedEn);
+        return Number.isFinite(parsedEn) ? parsedEn : 0;
+    }
+
+    const normalized = digitsAndSeparators.replace(/,/g, '');
     const parsed = Number(normalized);
     return Number.isFinite(parsed) ? parsed : 0;
 };
 
 const formatVnd = (value) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
 
-const normalizeMedicine = (item) => ({
-    ...item,
-    desc: item?.desc || item?.description || item?.type || '',
-    price: typeof item?.price === 'string' && item.price.includes('đ')
-        ? item.price
-        : formatVnd(getPriceNumber(item)),
-    unit: item?.unit
-        ? (String(item.unit).startsWith('/') ? item.unit : `/${item.unit}`)
-        : '/đơn vị',
-    stock: item?.stock ?? item?.stockQuantity ?? item?.availableStock ?? '--',
-    qty: Number(item?.qty ?? item?.quantity ?? 0),
-    selectedUnit: item?.selectedUnit || item?.unit || 'Đơn vị',
-    dosage: {
-        morning: Number(item?.dosage?.morning || 0),
-        noon: Number(item?.dosage?.noon || 0),
-        afternoon: Number(item?.dosage?.afternoon || 0),
-        evening: Number(item?.dosage?.evening || 0),
-        note: item?.dosage?.note || item?.note || '',
-    },
-});
+const UNIT_LABEL_MAP = {
+    tablet: 'viên',
+    tablets: 'viên',
+    pill: 'viên',
+    pills: 'viên',
+    capsule: 'viên nang',
+    capsules: 'viên nang',
+    cap: 'viên nang',
+    vial: 'lọ',
+    bottle: 'chai',
+    box: 'hộp',
+    pack: 'gói',
+    packet: 'gói',
+    sachet: 'gói',
+    tube: 'tuýp',
+    ampoule: 'ống',
+    ampule: 'ống',
+    bag: 'túi',
+    ml: 'ml',
+    l: 'lít',
+    liter: 'lít',
+    litre: 'lít',
+    mg: 'mg',
+    g: 'g',
+    kg: 'kg',
+    unit: 'đơn vị',
+};
+
+const TABLET_UNIT_OPTIONS = ['hộp', 'vỉ'];
+const BOX_ONLY_UNIT_OPTIONS = ['hộp'];
+
+const TABLET_UNIT_KEYS = new Set(['tablet', 'tablets', 'pill', 'pills', 'capsule', 'capsules', 'cap', 'vien', 'viên', 'vien nang', 'viên nang']);
+const LIQUID_UNIT_KEYS = new Set(['ml', 'bottle', 'vial', 'ampoule', 'ampule', 'drop', 'liquid', 'syrup', 'lọ', 'chai']);
+
+const toVietnameseUnit = (rawUnit) => {
+    const normalizedRaw = String(rawUnit || '')
+        .trim()
+        .toLowerCase()
+        .replace(/^\//, '');
+
+    if (!normalizedRaw) return 'đơn vị';
+    return UNIT_LABEL_MAP[normalizedRaw] || normalizedRaw;
+};
+
+const normalizeUnitKey = (rawUnit) => String(rawUnit || '').trim().toLowerCase().replace(/^\//, '');
+
+const resolveUnitOptions = (rawUnit) => {
+    const normalized = normalizeUnitKey(rawUnit);
+    if (TABLET_UNIT_KEYS.has(normalized)) {
+        return TABLET_UNIT_OPTIONS;
+    }
+    if (LIQUID_UNIT_KEYS.has(normalized)) {
+        return BOX_ONLY_UNIT_OPTIONS;
+    }
+    return BOX_ONLY_UNIT_OPTIONS;
+};
+
+const normalizeDoseValue = (rawValue) => {
+    const parsed = Number(rawValue);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 1;
+};
+
+const resolvePriceBySelectedUnit = (item, selectedUnit) => {
+    const boxPrice = Number(item?.boxPrice ?? item?.rawBoxPrice ?? 0);
+    const unitPrice = Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item));
+    const normalizedUnit = String(selectedUnit || '').trim().toLowerCase();
+
+    if (normalizedUnit === 'hộp' || normalizedUnit === 'hop' || normalizedUnit === 'box') {
+        if (Number.isFinite(boxPrice) && boxPrice > 0) {
+            return boxPrice;
+        }
+    }
+    return Number.isFinite(unitPrice) && unitPrice > 0 ? unitPrice : 0;
+};
+
+const normalizeMedicine = (item) => {
+    const baseUnit = item?.selectedUnit || item?.unit;
+    const unitOptions = resolveUnitOptions(baseUnit);
+    const normalizedSelectedUnit = toVietnameseUnit(baseUnit);
+    const selectedUnit = unitOptions.includes(normalizedSelectedUnit)
+        ? normalizedSelectedUnit
+        : unitOptions[0];
+
+    return {
+        ...item,
+        desc: item?.desc || item?.description || item?.type || '',
+        rawUnitPrice: Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item)),
+        rawBoxPrice: Number(item?.boxPrice ?? item?.rawBoxPrice ?? getPriceNumber(item)),
+        price: formatVnd(resolvePriceBySelectedUnit(item, selectedUnit)),
+        unit: `/${selectedUnit}`,
+        unitOptions,
+        stock: item?.stock ?? item?.stockQuantity ?? item?.availableStock ?? '--',
+        qty: Math.max(1, Number(item?.qty ?? item?.quantity ?? 1)),
+        selectedUnit,
+        dosage: {
+            morning: normalizeDoseValue(item?.dosage?.morning),
+            noon: normalizeDoseValue(item?.dosage?.noon),
+            afternoon: normalizeDoseValue(item?.dosage?.afternoon),
+            evening: normalizeDoseValue(item?.dosage?.evening),
+            note: item?.dosage?.note || item?.note || '',
+        },
+    };
+};
+
+const mergeMedicinesBySelected = (apiMedicines, selectedMedicines) => {
+    if (!Array.isArray(apiMedicines) || apiMedicines.length === 0) {
+        return Array.isArray(selectedMedicines) ? selectedMedicines : [];
+    }
+
+    if (!Array.isArray(selectedMedicines) || selectedMedicines.length === 0) {
+        return apiMedicines;
+    }
+
+    const selectedById = new Map(selectedMedicines.map((item) => [item.id, item]));
+    const merged = apiMedicines.map((med) => {
+        const selected = selectedById.get(med.id);
+        if (!selected) return med;
+        return {
+            ...med,
+            ...selected,
+            selected: true,
+        };
+    });
+
+    const selectedOnly = selectedMedicines.filter(
+        (selectedMed) => !merged.some((apiMed) => apiMed.id === selectedMed.id)
+    );
+
+    return [...merged, ...selectedOnly];
+};
 
 const MedicineSelector = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const selectedFromState = useMemo(
-        () => toArray(location.state?.selectedMedicines).map(normalizeMedicine),
+        () => toArray(location.state?.selectedMedicines)
+            .map(normalizeMedicine)
+            .filter((item) => Boolean(item?.selected)),
         [location.state?.selectedMedicines]
     );
     const returnPath = location.state?.returnPath;
@@ -65,16 +198,46 @@ const MedicineSelector = () => {
     const [showDosageModal, setShowDosageModal] = useState(false);
     const [activeDosageMedId, setActiveDosageMedId] = useState(null);
     const [dosageDraft, setDosageDraft] = useState({
-        morning: 0,
-        noon: 0,
-        afternoon: 0,
-        evening: 0,
+        morning: 1,
+        noon: 1,
+        afternoon: 1,
+        evening: 1,
         note: ''
     });
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const [medsList, setMedsList] = useState([]);
+    const [autofillByMedicineId, setAutofillByMedicineId] = useState({});
+
+    const applyAutofillIfAvailable = (medicine) => {
+        if (!medicine) return medicine;
+
+        const autofill = autofillByMedicineId[medicine.id];
+        if (!autofill) {
+            return medicine;
+        }
+
+        const selectedUnit = autofill.selectedUnit || medicine.selectedUnit;
+        const mergedMedicine = {
+            ...medicine,
+            qty: Math.max(1, Number(autofill.qty ?? medicine.qty ?? 1)),
+            selectedUnit,
+            dosage: {
+                morning: normalizeDoseValue(autofill?.dosage?.morning ?? medicine?.dosage?.morning),
+                noon: normalizeDoseValue(autofill?.dosage?.noon ?? medicine?.dosage?.noon),
+                afternoon: normalizeDoseValue(autofill?.dosage?.afternoon ?? medicine?.dosage?.afternoon),
+                evening: normalizeDoseValue(autofill?.dosage?.evening ?? medicine?.dosage?.evening),
+                note: autofill?.dosage?.note ?? medicine?.dosage?.note ?? '',
+            },
+        };
+
+        return {
+            ...mergedMedicine,
+            price: formatVnd(resolvePriceBySelectedUnit(mergedMedicine, selectedUnit)),
+            unit: `/${selectedUnit}`,
+        };
+    };
 
     useEffect(() => {
         let isMounted = true;
@@ -82,43 +245,68 @@ const MedicineSelector = () => {
             const response = await medicineService.listMedicines();
             if (!isMounted) return;
             const apiMedicines = toArray(response?.data || []).map(normalizeMedicine);
-            if (selectedFromState.length === 0) {
+            setAutofillByMedicineId({});
+
+            if (selectedFromState.length > 0) {
+                setMedsList(mergeMedicinesBySelected(apiMedicines, selectedFromState));
+                return;
+            }
+
+            if (!receptionId) {
                 setMedsList(apiMedicines);
                 return;
             }
 
-            const selectedById = new Map(selectedFromState.map((item) => [item.id, item]));
-            const merged = apiMedicines.map((med) => {
-                const selected = selectedById.get(med.id);
-                if (!selected) return med;
-                return {
-                    ...med,
-                    ...selected,
-                    selected: true,
-                };
-            });
+            try {
+                const autofillResponse = await treatmentService.getPrescriptionAutofill(receptionId);
+                if (!isMounted) return;
 
-            const newSelectedNotInSearch = selectedFromState.filter(
-                (selectedMed) => !merged.some((apiMed) => apiMed.id === selectedMed.id)
-            );
+                const autofillMedicines = toArray(autofillResponse?.data?.data?.medicines)
+                    .map((item) => normalizeMedicine({
+                        ...item,
+                        qty: Math.max(Number(item?.quantity || 0), 1),
+                    }));
 
-            setMedsList([...merged, ...newSelectedNotInSearch]);
+                if (autofillMedicines.length > 0) {
+                    const cache = autofillMedicines.reduce((acc, medicine) => {
+                        acc[medicine.id] = {
+                            qty: medicine.qty,
+                            selectedUnit: medicine.selectedUnit,
+                            dosage: medicine.dosage,
+                        };
+                        return acc;
+                    }, {});
+                    setAutofillByMedicineId(cache);
+                }
+            } catch {
+                // Fallback to manual selection list if autofill endpoint is unavailable.
+                if (isMounted) {
+                    setAutofillByMedicineId({});
+                }
+            }
+
+            setMedsList(apiMedicines);
         };
         fetchMedicines();
         return () => {
             isMounted = false;
         };
-    }, [selectedFromState]);
+    }, [selectedFromState, receptionId]);
 
     const toggleSelection = (id) => {
         setMedsList(prevList => 
             prevList.map(med => 
                 med.id === id
-                    ? {
-                        ...med,
-                        selected: !med.selected,
-                        expanded: med.selected ? false : med.expanded
-                    }
+                    ? (() => {
+                        const isSelecting = !med.selected;
+                        const selectedMed = isSelecting ? applyAutofillIfAvailable(med) : med;
+                        return {
+                            ...selectedMed,
+                            selected: isSelecting,
+                            expanded: isSelecting ? selectedMed.expanded : false,
+                            qty: Math.max(1, Number(selectedMed.qty || 0)),
+                        };
+                    })()
                     : med
             )
         );
@@ -129,18 +317,36 @@ const MedicineSelector = () => {
             prevList.map(med => {
                 if (med.id === id) {
                     const newQty = med.qty + delta;
-                    return { ...med, qty: newQty < 0 ? 0 : newQty };
+                    return { ...med, qty: newQty < 1 ? 1 : newQty };
                 }
                 return med;
             })
         );
     };
 
+    const updateSelectedUnit = (id, newUnit) => {
+        setMedsList((prevList) =>
+            prevList.map((med) => {
+                if (med.id !== id) return med;
+                return {
+                    ...med,
+                    selectedUnit: newUnit,
+                    price: formatVnd(resolvePriceBySelectedUnit(med, newUnit)),
+                    unit: `/${newUnit}`,
+                    selected: true,
+                };
+            })
+        );
+    };
+
     const toggleExpand = (id) => {
+        
         setMedsList((prevList) =>
             prevList.map((med) => {
                 if (med.id === id) {
-                    return { ...med, expanded: !med.expanded, selected: true };
+                    const becomesSelected = !med.selected;
+                    const expandedMed = becomesSelected ? applyAutofillIfAvailable(med) : med;
+                    return { ...expandedMed, expanded: !med.expanded, selected: true };
                 }
                 return { ...med, expanded: false };
             })
@@ -151,14 +357,20 @@ const MedicineSelector = () => {
         const target = medsList.find((med) => med.id === id);
         if (!target) return;
         setActiveDosageMedId(id);
-        setDosageDraft({ ...target.dosage });
+        setDosageDraft({
+            morning: normalizeDoseValue(target?.dosage?.morning),
+            noon: normalizeDoseValue(target?.dosage?.noon),
+            afternoon: normalizeDoseValue(target?.dosage?.afternoon),
+            evening: normalizeDoseValue(target?.dosage?.evening),
+            note: target?.dosage?.note || '',
+        });
         setShowDosageModal(true);
     };
 
     const updateDosageValue = (field, delta) => {
         setDosageDraft((prev) => ({
             ...prev,
-            [field]: Math.max(0, prev[field] + delta)
+            [field]: Math.max(0, Number(prev?.[field] ?? 1) + delta)
         }));
     };
 
@@ -233,6 +445,7 @@ const MedicineSelector = () => {
                             onToggleSelection={toggleSelection}
                             onToggleExpand={toggleExpand}
                             onUpdateQty={updateQty}
+                            onChangeUnit={updateSelectedUnit}
                             onOpenDosageModal={openDosageModal}
                         />
                     ))}

@@ -195,21 +195,28 @@
     margin-top: 32px;
 }
 
-.staff-modal-actions .ui.button {
+.staff-modal-actions .staff-modal-btn {
     margin: 0;
     height: 52px;
     border-radius: 12px;
     font-size: 16px;
     font-weight: 600;
+    border: none;
+    cursor: pointer;
 }
 
-.staff-modal-actions .btn-cancel.ui.button {
+.staff-modal-actions .btn-cancel {
     background: #ffffff;
     border: 2px solid #179a82;
     color: #179a82;
 }
 
-.staff-modal-actions .btn-confirm.ui.button {
+.staff-modal-actions .btn-confirm {
     background: #179a82;
     color: #ffffff;
+}
+
+.staff-modal-actions .staff-modal-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
 }

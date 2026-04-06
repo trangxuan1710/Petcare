@@ -11,6 +11,41 @@ import { RECEPTIONIST_PATHS } from '../../routes/receptionistPaths';
 import paymentService from '../../api/paymentService';
 import userService from '../../api/userService';
 
+const toArray = (raw) => {
+    if (Array.isArray(raw)) return raw;
+    if (Array.isArray(raw?.items)) return raw.items;
+    if (Array.isArray(raw?.content)) return raw.content;
+    if (Array.isArray(raw?.results)) return raw.results;
+    return [];
+};
+
+const UNIT_LABEL_MAP = {
+    tablet: 'viên',
+    tablets: 'viên',
+    pill: 'viên',
+    pills: 'viên',
+    capsule: 'viên nang',
+    capsules: 'viên nang',
+    cap: 'viên nang',
+    vial: 'lọ',
+    bottle: 'chai',
+    box: 'hộp',
+    pack: 'gói',
+    packet: 'gói',
+    sachet: 'gói',
+    tube: 'tuýp',
+    ampoule: 'ống',
+    ampule: 'ống',
+    bag: 'túi',
+    unit: 'đơn vị',
+};
+
+const toVietnameseUnit = (rawUnit) => {
+    const normalized = String(rawUnit || '').trim().toLowerCase().replace(/^\//, '');
+    if (!normalized) return 'đơn vị';
+    return UNIT_LABEL_MAP[normalized] || normalized;
+};
+
 const Payment = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -26,7 +61,6 @@ const Payment = () => {
     const [toast, setToast] = useState(null);
 
     const receptionId = location.state?.receptionId;
-    const receptionStatus = location.state?.receptionStatus;
 
     const showToast = (type, message) => {
         setToast({ type, message });
@@ -41,8 +75,6 @@ const Payment = () => {
             setPaymentError('');
 
             try {
-                const canLoadPaymentData = receptionStatus === 'chờ thanh toán' || receptionStatus === 'đã thanh toán';
-
                 const [methodsRes, userRes] = await Promise.allSettled([
                     paymentService.getPaymentMethods(),
                     userService.getUsers(),
@@ -50,7 +82,7 @@ const Payment = () => {
 
                 let previewRes = { status: 'fulfilled', value: { data: null, notFound: false } };
 
-                if (canLoadPaymentData && receptionId) {
+                if (receptionId) {
                     previewRes = await Promise.resolve(paymentService.getInvoicePreview(receptionId))
                         .then((value) => ({ status: 'fulfilled', value }))
                         .catch((reason) => ({ status: 'rejected', reason }));
@@ -77,10 +109,6 @@ const Payment = () => {
                     showToast('success', 'Phiếu này chưa có dữ liệu hóa đơn để xác nhận thanh toán.');
                 }
 
-                if (!canLoadPaymentData) {
-                    setPaymentError('Phiếu này chưa ở trạng thái thanh toán.');
-                }
-
                 const user = userRes.status === 'fulfilled' ? userRes.value?.data : null;
                 if (user) {
                     setCashierInfo({
@@ -105,10 +133,10 @@ const Payment = () => {
         return () => {
             isMounted = false;
         };
-    }, [receptionId, receptionStatus, reloadKey]);
+    }, [receptionId, reloadKey]);
 
     const goToTodayOrders = () => {
-        navigate(RECEPTIONIST_PATHS.TODAY_ORDERS);
+        navigate(RECEPTIONIST_PATHS.TODAY_ORDERS, { replace: true });
     };
 
     const goBack = () => {
@@ -117,28 +145,151 @@ const Payment = () => {
 
     const formatCurrency = (amount) => `${Number(amount || 0).toLocaleString('vi-VN')}đ`;
 
+    const chargeItems = useMemo(() => toArray(invoicePreview?.chargeItems), [invoicePreview]);
+
+    const isInvoicePaid = useMemo(
+        () => String(invoicePreview?.status || '').trim().toUpperCase() === 'PAID',
+        [invoicePreview]
+    );
+
     const paymentSummary = useMemo(() => {
-        const subtotal = Number(invoicePreview?.totalAmount || 0);
-        const paidAmount = 0;
-        const remain = subtotal;
+        const subtotalFromItems = chargeItems.reduce(
+            (sum, item) => sum + Number(item?.amount || 0),
+            0
+        );
+        const subtotal = Number(invoicePreview?.totalAmount ?? subtotalFromItems);
+        const discount = chargeItems.reduce(
+            (sum, item) => sum + Number(item?.discount || 0),
+            0
+        );
+        const insurance = chargeItems.reduce(
+            (sum, item) => sum + Number(item?.insurance || 0),
+            0
+        );
+        const paidAmount = isInvoicePaid ? subtotal : 0;
+        const remain = Math.max(subtotal - paidAmount, 0);
+
         return {
             subtotal,
-            discount: 0,
-            insurance: 0,
+            discount,
+            insurance,
             total: remain,
             paidAmount,
         };
+    }, [chargeItems, invoicePreview, isInvoicePaid]);
+
+    const costGroups = useMemo(() => {
+        if (chargeItems.length === 0) {
+            const fallbackAmount = Number(invoicePreview?.totalAmount || 0);
+            if (fallbackAmount <= 0) {
+                return [];
+            }
+            return [{
+                id: 'fallback-total',
+                title: 'Chi phí khám và điều trị',
+                subtitle: 'Dịch vụ',
+                insuranceAmount: 0,
+                totalAmount: fallbackAmount,
+                feeRows: [{
+                    name: 'Chi phí khám và điều trị',
+                    unit: '01/lượt',
+                    price: fallbackAmount,
+                    discount: 0,
+                    amount: fallbackAmount,
+                }],
+            }];
+        }
+
+        const toFeeRow = (item, index) => {
+            const quantity = Math.max(Number(item?.quantity || 1), 1);
+            const unitLabel = toVietnameseUnit(item?.unit);
+            const unitDisplay = `${String(quantity).padStart(2, '0')}/${unitLabel}`;
+            return {
+                name: item?.name || `Dịch vụ #${index + 1}`,
+                unit: unitDisplay,
+                price: Number(item?.unitPrice || 0),
+                discount: Number(item?.discount || 0),
+                insurance: Number(item?.insurance || 0),
+                amount: Number(item?.amount || 0),
+                type: String(item?.type || '').toUpperCase(),
+            };
+        };
+
+        const serviceItems = chargeItems.filter((item) => String(item?.type || '').toUpperCase() === 'SERVICE');
+        const medicineItems = chargeItems.filter((item) => String(item?.type || '').toUpperCase() === 'MEDICINE');
+
+        if (serviceItems.length === 0) {
+            const medicineRows = medicineItems.map(toFeeRow);
+            const totalAmount = medicineRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+            const insuranceAmount = medicineRows.reduce((sum, row) => sum + Number(row.insurance || 0), 0);
+            return [{
+                id: 'medicine-group',
+                title: 'Thuốc & vật tư',
+                subtitle: 'Thuốc & vật tư',
+                insuranceAmount,
+                totalAmount,
+                feeRows: medicineRows,
+            }];
+        }
+
+        const serviceGroups = serviceItems.map((item, index) => {
+            const feeRow = toFeeRow(item, index);
+            return {
+                id: `${item?.type || 'SERVICE'}-${item?.id || index}`,
+                title: item?.name || `Dịch vụ #${index + 1}`,
+                subtitle: 'Dịch vụ',
+                insuranceAmount: Number(item?.insurance || 0),
+                totalAmount: Number(item?.amount || 0),
+                feeRows: [feeRow],
+            };
+        });
+
+        if (medicineItems.length > 0) {
+            const targetServiceIndex = serviceGroups.findIndex((group) => /khám/i.test(String(group?.title || '')));
+            const attachIndex = targetServiceIndex >= 0 ? targetServiceIndex : 0;
+            const medicineRows = medicineItems.map(toFeeRow);
+            const medicineTotal = medicineRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
+            const medicineInsurance = medicineRows.reduce((sum, row) => sum + Number(row.insurance || 0), 0);
+
+            serviceGroups[attachIndex] = {
+                ...serviceGroups[attachIndex],
+                subtitle: 'Dịch vụ & thuốc',
+                totalAmount: Number(serviceGroups[attachIndex].totalAmount || 0) + medicineTotal,
+                insuranceAmount: Number(serviceGroups[attachIndex].insuranceAmount || 0) + medicineInsurance,
+                feeRows: [...serviceGroups[attachIndex].feeRows, ...medicineRows],
+            };
+        }
+
+        return serviceGroups;
+    }, [chargeItems, invoicePreview]);
+
+    const petInfo = useMemo(() => {
+        const backendPet = invoicePreview?.pet;
+        const weight = backendPet?.weight;
+
+        return {
+            name: backendPet?.name || 'Thú cưng',
+            breed: backendPet?.breed || backendPet?.species || '--',
+            gender: backendPet?.gender || null,
+            weight: weight == null || weight === '' ? '--' : `${weight}kg`,
+        };
     }, [invoicePreview]);
 
-    const feeRows = useMemo(() => [
-        {
-            name: 'Chi phí khám và điều trị',
-            unit: '01/lượt',
-            price: Number(invoicePreview?.totalAmount || 0).toLocaleString('vi-VN'),
-            discount: '0',
-            amount: Number(invoicePreview?.totalAmount || 0).toLocaleString('vi-VN'),
-        },
-    ], [invoicePreview]);
+    const customerInfo = useMemo(() => {
+        const backendCustomer = invoicePreview?.customer;
+        return {
+            name: backendCustomer?.fullName || location.state?.customerName || 'Khách hàng',
+            phone: backendCustomer?.phoneNumber || location.state?.customerPhone || '--',
+        };
+    }, [invoicePreview, location.state]);
+
+    const previewTimeLabel = useMemo(() => {
+        const raw = invoicePreview?.createdAt || invoicePreview?.receptionTime;
+        if (!raw) return 'Chưa có thời gian lập hóa đơn';
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) return 'Chưa có thời gian lập hóa đơn';
+        return date.toLocaleString('vi-VN');
+    }, [invoicePreview]);
 
     const handleConfirmPayment = async ({ amount, note, paymentMethodId }) => {
         if (isSubmitting) return;
@@ -181,10 +332,23 @@ const Payment = () => {
                 receptionistId: cashierId,
                 note,
             });
-            await paymentService.createInvoice(invoicePayload);
+
+            const invoiceId = Number(invoicePreview?.id || 0);
+            if (invoiceId > 0) {
+                await paymentService.patchInvoiceById(invoiceId, {
+                    paymentMethod: { id: Number(paymentMethodId) },
+                    receptionist: cashierId ? { id: Number(cashierId) } : undefined,
+                    totalAmount: remainAmount,
+                    status: 'PAID',
+                    note: note || 'Thanh toán tại quầy',
+                });
+            } else {
+                await paymentService.createInvoice(invoicePayload);
+            }
 
             setIsModalOpen(false);
             showToast('success', 'Ghi nhận thanh toán thành công.');
+            setReloadKey((prev) => prev + 1);
             goToTodayOrders();
         } catch (error) {
             const message = error?.message || 'Không thể ghi nhận thanh toán. Vui lòng thử lại.';
@@ -236,21 +400,13 @@ const Payment = () => {
                     ) : (
                         <>
                             <StaffPaymentInfoCard
-                                time={invoicePreview?.createdAt || 'Chưa có thời gian lập hóa đơn'}
-                                customer={{
-                                    name: location.state?.customerName || 'Khách hàng',
-                                    phone: location.state?.customerPhone || '--',
-                                }}
+                                time={previewTimeLabel}
+                                customer={customerInfo}
                                 cashier={cashierInfo}
                             />
                             <StaffCostSummaryCard
-                                petInfo={{
-                                    name: 'Thú cưng',
-                                    breed: '--',
-                                    age: '--',
-                                    weight: '--',
-                                }}
-                                feeRows={feeRows}
+                                petInfo={petInfo}
+                                costGroups={costGroups}
                                 paymentSummary={paymentSummary}
                                 paymentHistoryAmount={paymentSummary.paidAmount}
                             />
@@ -270,8 +426,10 @@ const Payment = () => {
                 onClose={() => setIsModalOpen(false)}
                 onConfirm={handleConfirmPayment}
                 remainAmount={formatCurrency(paymentSummary.total)}
+                defaultAmount={paymentSummary.total}
                 paymentMethods={paymentMethods}
                 isSubmitting={isSubmitting}
+                preferredPaymentMethodId={1}
             />
 
             {toast && (

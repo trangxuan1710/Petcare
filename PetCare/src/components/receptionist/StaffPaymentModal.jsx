@@ -1,20 +1,54 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import './StaffPaymentModal.css';
-import { Button } from 'semantic-ui-react';
 
 const StaffPaymentModal = ({
     open,
     onClose,
     onConfirm,
     remainAmount = '0đ',
+    defaultAmount = 0,
     paymentMethods = [],
     isSubmitting = false,
     defaultNote = 'Thanh toán tiền khám',
+    preferredPaymentMethodId = 1,
 }) => {
     // const [actionType, setActionType] = useState('thu_tien'); // 'thu_tien', 'tam_ung', 'hoan_tien'
     const [amount, setAmount] = useState('');
     const [note, setNote] = useState(defaultNote);
     const [paymentMethod, setPaymentMethod] = useState('');
+
+    const numericDefaultAmount = useMemo(() => {
+        const parsed = Number(defaultAmount);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+    }, [defaultAmount]);
+
+    const formatThousands = (value) => Number(value || 0).toLocaleString('vi-VN');
+
+    const normalizeAmountInput = (rawValue) => {
+        const digits = String(rawValue || '').replace(/\D/g, '');
+        if (!digits) return '';
+        return formatThousands(Number(digits));
+    };
+
+    useEffect(() => {
+        if (!open) return;
+
+        setNote(defaultNote || 'Thanh toán tiền khám');
+        setAmount(numericDefaultAmount > 0 ? formatThousands(numericDefaultAmount) : '');
+
+        if (!Array.isArray(paymentMethods) || paymentMethods.length === 0) {
+            setPaymentMethod('');
+            return;
+        }
+
+        const preferred = paymentMethods.find((method) => Number(method?.id) === Number(preferredPaymentMethodId));
+        if (preferred?.id != null) {
+            setPaymentMethod(String(preferred.id));
+            return;
+        }
+
+        setPaymentMethod(String(paymentMethods[0]?.id || ''));
+    }, [open, defaultNote, numericDefaultAmount, paymentMethods, preferredPaymentMethodId]);
 
     const handleConfirm = () => {
         if (!onConfirm) return;
@@ -81,8 +115,9 @@ const StaffPaymentModal = ({
                         <input
                             type="text"
                             value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
+                            onChange={(e) => setAmount(normalizeAmountInput(e.target.value))}
                             placeholder="Nhập số tiền"
+                            inputMode="numeric"
                         />
                         <div className="currency-selector">
                             <span>VND</span>
@@ -119,12 +154,17 @@ const StaffPaymentModal = ({
                 </div>
 
                 <div className="staff-modal-actions">
-                    <Button className="btn-cancel" onClick={onClose}>
+                    <button type="button" className="staff-modal-btn btn-cancel" onClick={onClose}>
                         Hủy bỏ
-                    </Button>
-                    <Button className="btn-confirm" onClick={handleConfirm} disabled={isSubmitting}>
+                    </button>
+                    <button
+                        type="button"
+                        className="staff-modal-btn btn-confirm"
+                        onClick={handleConfirm}
+                        disabled={isSubmitting}
+                    >
                         {isSubmitting ? 'Đang xử lý...' : 'Xác nhận'}
-                    </Button>
+                    </button>
                 </div>
             </div>
         </div>

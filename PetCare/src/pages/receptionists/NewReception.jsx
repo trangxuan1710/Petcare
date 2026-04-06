@@ -541,7 +541,7 @@ const NewReception = () => {
                                         <DropupSelect
                                             value={assignedDoctor}
                                             onChange={setAssignedDoctor}
-                                            placeholder="-- Bác sĩ phụ trách --"
+                                            placeholder="Bác sĩ phụ trách"
                                             options={doctorOptions.map((doctor) => ({
                                                 value: String(doctor.id),
                                                 label: doctor.fullName,

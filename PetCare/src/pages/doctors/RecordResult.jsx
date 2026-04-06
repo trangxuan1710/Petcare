@@ -38,12 +38,37 @@ const getPriceNumber = (item) => {
     if (rawPrice == null || rawPrice === '') return 0;
     if (typeof rawPrice === 'number') return rawPrice;
 
-    const normalized = String(rawPrice).replace(/[^\d.-]/g, '');
+    const rawText = String(rawPrice).trim();
+    if (!rawText) return 0;
+
+    const digitsAndSeparators = rawText.replace(/[^\d,.-]/g, '');
+    if (!digitsAndSeparators) return 0;
+
+    // Handle common VN currency formatting, e.g. 12.000 or 12.000,50.
+    if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(digitsAndSeparators)) {
+        const normalizedVn = digitsAndSeparators.replace(/\./g, '').replace(',', '.');
+        const parsedVn = Number(normalizedVn);
+        return Number.isFinite(parsedVn) ? parsedVn : 0;
+    }
+
+    // Handle EN-style grouping, e.g. 12,000 or 12,000.50.
+    if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(digitsAndSeparators)) {
+        const normalizedEn = digitsAndSeparators.replace(/,/g, '');
+        const parsedEn = Number(normalizedEn);
+        return Number.isFinite(parsedEn) ? parsedEn : 0;
+    }
+
+    const normalized = digitsAndSeparators.replace(/,/g, '');
     const parsed = Number(normalized);
     return Number.isFinite(parsed) ? parsed : 0;
 };
 
 const formatVnd = (value) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
+
+const normalizeDoseValue = (rawValue) => {
+    const parsed = Number(rawValue);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 1;
+};
 
 const normalizeServiceStatus = (rawStatus) => {
     const status = String(rawStatus || '').trim().toLowerCase();
@@ -84,6 +109,7 @@ const mapParaclinicalService = (item) => ({
 
 const mapMedicineToUi = (item) => ({
     id: item?.id || item?.medicineId,
+    serviceId: item?.serviceId || item?.receptionServiceId || 1,
     name: item?.name || item?.medicineName || 'Thuốc/Vật tư',
     desc: item?.description || '',
     price: formatVnd(getPriceNumber(item)),
@@ -92,13 +118,13 @@ const mapMedicineToUi = (item) => ({
     image: item?.imageUrl || 'https://placehold.co/80x80/f4f4f5/a1a1aa?text=Med',
     selected: true,
     qty: item?.qty || item?.quantity || 1,
-    selectedUnit: item?.unit || 'Đơn vị',
+    selectedUnit: item?.dosageUnit || item?.selectedUnit || item?.unit || 'Đơn vị',
     expanded: false,
     dosage: {
-        morning: item?.dosage?.morning || 0,
-        noon: item?.dosage?.noon || 0,
-        afternoon: item?.dosage?.afternoon || 0,
-        evening: item?.dosage?.evening || 0,
+        morning: normalizeDoseValue(item?.dosage?.morning ?? item?.morning),
+        noon: normalizeDoseValue(item?.dosage?.noon ?? item?.noon),
+        afternoon: normalizeDoseValue(item?.dosage?.afternoon ?? item?.afternoon),
+        evening: normalizeDoseValue(item?.dosage?.evening ?? item?.evening),
         note: item?.dosage?.note || item?.note || '',
     },
 });
@@ -116,10 +142,10 @@ export const RecordResult = () => {
     const [showDosageModal, setShowDosageModal] = useState(false);
     const [activeDosageMedId, setActiveDosageMedId] = useState(null);
     const [dosageDraft, setDosageDraft] = useState({
-        morning: 0,
-        noon: 0,
-        afternoon: 0,
-        evening: 0,
+        morning: 1,
+        noon: 1,
+        afternoon: 1,
+        evening: 1,
         note: '',
     });
     const [receptionDetail, setReceptionDetail] = useState(null);
@@ -165,11 +191,22 @@ export const RecordResult = () => {
                     || treatmentData?.prescriptions
                 ).map(mapMedicineToUi);
                 const medicinesFromState = toArray(location.state?.selectedMedicines).map(mapMedicineToUi);
+                const defaultClinicalServiceId = Number(defaultClinicalService?.serviceId || defaultClinicalService?.id || 1);
+
+                const ensureMedicineService = (items) =>
+                    items.map((medicine) => ({
+                        ...medicine,
+                        serviceId: Number(medicine?.serviceId || defaultClinicalServiceId || 1),
+                    }));
 
                 setReceptionDetail(receptionData || null);
                 setTreatmentDetail(treatmentData || null);
                 setSelectedParaclinical(paraclinicalData.map(mapParaclinicalService));
-                setMedsList(medicinesFromState.length > 0 ? medicinesFromState : medicinesFromApi);
+                setMedsList(
+                    medicinesFromState.length > 0
+                        ? ensureMedicineService(medicinesFromState)
+                        : ensureMedicineService(medicinesFromApi)
+                );
                 setClinicalStartedAt(defaultClinicalService?.startedAt || null);
 
                 if (typeof treatmentData?.plan === 'string' && treatmentData.plan.trim()) {
@@ -246,12 +283,16 @@ export const RecordResult = () => {
                 medicines: medsList
                     .filter((item) => item?.selected)
                     .map((item) => ({
+                        serviceId: Number(item?.serviceId || 1),
                         medicineId: item?.id,
                         quantity: item?.qty || 1,
-                        unit: item?.selectedUnit,
-                        dosage: {
-                            ...item?.dosage,
-                        },
+                        soldQuantity: item?.qty || 1,
+                        morning: Math.max(0, Number(item?.dosage?.morning ?? 1)),
+                        noon: Math.max(0, Number(item?.dosage?.noon ?? 1)),
+                        afternoon: Math.max(0, Number(item?.dosage?.afternoon ?? 1)),
+                        evening: Math.max(0, Number(item?.dosage?.evening ?? 1)),
+                        instruction: item?.dosage?.note || '',
+                        dosageUnit: String(item?.selectedUnit || item?.unit || 'đơn vị').replace(/^\//, ''),
                     })),
                 paraclinicalServices: selectedParaclinical.map((item) => ({
                     serviceId: item?.serviceId || item?.service?.id,
@@ -314,10 +355,10 @@ export const RecordResult = () => {
         if (!medicine?.id || isReadonlyMode) return;
         setActiveDosageMedId(medicine.id);
         setDosageDraft({
-            morning: Number(medicine?.dosage?.morning) || 0,
-            noon: Number(medicine?.dosage?.noon) || 0,
-            afternoon: Number(medicine?.dosage?.afternoon) || 0,
-            evening: Number(medicine?.dosage?.evening) || 0,
+            morning: normalizeDoseValue(medicine?.dosage?.morning),
+            noon: normalizeDoseValue(medicine?.dosage?.noon),
+            afternoon: normalizeDoseValue(medicine?.dosage?.afternoon),
+            evening: normalizeDoseValue(medicine?.dosage?.evening),
             note: medicine?.dosage?.note || medicine?.note || '',
         });
         setShowDosageModal(true);
@@ -327,7 +368,7 @@ export const RecordResult = () => {
         if (isReadonlyMode) return;
         setDosageDraft((prev) => ({
             ...prev,
-            [field]: Math.max(0, Number(prev?.[field] || 0) + delta),
+            [field]: Math.max(0, Number(prev?.[field] ?? 1) + delta),
         }));
     };
 

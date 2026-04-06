@@ -244,9 +244,6 @@
 }
 
 .ms-unit-select {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
     width: 110px;
     height: 40px;
     padding: 8px 12px;
@@ -256,6 +253,7 @@
     color: #444;
     cursor: pointer;
     background-color: #fff;
+    appearance: auto;
 }
 
 .ms-qty-stepper {

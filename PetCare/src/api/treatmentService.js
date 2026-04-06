@@ -35,6 +35,9 @@ const treatmentService = {
                 'Content-Type': 'multipart/form-data',
             },
         });
+    },
+    getPrescriptionAutofill(receptionId) {
+        return authApi.get(`/reception-slips/${receptionId}/prescription-autofill`);
     }
 }
 

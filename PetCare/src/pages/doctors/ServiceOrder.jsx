@@ -85,6 +85,14 @@ const toArray = (raw) => {
     return [];
 };
 
+const toNumber = (rawValue) => {
+    if (rawValue == null || rawValue === '') return 0;
+    if (typeof rawValue === 'number') return Number.isFinite(rawValue) ? rawValue : 0;
+    const normalized = String(rawValue).replace(/[^\d.-]/g, '');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
 const isCompletedStatus = (rawStatus) => {
     const status = String(rawStatus || '').trim().toLowerCase();
     return status === 'completed' || status === 'hoàn thành' || status === 'paid' || status === 'đã thanh toán';
@@ -130,7 +138,7 @@ export default function ServiceOrder() {
         status: item?.status || 'pending',
         technicianName: item?.technicianName || item?.technician?.fullName || item?.technician?.name || 'Chưa gán',
         quantity: item?.quantity || 1,
-        price: item?.price ?? item?.service?.price ?? item?.unitPrice ?? 0,
+        price: toNumber(item?.unitPrice ?? item?.service?.unitPrice ?? item?.price ?? item?.service?.price),
     });
 
     const mapAssignedServiceItem = (item) => ({
@@ -141,7 +149,7 @@ export default function ServiceOrder() {
         startedAt: item?.startedAt || null,
         technicianName: item?.performerName || item?.technicianName || 'Chưa gán',
         quantity: item?.quantity || 1,
-        price: item?.unitPrice ?? item?.price ?? 0,
+        price: toNumber(item?.unitPrice ?? item?.price),
     });
 
     useEffect(() => {
@@ -435,8 +443,17 @@ export default function ServiceOrder() {
                                                 <span className={`so-service-status ${serviceStatusMeta.key}`}>{serviceStatusMeta.label}</span>
                                             </div>
                                             <div className="so-service-price">
-                                                <span className="so-price-val">{Number(service.price || 0).toLocaleString('vi-VN')}đ</span>
-                                                <span className="so-price-unit"> /lượt x{service.quantity}</span>
+                                                {(() => {
+                                                    const quantity = Math.max(1, Number(service?.quantity || 1));
+                                                    const unitPrice = toNumber(service?.price);
+                                                    const lineAmount = unitPrice * quantity;
+                                                    return (
+                                                        <>
+                                                            <span className="so-price-val">{lineAmount.toLocaleString('vi-VN')}đ</span>
+                                                            <span className="so-price-unit"> ({unitPrice.toLocaleString('vi-VN')}đ /lượt x{quantity})</span>
+                                                        </>
+                                                    );
+                                                })()}
                                             </div>
                                             <div className="so-service-executor">
                                                 <span className="so-exec-label">Người thực hiện</span>
@@ -538,7 +555,13 @@ export default function ServiceOrder() {
                 </div>
             ) : (
                 <div className="so-bottom-actions">
-                    <button className="so-btn-cancel" onClick={() => navigate(-1)} disabled={isReadonlyMode}>Hủy bỏ</button>
+                    <button
+                        className="so-btn-cancel"
+                        onClick={() => navigate('/doctors/tickets', { replace: true })}
+                        disabled={isReadonlyMode}
+                    >
+                        Hủy bỏ
+                    </button>
                     <button
                         className="so-btn-execute"
                         disabled={isReadonlyMode || isDefaultServiceCompleted || isStartingService}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Minus, Plus, ChevronDown, PencilLine } from 'lucide-react';
+import { Minus, Plus, PencilLine } from 'lucide-react';
 import { Divider} from "semantic-ui-react"
 
 const MedicineCard = ({
@@ -7,6 +7,7 @@ const MedicineCard = ({
     onToggleSelection,
     onToggleExpand,
     onUpdateQty,
+    onChangeUnit,
     onOpenDosageModal
 }) => {
     const dosageRows = [
@@ -14,22 +15,24 @@ const MedicineCard = ({
         { label: 'Trưa', value: med.dosage.noon },
         { label: 'Chiều', value: med.dosage.afternoon },
         { label: 'Tối', value: med.dosage.evening }
-    ].filter((item) => item.value > 0);
+    ];
 
     return (
         <div
             className={`ms-med-card ${med.selected ? 'selected' : ''} ${med.expanded ? 'expanded' : ''}`}
-            onClick={() => onToggleExpand(med.id)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    onToggleExpand(med.id);
-                }
-            }}
         >
-            <div className="ms-med-main-row">
+            <div
+                className="ms-med-main-row"
+                onClick={() => onToggleExpand(med.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        onToggleExpand(med.id);
+                    }
+                }}
+            >
                 <div
                     className="ms-med-checkbox"
                     onClick={(event) => {
@@ -58,10 +61,16 @@ const MedicineCard = ({
                     <div className="ms-qty-row">
                         <span className="ms-qty-label">Số lượng</span>
                         <div className="ms-qty-controls-wrapper">
-                            <button className="ms-unit-select" type="button">
-                                <span>{med.selectedUnit}</span>
-                                <ChevronDown size={16} color="#444" />
-                            </button>
+                            <select
+                                className="ms-unit-select"
+                                value={med.selectedUnit}
+                                onChange={(event) => onChangeUnit(med.id, event.target.value)}
+                                aria-label={`Đơn vị của ${med.name}`}
+                            >
+                                {(med.unitOptions || []).map((unitOption) => (
+                                    <option key={unitOption} value={unitOption}>{unitOption}</option>
+                                ))}
+                            </select>
                             <div className="ms-qty-stepper">
                                 <button onClick={() => onUpdateQty(med.id, -1)} className="ms-stepper-btn" type="button">
                                     <Minus size={16} color="#666" />
@@ -82,26 +91,18 @@ const MedicineCard = ({
                         </button>
                     </div>
 
-                    {dosageRows.length > 0 ? (
-                        <div className="ms-dosage-summary">
-                            {dosageRows.map((item) => (
-                                <div className="ms-dosage-summary-row" key={item.label}>
-                                    <span>{item.label}</span>
-                                    <span>{item.value} viên</span>
-                                </div>
-                            ))}
-                            {med.dosage.note && (
-                                <div className="ms-dosage-summary-row note">
-                                    <span>Chỉ định khác</span>
-                                    <span>{med.dosage.note}</span>
-                                </div>
-                            )}
+                    <div className="ms-dosage-summary">
+                        {dosageRows.map((item) => (
+                            <div className="ms-dosage-summary-row" key={item.label}>
+                                <span>{item.label}</span>
+                                <span>{item.value} viên</span>
+                            </div>
+                        ))}
+                        <div className="ms-dosage-summary-row note">
+                            <span>Chỉ định khác</span>
+                            <span>{med.dosage.note || '---'}</span>
                         </div>
-                    ) : (
-                        <button className="ms-btn-dosage" type="button" onClick={() => onOpenDosageModal(med.id)}>
-                            Thêm liều dùng
-                        </button>
-                    )}
+                    </div>
                 </div>
             )}
         </div>

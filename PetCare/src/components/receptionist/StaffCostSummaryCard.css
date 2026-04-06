@@ -107,12 +107,35 @@
     padding: 10px 0 2px;
 }
 
+.cost-group-empty {
+    border: 1px dashed #d6dadd;
+    border-radius: 10px;
+    padding: 12px;
+    color: #7f868d;
+    font-size: 14px;
+    text-align: center;
+}
+
 .cost-group-header {
     display: flex;
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 6px;
     align-items: flex-start;
+}
+
+.cost-group-header-btn {
+    width: 100%;
+    border: none;
+    background: transparent;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 6px;
+    align-items: flex-start;
+    text-align: left;
+    padding: 0 10px;
+    cursor: pointer;
 }
 
 .group-meta {
@@ -159,13 +182,13 @@
 
 .fee-item {
     border-top: 1px dashed #d6dadd;
-    padding: 12px 2px;
+    padding: 12px 10px;
 }
 
 .fee-item-name {
     display: block;
     color: #565d63;
-    font-size: px;
+    font-size: 14px;
     line-height: 1.2;
     font-weight: 600;
     margin-bottom: 8px;
@@ -247,4 +270,13 @@
     justify-content: center;
     color: #c5cccf;
     font-size: 16px;
+}
+
+.history-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    color: #4f5760;
+    font-size: 15px;
 }
