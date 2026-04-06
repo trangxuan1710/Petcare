@@ -97,20 +97,17 @@ public class DoctorServiceImpl implements DoctorService {
         List<ReceptionRecord> doctorRecords = receptionRecordRepository
                 .findByDoctorIdAndReceptionTimeBetween(doctor.getId(), start, end);
 
-        List<ReceptionRecord> activeDoctorRecords = doctorRecords.stream()
-                .filter(record -> ACTIVE_WORKLOAD_STATUSES.contains(record.getStatus()))
-                .toList();
-
-        long emergencyCases = activeDoctorRecords.stream()
+        long emergencyCases = doctorRecords.stream()
+                .filter(record -> record.getStatus() == ReceptionStatus.WAITING_EXECUTION)
                 .filter(record -> record.getExamForm() != null && record.getExamForm().isEmergency())
                 .count();
-        long pendingExaminationCases = activeDoctorRecords.stream()
+        long pendingExaminationCases = doctorRecords.stream()
                 .filter(record -> PENDING_EXAM_STATUSES.contains(record.getStatus()))
                 .count();
-        long waitingConclusionCases = activeDoctorRecords.stream()
+        long waitingConclusionCases = doctorRecords.stream()
                 .filter(record -> record.getStatus() == ReceptionStatus.WAITING_CONCLUSION)
                 .count();
-        long waitingTreatmentCases = activeDoctorRecords.stream()
+        long waitingTreatmentCases = doctorRecords.stream()
                 .filter(record -> WAITING_TREATMENT_STATUSES.contains(record.getStatus()))
                 .count();
 

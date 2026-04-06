@@ -92,6 +92,22 @@ public class PetServiceImpl implements PetService {
             .stream()
             .collect(Collectors.groupingBy(rs -> rs.getReceptionRecord().getId()));
 
+        List<Long> receptionServiceIds = receptionServiceByReceptionId.values().stream()
+            .flatMap(List::stream)
+            .map(ReceptionService::getId)
+            .toList();
+
+        Map<Long, Prescription> prescriptionByReceptionServiceId = receptionServiceIds.isEmpty()
+            ? Collections.emptyMap()
+            : prescriptionRepository.findByReceptionServiceIdIn(receptionServiceIds)
+            .stream()
+            .filter(p -> p.getReceptionService() != null)
+            .collect(Collectors.toMap(
+                p -> p.getReceptionService().getId(),
+                Function.identity(),
+                (left, right) -> left
+            ));
+
         List<Long> medicalRecordIds = medicalRecordByReceptionId.values().stream().map(MedicalRecord::getId).toList();
 
         Map<Long, ExamResult> examResultByMedicalRecordId = medicalRecordIds.isEmpty()
@@ -104,14 +120,7 @@ public class PetServiceImpl implements PetService {
                 (left, right) -> left.getId() >= right.getId() ? left : right
             ));
 
-        List<Long> examResultIds = examResultByMedicalRecordId.values().stream().map(ExamResult::getId).toList();
-        Map<Long, Prescription> prescriptionByExamResultId = examResultIds.isEmpty()
-            ? Collections.emptyMap()
-            : prescriptionRepository.findByExamResultIdIn(examResultIds)
-            .stream()
-            .collect(Collectors.toMap(p -> p.getExamResult().getId(), Function.identity(), (left, right) -> left));
-
-        List<Long> prescriptionIds = prescriptionByExamResultId.values().stream().map(Prescription::getId).toList();
+        List<Long> prescriptionIds = prescriptionByReceptionServiceId.values().stream().map(Prescription::getId).toList();
         Map<Long, List<PrescriptionDetail>> prescriptionDetailsByPrescriptionId = prescriptionIds.isEmpty()
             ? Collections.emptyMap()
             : prescriptionDetailRepository.findByPrescriptionIdIn(prescriptionIds)
@@ -131,7 +140,6 @@ public class PetServiceImpl implements PetService {
                 .toList();
 
             ExamResult examResult = medicalRecord == null ? null : examResultByMedicalRecordId.get(medicalRecord.getId());
-            Prescription prescription = examResult == null ? null : prescriptionByExamResultId.get(examResult.getId());
 
             LocalDateTime examDate = medicalRecord == null ? null : medicalRecord.getExamDate();
             if (examDate == null && examResult != null) {
@@ -141,16 +149,28 @@ public class PetServiceImpl implements PetService {
                 examDate = reception.getReceptionTime();
             }
 
-            List<PetExamHistoryMedicineResponse> medicines = prescription == null
-                ? List.of()
-                : prescriptionDetailsByPrescriptionId.getOrDefault(prescription.getId(), List.of())
+            List<PetExamHistoryMedicineResponse> medicines = receptionServiceByReceptionId
+                .getOrDefault(reception.getId(), List.of())
                 .stream()
+                .map(ReceptionService::getId)
+                .map(prescriptionByReceptionServiceId::get)
+                .filter(java.util.Objects::nonNull)
+                .flatMap(prescription -> prescriptionDetailsByPrescriptionId.getOrDefault(prescription.getId(), List.of()).stream())
                 .map(detail -> {
-                String dosage = detail.getDosageReference() == null
-                    ? null
-                    : detail.getDosageReference().getTiming() + " - "
-                    + detail.getDosageReference().getQuantity() + " "
-                    + detail.getDosageReference().getUnit();
+                String dosage = null;
+                if (detail.getMorning() != null || detail.getNoon() != null || detail.getAfternoon() != null || detail.getEvening() != null) {
+                    dosage = "Sáng:" + Math.max(0, detail.getMorning() == null ? 1 : detail.getMorning())
+                        + ", Trưa:" + Math.max(0, detail.getNoon() == null ? 1 : detail.getNoon())
+                        + ", Chiều:" + Math.max(0, detail.getAfternoon() == null ? 1 : detail.getAfternoon())
+                        + ", Tối:" + Math.max(0, detail.getEvening() == null ? 1 : detail.getEvening());
+                    if (detail.getInstruction() != null && !detail.getInstruction().isBlank()) {
+                        dosage += " | Chỉ định: " + detail.getInstruction().trim();
+                    }
+                    String unit = detail.getDosageUnit();
+                    if (unit != null && !unit.isBlank()) {
+                        dosage += " (" + unit.trim() + ")";
+                    }
+                }
                 return PetExamHistoryMedicineResponse.builder()
                     .medicineId(detail.getMedicine().getId())
                     .medicineName(detail.getMedicine().getName())

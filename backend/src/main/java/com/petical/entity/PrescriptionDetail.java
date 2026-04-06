@@ -22,9 +22,23 @@ public class PrescriptionDetail {
     @JoinColumn(name = "medicine_id", nullable = false)
     private Medicine medicine;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dosage_reference_id", nullable = false)
-    private DosageReference dosageReference;
-
     private int quantity;
+
+    @Column(name = "dose_morning")
+    private Integer morning;
+
+    @Column(name = "dose_noon")
+    private Integer noon;
+
+    @Column(name = "dose_afternoon")
+    private Integer afternoon;
+
+    @Column(name = "dose_evening")
+    private Integer evening;
+
+    @Column(columnDefinition = "TEXT")
+    private String instruction;
+
+    @Column(name = "dosage_unit")
+    private String dosageUnit;
 }

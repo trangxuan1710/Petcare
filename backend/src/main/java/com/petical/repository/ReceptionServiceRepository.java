@@ -16,5 +16,8 @@ public interface ReceptionServiceRepository extends JpaRepository<ReceptionServi
     List<ReceptionService> findByReceptionRecordId(long receptionRecordId);
 
     @EntityGraph(attributePaths = {"service"})
+    java.util.Optional<ReceptionService> findFirstByReceptionRecordIdAndServiceIdOrderByIdAsc(long receptionRecordId, long serviceId);
+
+    @EntityGraph(attributePaths = {"service"})
     List<ReceptionService> findByReceptionRecordIdIn(Collection<Long> receptionRecordIds);
 }

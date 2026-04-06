@@ -61,7 +61,6 @@ public class DataSeeder implements CommandLineRunner {
         List<ExamForm> examForms = seedExamForms();
         List<Pet> pets = seedPets(faker, clients);
         List<Medicine> medicines = seedMedicines(faker);
-        List<DosageReference> dosageReferences = seedDosageReferences();
         List<Service> services = seedServices(faker);
         List<ReceptionRecord> receptionRecords = seedReceptionRecords(clients, pets, receptionists, doctors, examForms);
         seedReceptionServices(receptionRecords, services);
@@ -69,7 +68,7 @@ public class DataSeeder implements CommandLineRunner {
         List<ExamResult> examResults = seedExamResults(medicalRecords, directions);
         List<Prescription> prescriptions = seedPrescriptions(examResults);
         List<ServiceOrder> serviceOrders = seedServiceOrders(medicalRecords, services, technicians);
-        seedPrescriptionDetails(prescriptions, medicines, dosageReferences);
+        seedPrescriptionDetails(prescriptions, medicines);
         seedServiceResults(serviceOrders);
         seedInvoices(medicalRecords, receptionRecords, paymentMethods);
 
@@ -230,26 +229,12 @@ public class DataSeeder implements CommandLineRunner {
                     .stockQuantity(50 + index)
                     .unit(units[index % units.length])
                     .price(BigDecimal.valueOf(12000 + (long) index * 2000))
+                    .unitPrice(BigDecimal.valueOf(4000 + (long) index * 600))
+                    .boxPrice(BigDecimal.valueOf(12000 + (long) index * 2000))
                     .type(types[index % types.length])
                     .build();
             entityManager.persist(medicine);
             result.add(medicine);
-        }
-        return result;
-    }
-
-    private List<DosageReference> seedDosageReferences() {
-        String[] timings = {"Morning", "Noon", "Evening", "Before Sleep"};
-        String[] units = {"tablet", "ml", "drop"};
-        List<DosageReference> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
-            DosageReference dosageReference = DosageReference.builder()
-                    .timing(timings[index % timings.length])
-                    .quantity(1 + (index % 3))
-                    .unit(units[index % units.length])
-                    .build();
-            entityManager.persist(dosageReference);
-            result.add(dosageReference);
         }
         return result;
     }
@@ -401,8 +386,27 @@ public class DataSeeder implements CommandLineRunner {
     private List<Prescription> seedPrescriptions(List<ExamResult> examResults) {
         List<Prescription> result = new ArrayList<>();
         for (int index = 0; index < SEED_SIZE; index++) {
+            ExamResult examResult = examResults.get(index);
+            long receptionRecordId = examResult.getMedicalRecord().getReceptionRecord().getId();
+            ReceptionService ownerService = entityManager.createQuery(
+                            """
+                            select rs
+                            from ReceptionService rs
+                            where rs.receptionRecord.id = :receptionRecordId
+                            order by rs.id asc
+                            """,
+                            ReceptionService.class
+                    )
+                    .setParameter("receptionRecordId", receptionRecordId)
+                    .setMaxResults(1)
+                    .getResultList()
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+
             Prescription prescription = Prescription.builder()
-                    .examResult(examResults.get(index))
+                    .examResult(examResult)
+                    .receptionService(ownerService)
                     .build();
             entityManager.persist(prescription);
             result.add(prescription);
@@ -428,17 +432,21 @@ public class DataSeeder implements CommandLineRunner {
         return result;
     }
 
-    private void seedPrescriptionDetails(
+        private void seedPrescriptionDetails(
             List<Prescription> prescriptions,
-            List<Medicine> medicines,
-            List<DosageReference> dosageReferences
-    ) {
+            List<Medicine> medicines
+        ) {
         for (int index = 0; index < SEED_SIZE; index++) {
             PrescriptionDetail prescriptionDetail = PrescriptionDetail.builder()
                     .prescription(prescriptions.get(index))
                     .medicine(medicines.get(index))
-                    .dosageReference(dosageReferences.get(index))
                     .quantity(1 + (index % 4))
+                    .morning(1)
+                    .noon(1)
+                    .afternoon(1)
+                    .evening(1)
+                    .instruction(index % 5 == 0 ? "Uống sau ăn" : "")
+                    .dosageUnit(medicines.get(index).getUnit())
                     .build();
             entityManager.persist(prescriptionDetail);
         }

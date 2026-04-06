@@ -2,11 +2,13 @@ package com.petical.controller;
 
 import com.petical.dto.response.ApiResponse;
 import com.petical.dto.response.MedicineSearchItemResponse;
+import com.petical.dto.response.PrescriptionAutofillResponse;
 import com.petical.service.ExamPrescriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,6 +30,17 @@ public class ExamPrescriptionController {
     ) {
         return ApiResponse.<List<MedicineSearchItemResponse>>builder()
                 .data(examPrescriptionService.searchMedicines(keyword, limit))
+                .build();
+    }
+
+    @GetMapping("/reception-slips/{id}/prescription-autofill")
+    @Operation(
+            summary = "Gợi ý đơn thuốc tự động",
+            description = "Chỉ gợi ý cho ca khám đầu tiên của thú cưng, ưu tiên dữ liệu theo giống và cân nặng tương tự"
+    )
+    public ApiResponse<PrescriptionAutofillResponse> getPrescriptionAutofill(@PathVariable("id") long receptionRecordId) {
+        return ApiResponse.<PrescriptionAutofillResponse>builder()
+                .data(examPrescriptionService.getPrescriptionAutofill(receptionRecordId))
                 .build();
     }
 }

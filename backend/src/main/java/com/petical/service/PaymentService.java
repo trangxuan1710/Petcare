@@ -13,9 +13,9 @@ public interface PaymentService {
 
     List<PaymentMethod> getPaymentMethods();
 
-    Invoice createInvoice(Invoice request);
+    InvoicePreviewResponse createInvoice(Invoice request);
 
-    Invoice getInvoice(long id);
+    InvoicePreviewResponse getInvoice(long id);
 
-    Invoice updateInvoice(long id, Invoice request);
+    InvoicePreviewResponse updateInvoice(long id, Invoice request);
 }

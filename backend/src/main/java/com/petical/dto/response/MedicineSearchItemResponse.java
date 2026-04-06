@@ -24,6 +24,12 @@ public class MedicineSearchItemResponse {
     @Schema(description = "Giá", example = "120000")
     private BigDecimal price;
 
+    @Schema(description = "Giá theo đơn vị", example = "12000")
+    private BigDecimal unitPrice;
+
+    @Schema(description = "Giá theo hộp", example = "96000")
+    private BigDecimal boxPrice;
+
     @Schema(description = "Số lượng tồn", example = "2")
     private int stockQuantity;
 

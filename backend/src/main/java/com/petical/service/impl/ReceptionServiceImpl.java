@@ -161,7 +161,9 @@ public class ReceptionServiceImpl implements ReceptionService {
                                                 });
                 }
 
-                return receptionServiceRepository.findByReceptionRecordId(receptionId)
+                List<com.petical.entity.ReceptionService> scopedServices = receptionServiceRepository.findByReceptionRecordId(receptionId);
+
+                return scopedServices
                                 .stream()
                                 .map(item -> {
                                         Long performerId = assignedDoctor == null ? null : assignedDoctor.getId();

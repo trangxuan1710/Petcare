@@ -55,7 +55,8 @@ const StaffPaymentInfoCard = ({
         name: "Nguyễn Thu Hương", 
         phone: "0912345678" 
     },
-    qrImageSrc = '/assets/sample_qr.png'
+    qrImageSrc = '/assets/sample_qr.png',
+    onPrintInvoice,
 }) => {
     const [resolvedQrImage, setResolvedQrImage] = useState(null);
 
@@ -89,6 +90,17 @@ const StaffPaymentInfoCard = ({
 
     const canShowQrImage = Boolean(resolvedQrImage);
 
+    const handlePrintInvoice = () => {
+        if (typeof onPrintInvoice === 'function') {
+            onPrintInvoice();
+            return;
+        }
+
+        if (typeof window !== 'undefined') {
+            window.print();
+        }
+    };
+
     return (
         <section className="staff-payment-info-card">
             <div className={`staff-payment-qr-box ${canShowQrImage ? 'has-image' : ''}`}>
@@ -109,12 +121,13 @@ const StaffPaymentInfoCard = ({
                             vui lòng chọn hình thức<br /> 
                             thanh toán QR
                         </p>
-                        <button type="button" className="print-btn">
-                            <span>In đơn</span>
-                            <Printer size={24} strokeWidth={2} />
-                        </button>
                     </>
                 )}
+
+                <button type="button" className="qr-print-btn" onClick={handlePrintInvoice}>
+                    <Printer size={14} strokeWidth={2} />
+                    <span>In hóa đơn</span>
+                </button>
             </div>
 
             <div className="staff-payment-order-info">

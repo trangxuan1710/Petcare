@@ -24,6 +24,12 @@ public class Medicine {
 
     private String unit;
 
+    @Column(name = "unit_price")
+    private BigDecimal unitPrice;
+
+    @Column(name = "box_price")
+    private BigDecimal boxPrice;
+
     private BigDecimal price;
 
     private String type;

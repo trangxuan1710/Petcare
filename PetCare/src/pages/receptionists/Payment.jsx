@@ -143,6 +143,12 @@ const Payment = () => {
         navigate(-1);
     };
 
+    const handlePrintInvoice = () => {
+        if (typeof window !== 'undefined') {
+            window.print();
+        }
+    };
+
     const formatCurrency = (amount) => `${Number(amount || 0).toLocaleString('vi-VN')}đ`;
 
     const chargeItems = useMemo(() => toArray(invoicePreview?.chargeItems), [invoicePreview]);
@@ -403,6 +409,7 @@ const Payment = () => {
                                 time={previewTimeLabel}
                                 customer={customerInfo}
                                 cashier={cashierInfo}
+                                onPrintInvoice={handlePrintInvoice}
                             />
                             <StaffCostSummaryCard
                                 petInfo={petInfo}

@@ -38,8 +38,8 @@ public class    PaymentController {
     @PostMapping("/invoices")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Tạo hóa đơn", description = "Xác nhận thanh toán và ghi nhận hóa đơn cho phiếu tiếp đón")
-    public ApiResponse<Invoice> createInvoice(@RequestBody Invoice request) {
-        return ApiResponse.<Invoice>builder()
+    public ApiResponse<InvoicePreviewResponse> createInvoice(@RequestBody Invoice request) {
+        return ApiResponse.<InvoicePreviewResponse>builder()
                 .code(201)
                 .message("Created")
                 .data(paymentService.createInvoice(request))
@@ -48,16 +48,16 @@ public class    PaymentController {
 
     @GetMapping("/invoices/{id}")
     @Operation(summary = "Xem chi tiết hóa đơn", description = "Lấy thông tin một hóa đơn theo mã hóa đơn")
-    public ApiResponse<Invoice> getInvoice(@PathVariable long id) {
-        return ApiResponse.<Invoice>builder()
+    public ApiResponse<InvoicePreviewResponse> getInvoice(@PathVariable long id) {
+        return ApiResponse.<InvoicePreviewResponse>builder()
                 .data(paymentService.getInvoice(id))
                 .build();
     }
 
     @PatchMapping("/invoices/{id}")
     @Operation(summary = "Cập nhật hóa đơn", description = "Cập nhật phương thức thanh toán hoặc ghi chú trước khi chốt hóa đơn")
-    public ApiResponse<Invoice> updateInvoice(@PathVariable long id, @RequestBody Invoice request) {
-        return ApiResponse.<Invoice>builder()
+    public ApiResponse<InvoicePreviewResponse> updateInvoice(@PathVariable long id, @RequestBody Invoice request) {
+        return ApiResponse.<InvoicePreviewResponse>builder()
                 .data(paymentService.updateInvoice(id, request))
                 .build();
     }

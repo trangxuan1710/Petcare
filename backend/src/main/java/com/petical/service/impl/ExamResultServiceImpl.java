@@ -3,7 +3,6 @@ package com.petical.service.impl;
 import com.petical.dto.request.AddExamPrescriptionItemRequest;
 import com.petical.dto.request.RecordExamResultRequest;
 import com.petical.dto.response.RecordExamResultResponse;
-import com.petical.entity.DosageReference;
 import com.petical.entity.Doctor;
 import com.petical.entity.ExamResult;
 import com.petical.entity.ExamStatus;
@@ -19,7 +18,6 @@ import com.petical.enums.ReceptionServiceStatus;
 import com.petical.enums.ReceptionStatus;
 import com.petical.enums.TreatmentDecision;
 import com.petical.errors.AppException;
-import com.petical.repository.DosageReferenceRepository;
 import com.petical.repository.DoctorRepository;
 import com.petical.repository.ExamResultRepository;
 import com.petical.repository.ExamStatusRepository;
@@ -44,7 +42,9 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -66,7 +66,6 @@ public class ExamResultServiceImpl implements ExamResultService {
     private final PrescriptionRepository prescriptionRepository;
     private final PrescriptionDetailRepository prescriptionDetailRepository;
     private final MedicineRepository medicineRepository;
-    private final DosageReferenceRepository dosageReferenceRepository;
 
     @Override
     @Transactional
@@ -119,7 +118,7 @@ public class ExamResultServiceImpl implements ExamResultService {
         examResult = examResultRepository.save(examResult);
 
         int serviceCount = upsertReceptionServices(receptionRecord, request.getServiceIds());
-        Prescription prescription = upsertPrescription(examResult, request.getMedicines());
+        Prescription prescription = upsertPrescription(receptionRecord, examResult, request.getMedicines());
         int medicineCount = request.getMedicines() == null ? 0 : request.getMedicines().size();
 
         boolean discharge = request.getTreatmentDecision() == TreatmentDecision.DISCHARGE
@@ -251,15 +250,14 @@ public class ExamResultServiceImpl implements ExamResultService {
         return attached;
     }
 
-    private Prescription upsertPrescription(ExamResult examResult, List<AddExamPrescriptionItemRequest> medicines) {
+    private Prescription upsertPrescription(ReceptionRecord receptionRecord, ExamResult examResult, List<AddExamPrescriptionItemRequest> medicines) {
         if (medicines == null || medicines.isEmpty()) {
             return null;
         }
 
-        Prescription prescription = prescriptionRepository.findByExamResultId(examResult.getId())
-                .orElseGet(() -> prescriptionRepository.save(Prescription.builder().examResult(examResult).build()));
-
-        prescriptionDetailRepository.deleteByPrescriptionId(prescription.getId());
+        Map<Long, Prescription> prescriptionByOwnerServiceId = new LinkedHashMap<>();
+        Map<Long, Boolean> detailClearedByPrescriptionId = new LinkedHashMap<>();
+        Prescription firstPrescription = null;
 
         for (AddExamPrescriptionItemRequest item : medicines) {
             int soldQuantity = resolveSoldQuantity(item);
@@ -267,36 +265,85 @@ public class ExamResultServiceImpl implements ExamResultService {
                 throw new AppException(ErrorCode.ERROR_INPUT);
             }
 
+            ReceptionService ownerService = resolvePrescriptionOwnerService(receptionRecord, item.getServiceId());
+            long ownerServiceId = ownerService == null ? -1L : ownerService.getId();
+
+            Prescription prescription = prescriptionByOwnerServiceId.get(ownerServiceId);
+            if (prescription == null) {
+                if (ownerService != null) {
+                    prescription = prescriptionRepository.findByReceptionServiceId(ownerService.getId())
+                            .orElseGet(() -> prescriptionRepository.save(Prescription.builder()
+                                    .examResult(examResult)
+                                    .receptionService(ownerService)
+                                    .build()));
+                } else {
+                    prescription = prescriptionRepository.findByExamResultIdIn(List.of(examResult.getId()))
+                        .stream()
+                        .findFirst()
+                        .orElseGet(() -> prescriptionRepository.save(Prescription.builder()
+                            .examResult(examResult)
+                            .build()));
+                }
+
+                if (prescription.getReceptionService() == null && ownerService != null) {
+                    prescription.setReceptionService(ownerService);
+                    prescription = prescriptionRepository.save(prescription);
+                }
+
+                prescriptionByOwnerServiceId.put(ownerServiceId, prescription);
+            }
+
+            if (!detailClearedByPrescriptionId.getOrDefault(prescription.getId(), false)) {
+                prescriptionDetailRepository.deleteByPrescriptionId(prescription.getId());
+                detailClearedByPrescriptionId.put(prescription.getId(), true);
+            }
+
+            if (firstPrescription == null) {
+                firstPrescription = prescription;
+            }
+
             Medicine medicine = medicineRepository.findById(item.getMedicineId())
                     .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-
-            int totalDailyDose = item.getMorning() + item.getNoon() + item.getAfternoon() + item.getEvening();
-            DosageReference dosageReference = dosageReferenceRepository.save(DosageReference.builder()
-                    .timing(buildDosageTiming(item))
-                    .quantity(totalDailyDose > 0 ? totalDailyDose : 1)
-                    .unit(item.getDosageUnit() == null || item.getDosageUnit().isBlank() ? medicine.getUnit() : item.getDosageUnit().trim())
-                    .build());
 
             prescriptionDetailRepository.save(PrescriptionDetail.builder()
                     .prescription(prescription)
                     .medicine(medicine)
-                    .dosageReference(dosageReference)
                     .quantity(soldQuantity)
+                    .morning(resolveDoseValue(item.getMorning()))
+                    .noon(resolveDoseValue(item.getNoon()))
+                    .afternoon(resolveDoseValue(item.getAfternoon()))
+                    .evening(resolveDoseValue(item.getEvening()))
+                    .instruction(item.getInstruction() == null ? null : item.getInstruction().trim())
+                    .dosageUnit(resolveDosageUnit(item.getDosageUnit(), medicine.getUnit()))
                     .build());
         }
 
-        return prescription;
+        return firstPrescription;
     }
 
-    private String buildDosageTiming(AddExamPrescriptionItemRequest item) {
-        String dosage = "Sáng:" + item.getMorning()
-                + ", Trưa:" + item.getNoon()
-                + ", Chiều:" + item.getAfternoon()
-                + ", Tối:" + item.getEvening();
-        if (item.getInstruction() == null || item.getInstruction().isBlank()) {
-            return dosage;
+    private ReceptionService resolvePrescriptionOwnerService(ReceptionRecord receptionRecord, Long requestedServiceId) {
+        if (receptionRecord == null || receptionRecord.getId() <= 0) {
+            return null;
         }
-        return dosage + " | Chỉ định: " + item.getInstruction().trim();
+
+        if (requestedServiceId != null && requestedServiceId > 0) {
+            ReceptionService requested = receptionServiceRepository.findFirstByReceptionRecordIdAndServiceIdOrderByIdAsc(
+                    receptionRecord.getId(),
+                    requestedServiceId
+            ).orElse(null);
+            if (requested != null) {
+                return requested;
+            }
+        }
+
+        return receptionServiceRepository.findFirstByReceptionRecordIdAndServiceIdOrderByIdAsc(
+                        receptionRecord.getId(),
+                        DEFAULT_CLINICAL_SERVICE_ID
+                )
+                .orElseGet(() -> receptionServiceRepository.findByReceptionRecordId(receptionRecord.getId())
+                        .stream()
+                        .findFirst()
+                        .orElse(null));
     }
 
     private int resolveSoldQuantity(AddExamPrescriptionItemRequest item) {
@@ -304,6 +351,18 @@ public class ExamResultServiceImpl implements ExamResultService {
             return item.getSoldQuantity();
         }
         return item.getQuantity() == null ? 0 : item.getQuantity();
+    }
+
+    private int resolveDoseValue(int rawDose) {
+        return Math.max(0, rawDose);
+    }
+
+    private String resolveDosageUnit(String requestedUnit, String fallbackUnit) {
+        String value = requestedUnit == null || requestedUnit.isBlank() ? fallbackUnit : requestedUnit;
+        if (value == null) {
+            return null;
+        }
+        return value.trim().replaceFirst("^/", "");
     }
 
     private List<String> readEvidencePaths(String rawEvidencePath) {

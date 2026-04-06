@@ -10,6 +10,9 @@ import lombok.Setter;
 @Setter
 @Schema(name = "AddExamPrescriptionItemRequest", description = "Thông tin 1 thuốc/vật tư trong đơn")
 public class AddExamPrescriptionItemRequest {
+    @Schema(description = "Mã dịch vụ trên phiếu tiếp đón mà thuốc thuộc về", example = "1")
+    private Long serviceId;
+
     @NotNull
     @Schema(description = "Mã thuốc/vật tư", example = "12")
     private Long medicineId;

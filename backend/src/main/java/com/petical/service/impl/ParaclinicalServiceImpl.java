@@ -29,12 +29,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class ParaclinicalServiceImpl implements ParaclinicalService {
     private static final String DEFAULT_EXAM_STATUS_NAME = "IN_PROGRESS";
+        private static final long DEFAULT_CLINICAL_SERVICE_ID = 1L;
 
     private final TechnicianRepository technicianRepository;
     private final ServiceRepository serviceRepository;
@@ -124,18 +127,7 @@ public class ParaclinicalServiceImpl implements ParaclinicalService {
             }
         }
 
-        List<ParaclinicalSelectedServiceResponse> selected = serviceOrderRepository.findByMedicalRecordId(medicalRecord.getId())
-                .stream()
-                .map(order -> ParaclinicalSelectedServiceResponse.builder()
-                        .serviceOrderId(order.getId())
-                        .serviceId(order.getService().getId())
-                        .serviceName(order.getService().getName())
-                        .unitPrice(order.getService().getUnitPrice())
-                        .technicianId(order.getTechnician().getId())
-                        .technicianName(order.getTechnician().getFullName())
-                        .quantity(1)
-                        .build())
-                .toList();
+        List<ParaclinicalSelectedServiceResponse> selected = mapSelectedServicesFromReceptionServices(receptionRecord, medicalRecord);
 
         return SaveParaclinicalServicesResponse.builder()
                 .receptionRecordId(receptionRecord.getId())
@@ -155,19 +147,44 @@ public class ParaclinicalServiceImpl implements ParaclinicalService {
             return List.of();
         }
 
-        return serviceOrderRepository.findByMedicalRecordId(medicalRecord.getId())
-                .stream()
-                .map(order -> ParaclinicalSelectedServiceResponse.builder()
-                        .serviceOrderId(order.getId())
-                        .serviceId(order.getService().getId())
-                        .serviceName(order.getService().getName())
-                        .unitPrice(order.getService().getUnitPrice())
-                        .technicianId(order.getTechnician().getId())
-                        .technicianName(order.getTechnician().getFullName())
-                        .quantity(1)
-                        .build())
-                .toList();
+                return mapSelectedServicesFromReceptionServices(medicalRecord.getReceptionRecord(), medicalRecord);
     }
+
+        private List<ParaclinicalSelectedServiceResponse> mapSelectedServicesFromReceptionServices(
+                        ReceptionRecord receptionRecord,
+                        MedicalRecord medicalRecord
+        ) {
+                if (receptionRecord == null || medicalRecord == null) {
+                        return List.of();
+                }
+
+                Map<Long, ServiceOrder> orderByServiceId = new LinkedHashMap<>();
+                serviceOrderRepository.findByMedicalRecordId(medicalRecord.getId())
+                                .forEach(order -> {
+                                        if (order.getService() != null && !orderByServiceId.containsKey(order.getService().getId())) {
+                                                orderByServiceId.put(order.getService().getId(), order);
+                                        }
+                                });
+
+                List<ReceptionService> receptionServices = receptionServiceRepository.findByReceptionRecordId(receptionRecord.getId());
+
+                return receptionServices.stream()
+                        .filter(item -> item.getService() != null && item.getService().getId() != DEFAULT_CLINICAL_SERVICE_ID)
+                                .map(item -> {
+                                        ServiceOrder order = orderByServiceId.get(item.getService().getId());
+
+                                        return ParaclinicalSelectedServiceResponse.builder()
+                                                        .serviceOrderId(order == null ? item.getId() : order.getId())
+                                                        .serviceId(item.getService().getId())
+                                                        .serviceName(item.getService().getName())
+                                                        .unitPrice(item.getService().getUnitPrice())
+                                                        .technicianId(order == null || order.getTechnician() == null ? 0 : order.getTechnician().getId())
+                                                        .technicianName(order == null || order.getTechnician() == null ? "" : order.getTechnician().getFullName())
+                                                        .quantity(1)
+                                                        .build();
+                                })
+                                .toList();
+        }
 
     private Doctor resolveDoctor(ReceptionRecord receptionRecord) {
         if (receptionRecord.getDoctor() == null) {
