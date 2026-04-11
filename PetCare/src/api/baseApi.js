@@ -33,7 +33,7 @@ authApi.interceptors.request.use(
 
 const handleResponseError = (error) => {
     if (error?.response?.status === 401) {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
             localStorage.removeItem('access_token');
             localStorage.removeItem('user_role');
             localStorage.removeItem('user_info');
@@ -51,5 +51,5 @@ authApi.interceptors.response.use(
 
 publicApi.interceptors.response.use(
     (response) => response,
-    handleResponseError
+    (error) => Promise.reject(error)
 )

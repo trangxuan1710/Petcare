@@ -88,6 +88,9 @@ const getSseUrl = () => {
 };
 
 const syncUnreadFromServer = async () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) return;
+
     try {
         const response = await authApi.get('/notifications/unread-count');
         const unreadFromServer = Number(response?.data?.data?.unreadCount || 0);
@@ -164,8 +167,12 @@ export const useNotificationSSE = () => {
         subscriberCount += 1;
 
         setUnreadCount(sharedUnread);
-        startSharedConnection();
-        syncUnreadFromServer();
+
+        const token = localStorage.getItem('access_token');
+        if (token) {
+            startSharedConnection();
+            syncUnreadFromServer();
+        }
 
         return () => {
             listeners.delete(setUnreadCount);
