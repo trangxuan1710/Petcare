@@ -238,52 +238,49 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private List<Medicine> seedMedicines() {
-        String[] names = {
-                "Ringer Lactate",
-                "Bộ dây truyền dịch",
-                "Amoxicillin 500mg",
-                "Cefalexin",
-                "Vitamin B-Complex",
-                "Meloxicam",
-                "Men tiêu hóa BioPet",
-                "Băng gạc vô trùng",
-                "Dung dịch sát khuẩn",
-                "Kim tiêm 5ml",
-                "Prednisolone",
-                "Smecta Vet"
-        };
+        Object[][] rawMeds = {
+            {"Amentyl (cao cấp)", "Hộp 4 vỉ * 10 viên (1 viên Amoxicillin 125mg)", 30000, "Viên", "THUOC"},
+            {"Amox - Clav (thông dụng)", "Chai 20ml", 80000, "Lọ", "THUOC"},
+            {"Clamoxcin (cao cấp)", "Hộp 6 lọ * 5ml", 170000, "Lọ", "THUOC"},
+            {"Cefquino DC", "Hộp 5 cặp", 100000, "Lọ", "THUOC"},
+            {"Thuốc nhỏ mắt Bio-Gentadrop", "Lọ 10ml", 15000, "Lọ", "THUOC"},
+            {"Tiaflox 200mg (>2,5kg - 5kg)", "Hộp 4 vỉ * 10 viên", 50000, "Viên", "THUOC"},
+            {"Enrofloxacin 10%", "Lọ 20ml", 70000, "Lọ", "THUOC"},
+            {"Enroko 50mg", "Vỉ 10 viên", 8000, "Viên", "THUOC"},
+            {"Fluroquin 5ml", "Hộp 6 lọ * 5ml", 140000, "Lọ", "THUOC"},
+            {"Marbo 250mg (>5kg - 10kg) (cao cấp)", "Hộp 4 vỉ * 10 viên", 22000, "Viên", "THUOC"},
+            {"Marbo 5 (cao cấp)", "Hộp 6 lọ * 5ml", 160000, "Lọ", "THUOC"},
 
-        String[] descriptions = {
-                "Điều trị viêm loét dạ dày, rối loạn tiêu hóa",
-                "Bộ dây truyền dịch và vô trùng",
-                "Kháng sinh phổ rộng cho nhiễm khuẩn nhẹ",
-                "Kháng sinh hỗ trợ nhiễm khuẩn hô hấp",
-                "Bổ sung vitamin và tăng sức đề kháng",
-                "Giảm đau, kháng viêm sau thủ thuật",
-                "Ổn định hệ tiêu hóa và giảm tiêu chảy",
-                "Dùng trong chăm sóc vết thương hở",
-                "Sát khuẩn vùng da tổn thương",
-                "Vật tư tiêu hao cho tiêm truyền",
-                "Kháng viêm corticosteroid liều thấp",
-                "Hỗ trợ điều trị rối loạn tiêu hóa cấp"
+            {"Áo mổ giấy", "", 35000, "Chiếc", "VAT_TU"},
+            {"Băng chun 2.5cm", "", 15000, "Cuộn", "VAT_TU"},
+            {"Băng chun 3 móc", "", 30000, "Cuộn", "VAT_TU"},
+            {"Băng chun 5cm", "", 20000, "Cuộn", "VAT_TU"},
+            {"Băng chun 7.5cm", "", 25000, "Cuộn", "VAT_TU"},
+            {"Băng keo Urgo 5cm", "", 35000, "Cuộn", "VAT_TU"},
+            {"Băng keo y tế 3M 2.5cm - Hộp 12 cuộn", "", 40000, "Cuộn", "VAT_TU"},
+            {"Băng keo y tế 3M 5cm - Hộp 6 cuộn", "", 65000, "Cuộn", "VAT_TU"},
+            {"Bộ dây chằng giả", "", 1100000, "Chiếc", "VAT_TU"},
+            {"Bộ dây truyền dịch", "", 10000, "Chiếc", "VAT_TU"},
+            {"Bộ kim cánh bướm G22", "", 5000, "Chiếc", "VAT_TU"},
+            {"Bơm tiêm 1ml", "", 5000, "Chiếc", "VAT_TU"},
+            {"Bơm tiêm 3ml", "", 5000, "Chiếc", "VAT_TU"},
+            {"Bơm tiêm 5ml", "", 5000, "Chiếc", "VAT_TU"},
+            {"Bơm tiêm 10ml", "", 15000, "Chiếc", "VAT_TU"}
         };
-
-        String[] units = {"ml", "set", "tablet", "tablet", "tablet", "tablet", "sachet", "pack", "bottle", "piece", "tablet", "sachet"};
-        String[] types = {"Fluid", "Supply", "Antibiotic", "Antibiotic", "Vitamin", "Pain Relief", "Digestive", "Supply", "Antiseptic", "Supply", "Anti-inflammatory", "Digestive"};
 
         List<Medicine> result = new ArrayList<>();
-        for (int i = 0; i < names.length; i++) {
-            BigDecimal unitPrice = BigDecimal.valueOf(5000L + i * 2500L);
-            BigDecimal boxPrice = unitPrice.multiply(BigDecimal.valueOf(10));
+        for (int i = 0; i < rawMeds.length; i++) {
+            Object[] data = rawMeds[i];
+            BigDecimal unitPrice = BigDecimal.valueOf(((Number) data[2]).longValue());
             Medicine medicine = Medicine.builder()
-                    .name(names[i])
-                    .description(descriptions[i])
-                    .stockQuantity(40 + i * 5)
-                    .unit(units[i])
+                    .name((String) data[0])
+                    .description((String) data[1])
+                    .stockQuantity(100 + i * 5)
+                    .unit((String) data[3])
                     .unitPrice(unitPrice)
-                    .boxPrice(boxPrice)
-                    .price(boxPrice)
-                    .type(types[i])
+                    .boxPrice(unitPrice)
+                    .price(unitPrice)
+                    .type((String) data[4])
                     .build();
             entityManager.persist(medicine);
             result.add(medicine);
