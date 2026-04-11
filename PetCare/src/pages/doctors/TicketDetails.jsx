@@ -222,12 +222,7 @@ const TicketDetails = () => {
                             <span className="exam-info-label">Hình thức khám</span>
                             <span className="exam-info-value text-right">{ticketDetail?.examForm?.examType || '--'}</span>
                         </div>
-                        <div className="exam-info-row align-top">
-                            <span className="exam-info-label">Mô tả</span>
-                            <span className="exam-info-value text-right multi-line">
-                                {ticketDetail?.symptomDescription || '---'}
-                            </span>
-                        </div>
+                        {/* 'symptomDescription' removed; description now stored in examReason */}
                     </div>
 
                     {/* Footer divider & text */}

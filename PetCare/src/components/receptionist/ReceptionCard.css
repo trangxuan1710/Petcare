@@ -1,10 +1,11 @@
 .reception-card {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     padding: 16px;
     background-color: #fff;
     border-radius: 12px;
+    border: 1px solid #e6efec;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
@@ -37,7 +38,8 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
+    min-width: 0;
 }
 
 .reception-card-name {
@@ -47,6 +49,49 @@
     line-height: 1.25;
     color: #1a1a1a;
     margin: 0;
+}
+
+.reception-card-pet {
+    margin-top: 2px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    border: 1px solid #e6efec;
+    border-radius: 12px;
+    padding: 10px 12px;
+    background: #fff;
+}
+
+.reception-card-pet-name {
+    display: inline-block;
+    font-weight: 700;
+    color: #111827;
+    font-size: 16px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.reception-card-pet-meta {
+    color: #4b5563;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.reception-card-pet-stat {
+    color: #6b7280;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.reception-card-pet-weight svg {
+    color: #9ca3af;
 }
 
 .reception-card-phone {
@@ -66,4 +111,5 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    align-self: center;
 }

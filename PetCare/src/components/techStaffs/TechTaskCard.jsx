@@ -14,7 +14,14 @@ const statusLabel = {
     done: 'Đã hoàn thành'
 };
 
-const TechTaskCard = ({ task, onOpen, isProcessingTab = false, onRecordResult }) => {
+const actionLabelByMode = {
+    start: 'Bắt đầu',
+    record: 'Ghi nhận kết quả',
+};
+
+const TechTaskCard = ({ task, onOpen, actionMode = null, onAction, isActionLoading = false }) => {
+    const actionLabel = actionLabelByMode[actionMode] || '';
+
     return (
         <article className="tech-task-card" onClick={() => onOpen && onOpen(task)}>
             <div className="tech-task-head">
@@ -37,19 +44,20 @@ const TechTaskCard = ({ task, onOpen, isProcessingTab = false, onRecordResult })
                 </strong>
             </div>
 
-            {isProcessingTab && (
+            {actionMode && (
                 <div className="tech-task-action-wrap">
                     <button
                         type="button"
                         className="tech-task-action-btn"
+                        disabled={isActionLoading}
                         onClick={(event) => {
                             event.stopPropagation();
-                            if (onRecordResult) {
-                                onRecordResult(task);
+                            if (onAction) {
+                                onAction(task);
                             }
                         }}
                     >
-                        Ghi nhận kết quả
+                        {isActionLoading ? 'Đang xử lý...' : actionLabel}
                     </button>
                 </div>
             )}

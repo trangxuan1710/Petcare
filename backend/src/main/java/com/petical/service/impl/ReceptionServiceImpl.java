@@ -3,6 +3,7 @@ package com.petical.service.impl;
 import com.petical.dto.request.CreateReceptionSlipRequest;
 import com.petical.dto.request.UpdateReceptionSlipRequest;
 import com.petical.dto.response.ReceptionAssignedServiceResponse;
+import com.petical.dto.response.TechnicianUsedMedicineItemResponse;
 import com.petical.entity.*;
 import com.petical.enums.ExamType;
 import com.petical.enums.ErrorCode;
@@ -17,9 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +45,9 @@ public class ReceptionServiceImpl implements ReceptionService {
         private final ReceptionServiceRepository receptionServiceRepository;
         private final ServiceOrderRepository serviceOrderRepository;
         private final ExamResultRepository examResultRepository;
+        private final ServiceResultRepository serviceResultRepository;
+        private final PrescriptionRepository prescriptionRepository;
+        private final PrescriptionDetailRepository prescriptionDetailRepository;
 
     @Override
     @Transactional
@@ -53,6 +61,11 @@ public class ReceptionServiceImpl implements ReceptionService {
         if (!petRepository.existsByIdAndClientId(pet.getId(), client.getId())) {
             throw new AppException(ErrorCode.PET_NOT_BELONG_TO_CLIENT);
         }
+
+                // Prevent creating a new reception when there's an existing unfinished reception for the same pet
+                if (receptionRecordRepository.existsByPetIdAndStatusNot(pet.getId(), ReceptionStatus.PAID)) {
+                        throw new AppException(ErrorCode.RECEPTION_ALREADY_OPEN);
+                }
 
         Receptionist receptionist = receptionistRepository.findById(request.getReceptionistId())
                 .orElseThrow(() -> new AppException(ErrorCode.RECEPTIONIST_NOT_FOUND));
@@ -79,7 +92,6 @@ public class ReceptionServiceImpl implements ReceptionService {
                 .doctor(doctor)
                 .examForm(examForm)
                 .examReason(request.getExamReason().trim())
-                .symptomDescription(request.getSymptomDescription())
                 .note(request.getNote())
                 .weight(request.getWeight())
                 .receptionTime(request.getReceptionTime())
@@ -163,6 +175,25 @@ public class ReceptionServiceImpl implements ReceptionService {
 
                 List<com.petical.entity.ReceptionService> scopedServices = receptionServiceRepository.findByReceptionRecordId(receptionId);
 
+                Map<Long, ServiceResult> resultByOrderId = serviceResultRepository.findByServiceOrderIdIn(
+                                orderByServiceId.values().stream().map(ServiceOrder::getId).toList())
+                                .stream()
+                                .collect(Collectors.toMap(result -> result.getServiceOrder().getId(), Function.identity(), (left, right) -> left));
+
+                Map<Long, Prescription> prescriptionByReceptionServiceId = prescriptionRepository
+                                .findByReceptionServiceIdIn(scopedServices.stream().map(com.petical.entity.ReceptionService::getId).toList())
+                                .stream()
+                                .collect(Collectors.toMap(
+                                                prescription -> prescription.getReceptionService().getId(),
+                                                Function.identity(),
+                                                (left, right) -> left.getId() >= right.getId() ? left : right
+                                ));
+
+                Map<Long, List<PrescriptionDetail>> prescriptionDetailsByPrescriptionId = prescriptionDetailRepository
+                                .findByPrescriptionIdIn(prescriptionByReceptionServiceId.values().stream().map(Prescription::getId).toList())
+                                .stream()
+                                .collect(Collectors.groupingBy(detail -> detail.getPrescription().getId()));
+
                 return scopedServices
                                 .stream()
                                 .map(item -> {
@@ -177,6 +208,15 @@ public class ReceptionServiceImpl implements ReceptionService {
                                                 performerRole = "TECHNICIAN";
                                         }
 
+                                        ServiceResult serviceResult = serviceOrder == null ? null : resultByOrderId.get(serviceOrder.getId());
+                                        Prescription prescription = prescriptionByReceptionServiceId.get(item.getId());
+                                        List<TechnicianUsedMedicineItemResponse> medicines = prescription == null
+                                                        ? List.of()
+                                                        : loadUsedMedicines(
+                                                                        prescription,
+                                                                        prescriptionDetailsByPrescriptionId.getOrDefault(prescription.getId(), List.of())
+                                                        );
+
                                         ReceptionServiceStatus status = deriveServiceStatus(item, receptionRecord.getStatus(), item.getService().getId(), isClinicalServiceCompleted);
 
                                         return ReceptionAssignedServiceResponse.builder()
@@ -189,6 +229,9 @@ public class ReceptionServiceImpl implements ReceptionService {
                                                         .performerRole(performerRole)
                                                         .status(status.getValue())
                                                         .startedAt(item.getStartedAt())
+                                                        .result(serviceResult == null ? null : normalizeTextOrNull(serviceResult.getResult()))
+                                                        .evidencePaths(readEvidencePaths(serviceResult == null ? null : serviceResult.getEvidencePath()))
+                                                        .medicines(medicines)
                                                         .build();
                                 })
                                 .toList();
@@ -236,6 +279,46 @@ public class ReceptionServiceImpl implements ReceptionService {
                 return directionName.contains("cận lâm sàng") || directionName.contains("paraclinical");
         }
 
+        private String normalizeTextOrNull(String value) {
+                if (value == null) {
+                        return null;
+                }
+                String normalized = value.trim();
+                return normalized.isEmpty() ? null : normalized;
+        }
+
+        private List<String> readEvidencePaths(String rawEvidencePath) {
+                if (rawEvidencePath == null || rawEvidencePath.isBlank()) {
+                        return List.of();
+                }
+
+                return Arrays.stream(rawEvidencePath.split(";"))
+                                .map(String::trim)
+                                .filter(path -> !path.isBlank())
+                                .toList();
+        }
+
+        private List<TechnicianUsedMedicineItemResponse> loadUsedMedicines(
+                        Prescription prescription,
+                        List<PrescriptionDetail> details
+        ) {
+                if (prescription == null || details == null || details.isEmpty()) {
+                        return List.of();
+                }
+
+                return details.stream()
+                                .sorted(Comparator.comparingLong(PrescriptionDetail::getId))
+                                .map(detail -> TechnicianUsedMedicineItemResponse.builder()
+                                                .medicineId(detail.getMedicine() == null ? null : detail.getMedicine().getId())
+                                                .medicineName(detail.getMedicine() == null ? null : detail.getMedicine().getName())
+                                                .description(detail.getMedicine() == null ? null : detail.getMedicine().getDescription())
+                                                .quantity(detail.getQuantity())
+                                                .dosageUnit(detail.getDosageUnit())
+                                                .instruction(detail.getInstruction())
+                                                .build())
+                                .toList();
+        }
+
     @Override
     @Transactional
     public ReceptionRecord updateReceptionSlip(long id, UpdateReceptionSlipRequest request) {
@@ -247,9 +330,7 @@ public class ReceptionServiceImpl implements ReceptionService {
                         record.setExamReason(request.getExamReason().trim());
                 }
 
-                if (request.getSymptomDescription() != null && !request.getSymptomDescription().isBlank()) {
-                        record.setSymptomDescription(request.getSymptomDescription());
-                }
+                // symptomDescription field removed; use examReason for storing reason/description
                 if (request.getNote() != null) {
                         record.setNote(request.getNote());
                 }

@@ -93,6 +93,44 @@ const toNumber = (rawValue) => {
     return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const toServiceKey = (service) => {
+    const raw = service?.serviceId ?? service?.id ?? service?.name;
+    return String(raw ?? '').trim().toLowerCase();
+};
+
+const mergeUsedServices = (assignedServices = [], selectedServices = []) => {
+    const serviceMap = new Map();
+
+    selectedServices.forEach((service) => {
+        const key = toServiceKey(service);
+        if (!key) return;
+        serviceMap.set(key, { ...service });
+    });
+
+    assignedServices.forEach((service) => {
+        const key = toServiceKey(service);
+        if (!key) return;
+
+        const current = serviceMap.get(key);
+        if (!current) {
+            serviceMap.set(key, { ...service });
+            return;
+        }
+
+        serviceMap.set(key, {
+            ...current,
+            ...service,
+            name: service?.name || current?.name || 'Dịch vụ',
+            status: service?.status || current?.status || 'pending',
+            technicianName: service?.technicianName || current?.technicianName || 'Chưa gán',
+            quantity: Number(service?.quantity ?? current?.quantity ?? 1) || 1,
+            price: toNumber(service?.price ?? current?.price),
+        });
+    });
+
+    return Array.from(serviceMap.values());
+};
+
 const isCompletedStatus = (rawStatus) => {
     const status = String(rawStatus || '').trim().toLowerCase();
     return status === 'completed' || status === 'hoàn thành' || status === 'paid' || status === 'đã thanh toán';
@@ -180,24 +218,7 @@ export default function ServiceOrder() {
                     : [];
                 const selectedServices = toArray(paraclinicalResponse?.normalizedData).map(mapParaclinicalItem);
 
-                const selectedByServiceId = new Map();
-                selectedServices.forEach((service) => {
-                    const serviceId = String(service?.serviceId || service?.id || '');
-                    if (serviceId) {
-                        selectedByServiceId.set(serviceId, service);
-                    }
-                });
-
-                const mergedServices = assignedServices.map((service) => {
-                    const matched = selectedByServiceId.get(String(service.serviceId || service.id));
-                    return matched
-                        ? {
-                            ...service,
-                            technicianName: matched.technicianName || service.technicianName,
-                            status: matched.status || service.status,
-                        }
-                        : service;
-                });
+                const mergedServices = mergeUsedServices(assignedServices, selectedServices);
 
                 setReceptionDetail(receptionData || null);
                 setTreatmentDetail(treatmentData || null);
@@ -273,6 +294,26 @@ export default function ServiceOrder() {
         return isReadonlyReceptionStatus(receptionDetail?.status);
     }, [receptionDetail]);
 
+    const shouldHideConclusionTab = useMemo(() => {
+        if (!defaultClinicalService) return false;
+        return !isCompletedStatus(defaultClinicalService.status);
+    }, [defaultClinicalService]);
+
+    const tabs = useMemo(() => {
+        const nextTabs = ['Dịch vụ'];
+        if (!shouldHideConclusionTab) {
+            nextTabs.push('Kết luận phiếu khám');
+        }
+        nextTabs.push('Lịch sử điều trị');
+        return nextTabs;
+    }, [shouldHideConclusionTab]);
+
+    useEffect(() => {
+        if (shouldHideConclusionTab && activeTab === 'Kết luận phiếu khám') {
+            setActiveTab('Dịch vụ');
+        }
+    }, [activeTab, shouldHideConclusionTab]);
+
     const handleExecute = async () => {
         if (isReadonlyMode || isDefaultServiceCompleted) {
             return;
@@ -342,7 +383,6 @@ export default function ServiceOrder() {
         setShowFinishModal(true);
     };
 
-    const tabs = ['Dịch vụ', 'Kết luận phiếu khám', 'Lịch sử điều trị'];
     const conclusionOptions = ['Cận lâm sàng', 'Điều trị nội trú', 'Điều trị ngoại trú', 'Kết thúc cho về'];
 
     return (
@@ -450,7 +490,6 @@ export default function ServiceOrder() {
                                                     return (
                                                         <>
                                                             <span className="so-price-val">{lineAmount.toLocaleString('vi-VN')}đ</span>
-                                                            <span className="so-price-unit"> ({unitPrice.toLocaleString('vi-VN')}đ /lượt x{quantity})</span>
                                                         </>
                                                     );
                                                 })()}

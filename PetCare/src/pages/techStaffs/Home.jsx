@@ -1,104 +1,105 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search } from 'lucide-react';
 import TechTopHeader from '../../components/techStaffs/TechTopHeader';
 import TechStatusTabs from '../../components/techStaffs/TechStatusTabs';
 import TechTaskCard from '../../components/techStaffs/TechTaskCard';
 import { TECH_PATHS, buildTechRecordResultPath } from '../../routes/techPaths';
+import techService from '../../api/techService';
 import './Home.css';
 
-const tasksSeed = [
-    {
-        id: 1,
-        title: 'Xét nghiệm nước tiểu',
-        requester: 'Nguyễn Văn An',
-        petName: 'Kuro',
-        status: 'processing'
-    },
-    {
-        id: 2,
-        title: 'Xét nghiệm nước tiểu',
-        requester: 'Nguyễn Văn An',
-        petName: 'Kuro',
-        status: 'processing',
-    },
-    {
-        id: 3,
-        title: 'Xét nghiệm nước tiểu',
-        requester: 'Nguyễn Văn An',
-        petName: 'Kuro',
-        status: 'processing'
-    },
-    {
-        id: 4,
-        title: 'Xét nghiệm nước tiểu',
-        requester: 'Trần Thị Bích',
-        petName: 'Milo',
-        status: 'queued'
-    },
-    {
-        id: 5,
-        title: 'Siêu âm tim',
-        requester: 'Lê Duy Tuấn',
-        petName: 'Luna',
-        status: 'queued'
-    },
-    {
-        id: 6,
-        title: 'Xét nghiệm máu',
-        requester: 'Nguyễn Văn An',
-        petName: 'Mochi',
-        status: 'queued'
-    },
-    {
-        id: 7,
-        title: 'Xét nghiệm nước tiểu',
-        requester: 'Nguyễn Văn An',
-        petName: 'Kuro',
-        status: 'done'
-    },
-    {
-        id: 8,
-        title: 'Xét nghiệm nước tiểu',
-        requester: 'Nguyễn Văn An',
-        petName: 'Kuro',
-        status: 'done',
-    },
-    {
-        id: 9,
-        title: 'Xét nghiệm nước tiểu',
-        requester: 'Nguyễn Văn An',
-        petName: 'Kuro',
-        status: 'done'
-    }
-];
+const STATUS_TO_API = {
+    queued: 'WAITING_EXECUTION',
+    processing: 'IN_PROGRESS',
+    done: 'COMPLETED',
+};
+
 const TechHome = () => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('done');
+    const [activeTab, setActiveTab] = useState('queued');
     const [searchTerm, setSearchTerm] = useState('');
+    const [tasks, setTasks] = useState([]);
+    const [stats, setStats] = useState({ waitingCount: 0, inProgressCount: 0, completedCount: 0, totalCount: 0 });
+    const [isLoading, setIsLoading] = useState(false);
+    const [loadError, setLoadError] = useState('');
+    const [actionTaskId, setActionTaskId] = useState(null);
 
-    const tabs = useMemo(() => {
-        const count = (status) => tasksSeed.filter((task) => task.status === status).length;
-        return [
-            { key: 'queued', label: 'Chờ thực hiện', count: count('queued') },
-            { key: 'processing', label: 'Đang thực hiện', count: count('processing') },
-            { key: 'done', label: 'Đã hoàn thành', count: count('done') },
-            { key: 'all', label: 'Tất cả', count: tasksSeed.length }
-        ];
-    }, []);
+    useEffect(() => {
+        let isMounted = true;
 
-    const filteredTasks = useMemo(() => {
-        const keyword = searchTerm.trim().toLowerCase();
+        const fetchTasks = async () => {
+            setIsLoading(true);
+            setLoadError('');
 
-        return tasksSeed.filter((task) => {
-            const byStatus = activeTab === 'all' || task.status === activeTab;
-            const searchText = `${task.title} ${task.requester} ${task.petName}`.toLowerCase();
-            const byKeyword = !keyword || searchText.includes(keyword);
-            return byStatus && byKeyword;
-        });
+            try {
+                const status = activeTab === 'all' ? undefined : STATUS_TO_API[activeTab];
+                const response = await techService.getMyAssignedServices({
+                    status,
+                    keyword: searchTerm.trim() || undefined,
+                });
+
+                if (!isMounted) return;
+                setTasks(response?.data?.items || []);
+                setStats({
+                    waitingCount: Number(response?.data?.waitingCount || 0),
+                    inProgressCount: Number(response?.data?.inProgressCount || 0),
+                    completedCount: Number(response?.data?.completedCount || 0),
+                    totalCount: Number(response?.data?.totalCount || 0),
+                });
+            } catch {
+                if (!isMounted) return;
+                setTasks([]);
+                setLoadError('Không thể tải danh sách công việc.');
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        fetchTasks();
+
+        return () => {
+            isMounted = false;
+        };
     }, [activeTab, searchTerm]);
 
+    const tabs = useMemo(() => {
+        return [
+            { key: 'queued', label: 'Chờ thực hiện', count: stats.waitingCount },
+            { key: 'processing', label: 'Đang thực hiện', count: stats.inProgressCount },
+            { key: 'done', label: 'Đã hoàn thành', count: stats.completedCount },
+            { key: 'all', label: 'Tất cả', count: stats.totalCount },
+        ];
+    }, [stats]);
+
+    const actionMode = useMemo(() => {
+        if (activeTab === 'queued') return 'start';
+        if (activeTab === 'processing') return 'record';
+        return null;
+    }, [activeTab]);
+
     const handleOpenTask = (selectedTask) => {
+        navigate(buildTechRecordResultPath(selectedTask.id));
+    };
+
+    const handleTaskAction = async (selectedTask) => {
+        if (!selectedTask?.id) {
+            return;
+        }
+
+        if (actionMode === 'start') {
+            try {
+                setActionTaskId(selectedTask.id);
+                await techService.startMyAssignedService(selectedTask.id);
+            } catch {
+                setLoadError('Không thể bắt đầu công việc, vui lòng thử lại.');
+                return;
+            } finally {
+                setActionTaskId(null);
+            }
+        }
+
         navigate(buildTechRecordResultPath(selectedTask.id));
     };
 
@@ -126,16 +127,19 @@ const TechHome = () => {
                 <TechStatusTabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
                 <section className="tech-task-list">
-                    {filteredTasks.map((task) => (
+                    {loadError && <div className="tech-empty-state">{loadError}</div>}
+                    {!loadError && isLoading && <div className="tech-empty-state">Đang tải danh sách công việc...</div>}
+                    {!loadError && !isLoading && tasks.map((task) => (
                         <TechTaskCard
                             key={task.id}
                             task={task}
-                            isProcessingTab={activeTab === 'processing'}
                             onOpen={handleOpenTask}
-                            onRecordResult={handleOpenTask}
+                            actionMode={actionMode}
+                            onAction={handleTaskAction}
+                            isActionLoading={actionTaskId === task.id}
                         />
                     ))}
-                    {filteredTasks.length === 0 && (
+                    {!loadError && !isLoading && tasks.length === 0 && (
                         <div className="tech-empty-state">Không có công việc phù hợp bộ lọc.</div>
                     )}
                 </section>

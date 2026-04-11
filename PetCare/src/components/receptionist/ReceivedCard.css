@@ -1,10 +1,18 @@
 .received-card {
     background-color: #fff;
     border-radius: 16px;
-    padding: 14px 14px 12px;
-    border: 1px solid #dcebe5;
-    box-shadow: 0 2px 10px rgba(13, 148, 136, 0.06);
+    padding: 18px 18px 16px;
+    border: 1px solid #e6f0ea;
+    box-shadow: 0 1px 6px rgba(13, 148, 136, 0.04);
     font-family: "Roboto", Helvetica, Arial, sans-serif;
+}
+
+.received-card.clickable {
+    cursor: pointer;
+}
+
+.received-card.clickable:hover {
+    box-shadow: 0 2px 10px rgba(13, 148, 136, 0.08);
 }
 
 .rc-card-header {
@@ -12,7 +20,6 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 8px;
-    margin-bottom: 10px;
 }
 
 .rc-card-main-meta {
@@ -67,8 +74,8 @@
 .rc-card-created {
     font-size: 12px;
     line-height: 1.35;
-    color: #8f949b;
-    margin: 5px 0 0;
+    color: #9aa0a6;
+    margin: 8px 0 8px;
 }
 
 .rc-card-summary-chip {
@@ -81,14 +88,14 @@
 
 .rc-divider {
     border: none;
-    border-top: 1px solid #e6e6e6;
-    margin: 12px 0;
+    border-top: 1px solid #eef3f1;
+    margin: 8px 0 12px;
 }
 
 .rc-card-pets {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     margin-bottom: 12px;
 }
 
@@ -96,34 +103,59 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border: 1px solid #dfe6e3;
-    border-radius: 10px;
-    background-color: #f7faf9;
-    padding: 8px 10px;
+    border: none;
+    border-radius: 12px;
+    background-color: transparent;
+    padding: 0;
+    margin-top: 6px;
 }
 
 .rc-card-pet-details {
     display: flex;
     align-items: center;
-    flex-wrap: nowrap;
-    gap: 10px;
+    gap: 8px;
     flex: 1;
     min-width: 0;
     color: #4b5563;
 }
 
-.rc-card-pet-name {
-    font-size: clamp(16px, 4.1vw, 18px);
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-right: 2px;
-}
-
-.rc-card-pet-breed {
-    font-size: clamp(12px, 3.1vw, 13px);
-    white-space: nowrap;
+.rc-card-pet-pill {
     display: flex;
     align-items: center;
+    gap: 12px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 10px 14px;
+    border: 1px solid #e6efec;
+    box-shadow: 0 1px 2px rgba(15, 107, 92, 0.03);
+    width: 100%;
+}
+
+.rc-card-pet-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.rc-card-pet-meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #9ca3af;
+    font-size: 12px;
+}
+
+.rc-card-pet-age,
+.rc-card-pet-weight {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #9ca3af;
+}
+
+.rc-card-pet-weight svg {
+    vertical-align: middle;
+    color: #9ca3af;
 }
 
 .rc-card-pet-stat {
@@ -148,7 +180,7 @@
 .rc-card-amount {
     color: #f04438;
     font-weight: 400;
-    font-size: 1.5rem !important;
+    font-size: 1.3rem !important;
 }
 
 .rc-card-source {
@@ -168,7 +200,7 @@
     padding: 10px 20px;
     border-radius: 12px;
     font-size: clamp(15px, 3.8vw, 17px);
-    font-weight: 700;
+    font-weight: 500;
     line-height: 1.15;
     cursor: pointer;
     border: none;
@@ -210,7 +242,7 @@
     }
 
     .rc-card-pet-name {
-        font-size: clamp(16px, 4.4vw, 18px);
+        font-size: 14px;
     }
 
     .rc-card-amount {

@@ -11,6 +11,7 @@ import paymentService from '../../api/paymentService';
 import customerService from '../../api/customerService';
 import authService from '../../api/authService';
 import useHeaderProfile from '../../hooks/useHeaderProfile';
+import { toTitleCase } from '../../utils/textFormat';
 import './TodayOrders.css';
 
 const MONTH_NAMES = [
@@ -18,6 +19,12 @@ const MONTH_NAMES = [
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+const SPECIES_LABELS = {
+    cho: 'Chó',
+    meo: 'Mèo',
+    khac: 'Khác',
+};
 
 const ORDER_STATUS = {
     RECEIVED: 'chờ thực hiện',
@@ -161,7 +168,7 @@ const buildCustomerAvatar = (name) => {
 const normalizeClient = (client = {}) => ({
     id: client?.id,
     customerId: client?.id,
-    customerName: client?.fullName || client?.name || 'Khách hàng',
+    customerName: toTitleCase(client?.fullName || client?.name || 'Khách hàng') || 'Khách hàng',
     phone: client?.phoneNumber || client?.phone || '--',
     pets: [],
     avatar: buildCustomerAvatar(client?.fullName || client?.name),
@@ -287,7 +294,7 @@ const TodayOrders = () => {
             return {
                 id: record?.id,
                 customerId: record?.client?.id,
-                customerName: record?.client?.fullName || 'Khách hàng',
+                customerName: toTitleCase(record?.client?.fullName || 'Khách hàng') || 'Khách hàng',
                 phone: record?.client?.phoneNumber || '--',
                 ticketId: `REC${record?.id || ''}`,
                 status: mappedStatus,
@@ -305,10 +312,14 @@ const TodayOrders = () => {
                 pets: [
                     {
                         id: record?.pet?.id,
-                        name: record?.pet?.name || 'Chưa có tên',
-                        breed: record?.pet?.breed || record?.pet?.species || '--',
+                        name: toTitleCase(record?.pet?.name || 'Chưa có tên') || 'Chưa có tên',
+                        species: String(record?.pet?.species || '').toLowerCase(),
+                        speciesLabel: (SPECIES_LABELS[String(record?.pet?.species || '').toLowerCase()] || record?.pet?.species || '').trim(),
+                        breed: record?.pet?.breed || '',
+                        displayBreed: toTitleCase(`${(SPECIES_LABELS[String(record?.pet?.species || '').toLowerCase()] || record?.pet?.species || '').trim()} ${record?.pet?.breed || ''}`.trim()),
+                        dateOfBirth: record?.pet?.dateOfBirth || '',
                         gender: String(record?.pet?.gender || '').toLowerCase() === 'female' ? 'female' : 'male',
-                        weight: record?.pet?.weight ? `${record?.pet?.weight}kg` : '--',
+                        weight: record?.weight ?? record?.pet?.weight ?? null,
                     },
                 ],
                 sourceOrder: null,
@@ -323,8 +334,10 @@ const TodayOrders = () => {
         const enrichOrderTotals = async (mappedOrders) => {
             const candidates = mappedOrders.filter((order) =>
                 order?.id
-                && !order?.totalAmount
-                && (order?.status === ORDER_STATUS.WAITING_PAYMENT || order?.status === ORDER_STATUS.PAID)
+                && (
+                    order?.status === ORDER_STATUS.WAITING_PAYMENT
+                    || (order?.status === ORDER_STATUS.PAID && !order?.totalAmount)
+                )
             );
 
             if (candidates.length === 0) {
@@ -341,8 +354,8 @@ const TodayOrders = () => {
                     return;
                 }
                 const orderId = candidates[index]?.id;
-                const totalAmount = Number(result.value?.data?.totalAmount || 0);
-                if (!orderId || totalAmount <= 0) {
+                const totalAmount = Number(result.value?.data?.totalAmount);
+                if (!orderId || !Number.isFinite(totalAmount)) {
                     return;
                 }
                 totalById.set(orderId, formatCurrency(totalAmount));
@@ -855,21 +868,36 @@ const TodayOrders = () => {
                         {!isLoadingOrders && !isSearchingCustomers && receivedCustomers.length > 0 ? (
                             <div className="to-customers-list">
                                 {receivedCustomers.map((c) => (
-                                    <ReceptionCard
-                                        key={c.id}
-                                        name={c.customerName}
-                                        phone={c.phone}
-                                        avatar={c.avatar}
-                                        onViewDetail={() => handleOpenReceivedDetail(c)}
-                                        onAdd={() =>
-                                            handleGoToNewReception({
-                                                id: c.customerId,
-                                                name: c.customerName,
-                                                phone: c.phone,
-                                                pets: c.pets || [],
-                                            })
-                                        }
-                                    />
+                                    c?.receptionRecord ? (
+                                        <ReceivedCard
+                                            key={c.id}
+                                            customerName={c.customerName}
+                                            phone={c.phone}
+                                            status={c.statusLabel}
+                                            createdAt={c.createdAt}
+                                            pets={c.pets || []}
+                                            selectedPetId={c?.receptionRecord?.pet?.id}
+                                            showFooter={false}
+                                            onCardClick={() => handleOpenReceivedDetail(c)}
+                                        />
+                                    ) : (
+                                        <ReceptionCard
+                                            key={c.id}
+                                            name={c.customerName}
+                                            phone={c.phone}
+                                            avatar={c.avatar}
+                                            pets={c.pets || []}
+                                            onViewDetail={() => handleOpenReceivedDetail(c)}
+                                            onAdd={() =>
+                                                handleGoToNewReception({
+                                                    id: c.customerId,
+                                                    name: c.customerName,
+                                                    phone: c.phone,
+                                                    pets: c.pets || [],
+                                                })
+                                            }
+                                        />
+                                    )
                                 ))}
                             </div>
                         ) : !isLoadingOrders && !isSearchingCustomers ? (
@@ -900,12 +928,15 @@ const TodayOrders = () => {
                                 status={order.statusLabel}
                                 createdAt={order.createdAt}
                                 pets={order.pets}
+                                selectedPetId={order?.receptionRecord?.pet?.id}
+                                showPets={false}
+                                showFooter={order.status === ORDER_STATUS.WAITING_PAYMENT}
                                 sourceOrder={order.sourceOrder}
                                 serviceSummary={order.serviceSummary}
                                 totalAmount={order.totalAmount}
                                 paymentEnabled={order.paymentEnabled}
                                 paymentButtonLabel={
-                                    order.status === ORDER_STATUS.PAID ? 'Đã thanh toán' : 'Tổng hóa đơn'
+                                    order.status === ORDER_STATUS.PAID ? 'Đã thanh toán' : 'Thanh toán'
                                 }
                                 hideSource={order.hideSource}
                                 onPayment={() => handleGoToPayment(order)}

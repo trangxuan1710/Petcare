@@ -1,0 +1,248 @@
+.tms-page {
+    min-height: 100vh;
+    background: #f4f6f6;
+    font-family: "Roboto", sans-serif;
+    color: #1f2937;
+}
+
+.tms-header {
+    height: 70px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    background: #ffffff;
+    border-bottom: 1px solid #e8eced;
+}
+
+.tms-header h1 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 700;
+}
+
+.tms-icon-btn {
+    border: none;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.tms-search-box {
+    margin: 12px 16px 0;
+    background: #ffffff;
+    border: 1px solid #e0e5e7;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    height: 42px;
+}
+
+.tms-search-box input {
+    border: none;
+    outline: none;
+    width: 100%;
+    background: transparent;
+    font-size: 14px;
+}
+
+.tms-content {
+    padding: 14px 16px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tms-empty {
+    background: #ffffff;
+    border: 1px dashed #c9d8d2;
+    border-radius: 14px;
+    text-align: center;
+    padding: 18px;
+    color: #6b7780;
+    font-size: 14px;
+}
+
+.tms-card {
+    background: #ffffff;
+    border: 1px solid #e5e9eb;
+    border-radius: 14px;
+    padding: 12px 12px 10px;
+}
+
+.tms-card.is-selected {
+    border-color: #d8e7e2;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.tms-item-head {
+    display: grid;
+    grid-template-columns: 24px 62px 1fr;
+    gap: 10px;
+    align-items: start;
+}
+
+.tms-check {
+    display: inline-flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 18px;
+}
+
+.tms-check input {
+    width: 16px;
+    height: 16px;
+    accent-color: #1c9b84;
+    cursor: pointer;
+}
+
+.tms-thumb {
+    width: 62px;
+    height: 62px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.tms-item-main {
+    min-width: 0;
+}
+
+.tms-main-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.tms-main-row strong {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+}
+
+.tms-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+}
+
+.tms-desc {
+    margin: 4px 0 0;
+    color: #8b9198;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.tms-meta-row {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: #4f5660;
+    font-size: 12px;
+}
+
+.tms-meta-row span:last-child {
+    font-weight: 500;
+}
+
+.tms-controls {
+    margin-top: 12px;
+    margin-left: 96px;
+    padding-top: 12px;
+    border-top: 1px solid #edf1f2;
+    display: grid;
+    grid-template-columns: 1fr 78px;
+    gap: 10px;
+}
+
+.tms-stepper {
+    border: 1px solid #dfe5e8;
+    border-radius: 11px;
+    height: 38px;
+    display: grid;
+    grid-template-columns: 36px 1fr 36px;
+    align-items: center;
+    background: #fff;
+}
+
+.tms-stepper button {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+}
+
+.tms-stepper span {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.tms-unit-select {
+    border: 1px solid #dfe5e8;
+    border-radius: 11px;
+    height: 38px;
+    padding: 0 10px;
+    font-size: 13px;
+    color: #4b5563;
+    background: #fff;
+}
+
+.tms-note {
+    margin-top: 8px;
+    margin-left: 96px;
+    width: calc(100% - 96px);
+    height: 34px;
+    border: 1px solid #e1e7ea;
+    border-radius: 10px;
+    padding: 0 10px;
+    font-size: 13px;
+}
+
+.tms-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: #eff3f1;
+    border-top: 1px solid #dce6e2;
+    padding: 10px 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.tms-btn-outline,
+.tms-btn-primary {
+    height: 46px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.tms-btn-outline {
+    background: #ffffff;
+    border: 1.5px solid #14957d;
+    color: #14957d;
+}
+
+.tms-btn-primary {
+    background: #14957d;
+    border: none;
+    color: #ffffff;
+}

@@ -19,6 +19,66 @@
     gap: 14px;
 }
 
+.staff-payment-method-card {
+    background: #ffffff;
+    border: 1px solid #e9efed;
+    border-radius: 16px;
+    padding: 14px;
+    box-shadow: 0 1px 4px 0 rgba(28, 155, 132, 0.06), 0 2px 12px 0 rgba(28, 155, 132, 0.08);
+}
+
+.staff-payment-method-title {
+    margin: 0 0 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #22313a;
+}
+
+.staff-payment-method-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.staff-payment-method-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #dbe7e4;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #24323b;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.staff-payment-method-option.is-selected {
+    border-color: #13937c;
+    background: #f2fbf8;
+}
+
+.staff-payment-method-option input {
+    accent-color: #13937c;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+}
+
+.staff-payment-method-option span {
+    font-weight: 600;
+}
+
+.staff-payment-method-option input:disabled + span {
+    opacity: 0.6;
+}
+
+.staff-payment-method-empty {
+    margin: 0;
+    font-size: 13px;
+    color: #7a8891;
+}
+
 .staff-payment-error {
     margin: 10px 4px 0;
     color: #b42318;
@@ -106,4 +166,119 @@
     background: url('https://randomuser.me/api/portraits/men/32.jpg') center/cover no-repeat;
     border: 2px solid #ffffff;
     box-shadow: 0 8px 16px rgba(16, 24, 40, 0.16);
+}
+
+.staff-payment-qr-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(16, 24, 40, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 420;
+}
+
+.staff-payment-qr-modal {
+    width: min(420px, 100%);
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 16px;
+    box-shadow: 0 20px 48px rgba(8, 16, 24, 0.25);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.staff-payment-qr-modal h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #132029;
+}
+
+.staff-payment-qr-subtitle {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: #3c4d57;
+}
+
+.staff-payment-qr-account-name {
+    margin: 4px 0 12px;
+    font-size: 13px;
+    color: #0e7160;
+    font-weight: 700;
+}
+
+.staff-payment-qr-image {
+    width: min(320px, 100%);
+    border-radius: 14px;
+    border: 1px solid #deece8;
+    background: #ffffff;
+}
+
+.staff-payment-qr-amount {
+    margin: 12px 0 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #15222a;
+}
+
+.staff-payment-qr-meta {
+    margin: 4px 0 14px;
+    font-size: 12px;
+    color: #61737c;
+}
+
+.staff-payment-qr-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.staff-payment-qr-btn {
+    height: 42px;
+    border-radius: 12px;
+    border: none;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.staff-payment-qr-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.staff-payment-qr-btn-outline {
+    border: 1px solid #138f79;
+    background: #ffffff;
+    color: #138f79;
+}
+
+.staff-payment-qr-btn-primary {
+    background: #138f79;
+    color: #ffffff;
+}
+
+@media (max-width: 640px) {
+    .staff-payment-method-card {
+        padding: 12px;
+    }
+
+    .staff-payment-method-option {
+        font-size: 13px;
+        padding: 9px 10px;
+    }
+
+    .staff-payment-qr-modal {
+        border-radius: 16px;
+        padding: 14px;
+    }
+
+    .staff-payment-qr-actions {
+        grid-template-columns: 1fr;
+    }
 }

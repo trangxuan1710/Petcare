@@ -20,6 +20,9 @@ public class Medicine {
     @Column(nullable = false)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
     private int stockQuantity;
 
     private String unit;

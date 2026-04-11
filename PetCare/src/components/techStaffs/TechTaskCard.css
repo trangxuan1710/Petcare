@@ -80,6 +80,11 @@
     cursor: pointer;
 }
 
+.tech-task-action-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
 .tech-task-action-btn:hover {
     background: #f5fbf9;
 }

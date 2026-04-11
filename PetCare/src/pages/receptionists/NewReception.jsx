@@ -7,19 +7,11 @@ import customerService from '../../api/customerService';
 import petService from '../../api/petService';
 import receptionService from '../../api/receptionService';
 import userService from '../../api/userService';
+import { toTitleCase } from '../../utils/textFormat';
 import './NewReception.css';
 
-const EXAM_REASON_OPTIONS = {
-    behohap: 'Bệnh hô hấp',
-    tieuhoa: 'Bệnh tiêu hóa',
-    dalieu: 'Bệnh da liễu',
-    khac: 'Khác',
-};
+// Exam reason will be provided as a single-line text input (Vietnamese)
 
-const EXAM_TYPE_OPTIONS = {
-    khammoi: 'lâm sàng',
-    taikham: 'ngoại trú',
-};
 
 const PET_BREED_OPTIONS = {
     cho: [
@@ -54,15 +46,60 @@ const SPECIES_LABELS = {
     khac: 'Khác',
 };
 
-const formatPetWeight = (pet) => {
-    if (pet?.weight == null || pet?.weight === '') return '--kg';
-    if (typeof pet.weight === 'number') return `${pet.weight}kg`;
+const RECEPTION_ALREADY_OPEN_CODE = 1020;
+const RECEPTION_ALREADY_OPEN_MESSAGE = 'There is an existing open reception for this pet';
 
-    const rawWeight = String(pet.weight).trim();
-    if (!rawWeight) return '--kg';
-    if (/kg$/i.test(rawWeight)) return rawWeight;
-    return `${rawWeight}kg`;
+const extractApiErrorMessage = (error, fallbackMessage) => {
+    const apiCode = Number(error?.response?.data?.code);
+    const apiMessage = String(
+        error?.response?.data?.message
+        || error?.response?.data?.error
+        || error?.response?.data?.detail
+        || ''
+    ).trim();
+
+    if (apiCode === RECEPTION_ALREADY_OPEN_CODE || apiMessage === RECEPTION_ALREADY_OPEN_MESSAGE) {
+        return 'Thú cưng này đang có phiếu tiếp đón chưa hoàn thành. Vui lòng hoàn tất phiếu cũ trước khi tạo mới.';
+    }
+
+    if (apiMessage) {
+        return apiMessage;
+    }
+
+    const genericMessage = String(error?.message || '').trim();
+    if (genericMessage && !/status code\s*\d{3}/i.test(genericMessage)) {
+        return genericMessage;
+    }
+
+    return fallbackMessage;
 };
+
+const formatDisplayDate = (rawDate) => {
+    if (!rawDate) return '';
+    const value = String(rawDate).trim();
+    const exact = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (exact) {
+        return `${exact[3]}-${exact[2]}-${exact[1]}`;
+    }
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value;
+    const dd = String(parsed.getDate()).padStart(2, '0');
+    const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+    const yyyy = parsed.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
+};
+
+const resolvePetHasHistory = (pet) => {
+    if (!pet || typeof pet !== 'object') return false;
+    return Boolean(
+        pet?.hasHistory === true
+        || pet?.hasReceptionHistory === true
+        || pet?.hasSuccessfulReceptionHistory === true
+        || pet?.receptionRecordSuccess === true
+    );
+};
+
 
 const DropupSelect = ({
     value,
@@ -144,8 +181,7 @@ const NewReception = () => {
 
     const [isEmergency, setIsEmergency] = useState(false);
     const [weight, setWeight] = useState('');
-    const [reason, setReason] = useState('');
-    const [description, setDescription] = useState('');
+    const [description, setDescription] = useState(''); // now used as `examReason` single-line input
     const [examType, setExamType] = useState('');
     const [assignedDoctor, setAssignedDoctor] = useState('');
     const [doctorOptions, setDoctorOptions] = useState([]);
@@ -172,15 +208,33 @@ const NewReception = () => {
         [pets, selectedPet]
     );
 
+    const displayCustomerName = useMemo(
+        () => toTitleCase(customerName) || customerName || 'Khách hàng',
+        [customerName]
+    );
+
+    // when pet has no history, lock exam type as "khám mới"
+    useEffect(() => {
+        if (!selectedPetInfo) {
+            setExamType('');
+            return;
+        }
+
+        if (selectedPetInfo.hasHistory === false) {
+            setExamType('khammoi');
+        }
+    }, [selectedPetInfo]);
+
     const selectedPetBirthDate = useMemo(() => {
         if (!selectedPetInfo?.dateOfBirth) return '';
-        const rawDate = String(selectedPetInfo.dateOfBirth);
-        return rawDate.length >= 10 ? rawDate.slice(0, 10) : rawDate;
+        return formatDisplayDate(selectedPetInfo.dateOfBirth);
     }, [selectedPetInfo]);
 
     const selectedBreedOptions = useMemo(() => {
         return PET_BREED_OPTIONS[newPetSpecies] || [];
     }, [newPetSpecies]);
+
+    const isPetSelected = Boolean(selectedPet);
 
     const showToast = (type, message) => {
         setToast({ type, message });
@@ -192,17 +246,18 @@ const NewReception = () => {
         if (!customer) return;
 
         setCustomerId(customer?.id || null);
-        setCustomerName(customer?.name || customer?.fullName || '');
+        setCustomerName(toTitleCase(customer?.name || customer?.fullName || ''));
         setCustomerPhone(customer?.phone || customer?.phoneNumber || '');
 
         const incomingPets = (customer?.pets || []).map((pet, index) => ({
             id: pet?.id || `temp-${index}`,
-            name: pet?.name || 'Thú cưng',
+            name: toTitleCase(pet?.name || 'Thú cưng') || 'Thú cưng',
             species: pet?.species || '',
-            breed: pet?.breed || '',
+            breed: toTitleCase(pet?.breed || ''),
             dateOfBirth: pet?.dateOfBirth || '',
             weight: pet?.weight || '',
             gender: pet?.gender || '',
+            hasHistory: resolvePetHasHistory(pet),
         }));
 
         setPets(incomingPets);
@@ -277,12 +332,13 @@ const NewReception = () => {
         const petItems = petsResponse?.data || [];
         const mappedPets = petItems.map((pet) => ({
             id: pet?.id,
-            name: pet?.name || 'Thú cưng',
+            name: toTitleCase(pet?.name || 'Thú cưng') || 'Thú cưng',
             species: pet?.species || '',
-            breed: pet?.breed || '',
+            breed: toTitleCase(pet?.breed || ''),
             dateOfBirth: pet?.dateOfBirth || '',
             weight: pet?.weight || '',
             gender: pet?.gender || '',
+            hasHistory: resolvePetHasHistory(pet),
         }));
         setPets(mappedPets);
         if (mappedPets.length > 0) {
@@ -320,12 +376,13 @@ const NewReception = () => {
 
             const createdPet = {
                 id: pet.id,
-                name: pet.name || newPetName.trim(),
+                name: toTitleCase(pet.name || newPetName.trim()) || 'Thú cưng',
                 species: pet.species || newPetSpecies,
-                breed: pet.breed || newPetBreed.trim(),
+                breed: toTitleCase(pet.breed || newPetBreed.trim()),
                 dateOfBirth: pet.dateOfBirth || newPetDateOfBirth,
                 weight: pet.weight || '',
                 gender: pet.gender || '',
+                hasHistory: false,
             };
 
             setPets((prev) => [...prev, createdPet]);
@@ -337,8 +394,9 @@ const NewReception = () => {
             setNewPetDateOfBirth('');
             showToast('success', 'Tạo thú cưng thành công.');
         } catch (error) {
-            setSubmitError(error?.message || 'Không thể tạo thú cưng mới. Vui lòng thử lại.');
-            showToast('error', error?.message || 'Tạo thú cưng thất bại.');
+            const message = extractApiErrorMessage(error, 'Không thể tạo thú cưng mới. Vui lòng thử lại.');
+            setSubmitError(message);
+            showToast('error', message);
         }
     };
 
@@ -366,8 +424,8 @@ const NewReception = () => {
             if (!weight || Number.isNaN(weightValue) || weightValue <= 0) {
                 throw new Error('Vui lòng nhập cân nặng hợp lệ lớn hơn 0.');
             }
-            if (!reason) {
-                throw new Error('Vui lòng chọn lý do khám.');
+            if (!description || !description.trim()) {
+                throw new Error('Vui lòng nhập lý do khám.');
             }
             if (!selectedPet) {
                 throw new Error('Vui lòng chọn thú cưng hoặc tạo mới thú cưng trước khi tạo phiếu.');
@@ -378,19 +436,19 @@ const NewReception = () => {
                 petId: Number(selectedPet),
                 receptionistId,
                 doctorId,
-                examReason: EXAM_REASON_OPTIONS[reason] || reason,
-                symptomDescription: description || '',
+                examReason: description.trim(),
                 note: notes || '',
                 weight: weightValue,
-                examType: EXAM_TYPE_OPTIONS[examType] || 'lâm sàng',
+                examType: selectedPetInfo?.hasHistory === false ? 'khammoi' : (examType || null),
                 emergency: isEmergency,
             });
 
             navigate(RECEPTIONIST_PATHS.TODAY_ORDERS);
             showToast('success', 'Tạo phiếu tiếp đón thành công.');
         } catch (error) {
-            setSubmitError(error?.message || 'Không thể tạo phiếu tiếp đón. Vui lòng thử lại.');
-            showToast('error', error?.message || 'Tạo phiếu tiếp đón thất bại.');
+            const message = extractApiErrorMessage(error, 'Không thể tạo phiếu tiếp đón. Vui lòng thử lại.');
+            setSubmitError(message);
+            showToast('error', message);
         } finally {
             setIsSubmitting(false);
         }
@@ -416,7 +474,7 @@ const NewReception = () => {
                 <div className="nr-content">
                     <div className="nr-customer-section">
                         <div className="nr-customer-row">
-                            <h2 className="nr-customer-name">{customerName || 'Khách hàng'}</h2>
+                            <h2 className="nr-customer-name">{displayCustomerName}</h2>
                         </div>
                         <div className="nr-customer-sub-row">
                             <div className="nr-customer-phone">
@@ -440,7 +498,7 @@ const NewReception = () => {
                                 onClick={() => setSelectedPet(pet.id || pet.name)}
                             >
                                 <PawPrint size={14} />
-                                <span>{pet.name}</span>
+                                <span>{toTitleCase(pet.name) || pet.name}</span>
                             </button>
                         ))}
                         <button type="button" className="nr-pet-chip-add" onClick={() => setShowAddPetModal(true)}>
@@ -451,9 +509,9 @@ const NewReception = () => {
                     {selectedPetInfo && (
                         <div className="nr-pet-info-bar" aria-live="polite">
                             <div className="nr-pet-info-details nr-pet-info-details-single-line">
-                                <span className="nr-pet-info-name">{selectedPetInfo?.name || '---'}</span>
+                                <span className="nr-pet-info-name">{toTitleCase(selectedPetInfo?.name) || '---'}</span>
                                 <span className="nr-pet-info-breed">
-                                    {(SPECIES_LABELS[String(selectedPetInfo?.species || '').toLowerCase()] || selectedPetInfo?.species || '').trim()} {selectedPetInfo?.breed || ''}
+                                    {(SPECIES_LABELS[String(selectedPetInfo?.species || '').toLowerCase()] || selectedPetInfo?.species || '').trim()} {toTitleCase(selectedPetInfo?.breed || '')}
                                 </span>
                                 {String(selectedPetInfo?.gender || '').trim() && (
                                     <span className="nr-pet-info-stat">
@@ -477,6 +535,7 @@ const NewReception = () => {
                                     className="nr-input"
                                     value={weight}
                                     onChange={(e) => setWeight(e.target.value)}
+                                    disabled={!isPetSelected}
                                 />
                                 <span className="nr-input-suffix">kg</span>
                             </div>
@@ -494,26 +553,20 @@ const NewReception = () => {
                             </div>
                         </div>
 
-                        <div className="nr-field">
-                            <label className="nr-field-label">Lý do khám <span className="nr-required">*</span></label>
-                            <div className="nr-select-wrapper">
-                                <DropupSelect
-                                    value={reason}
-                                    onChange={setReason}
-                                    placeholder="-- Chọn lý do khám --"
-                                    options={[
-                                        { value: 'behohap', label: 'Bệnh hô hấp' },
-                                        { value: 'tieuhoa', label: 'Bệnh tiêu hóa' },
-                                        { value: 'dalieu', label: 'Bệnh da liễu' },
-                                        { value: 'khac', label: 'Khác' },
-                                    ]}
-                                />
-                            </div>
-                        </div>
+                        {/* Removed categorical reason select. Use single-line text input below as 'Lý do khám' */}
 
                         <div className="nr-field">
-                            <label className="nr-field-label">Mô tả</label>
-                            <textarea className="nr-textarea" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+                            <label className="nr-field-label">Lý do khám <span className="nr-required">*</span></label>
+                            <div className="nr-input-wrapper">
+                                <input
+                                    type="text"
+                                    className="nr-input"
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    disabled={!isPetSelected}
+                                    placeholder={isPetSelected ? 'Nhập lý do khám' : 'Chọn thú cưng để nhập lý do khám'}
+                                />
+                            </div>
                         </div>
 
                         <div className="nr-field">
@@ -527,6 +580,7 @@ const NewReception = () => {
                                         { value: 'khammoi', label: 'Khám mới' },
                                         { value: 'taikham', label: 'Tái khám' },
                                     ]}
+                                    disabled={!isPetSelected || (selectedPetInfo && selectedPetInfo.hasHistory === false)}
                                 />
                             </div>
                         </div>
@@ -546,6 +600,7 @@ const NewReception = () => {
                                                 value: String(doctor.id),
                                                 label: doctor.fullName,
                                             }))}
+                                            disabled={!isPetSelected}
                                         />
                                     )}
                                 </div>
@@ -563,11 +618,19 @@ const NewReception = () => {
 
                         <div className="nr-field">
                             <label className="nr-field-label">Lưu ý</label>
-                            <textarea className="nr-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} />
+                            <textarea className="nr-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} readOnly={!isPetSelected} />
                         </div>
 
                         <div className="nr-toggle-row">
-                            <div className={`nr-toggle ${isEmergency ? 'active' : ''}`} onClick={() => setIsEmergency(!isEmergency)}>
+                            <div
+                                className={`nr-toggle ${isEmergency ? 'active' : ''} ${!isPetSelected ? 'disabled' : ''}`}
+                                role="switch"
+                                aria-checked={isEmergency}
+                                aria-disabled={!isPetSelected}
+                                tabIndex={isPetSelected ? 0 : -1}
+                                onClick={() => { if (!isPetSelected) return; setIsEmergency(!isEmergency); }}
+                                onKeyDown={(e) => { if (!isPetSelected) return; if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsEmergency(!isEmergency); } }}
+                            >
                                 <div className="nr-toggle-thumb"></div>
                             </div>
                             <span className="nr-toggle-label">Cấp cứu</span>
@@ -577,7 +640,7 @@ const NewReception = () => {
 
                 <div className="nr-bottom-actions">
                     <button className="nr-btn-cancel" type="button" onClick={goBack}>Hủy bỏ</button>
-                    <button className="nr-btn-submit" type="button" onClick={handleCreateReception} disabled={isSubmitting}>
+                    <button className="nr-btn-submit" type="button" onClick={handleCreateReception} disabled={!isPetSelected || isSubmitting}>
                         {isSubmitting ? 'Đang tạo...' : 'Tạo phiếu'}
                     </button>
                 </div>

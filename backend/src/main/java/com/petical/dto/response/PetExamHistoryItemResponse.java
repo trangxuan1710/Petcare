@@ -27,8 +27,7 @@ public class PetExamHistoryItemResponse {
     private LocalDateTime examDate;
     @Schema(description = "Lý do khám")
     private String examReason;
-    @Schema(description = "Mô tả triệu chứng")
-    private String symptomDescription;
+    // 'symptomDescription' removed; description is stored in `examReason` now
     @Schema(description = "Ghi chú")
     private String note;
     @Schema(description = "Kết quả chung")

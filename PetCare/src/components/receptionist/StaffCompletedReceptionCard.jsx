@@ -1,6 +1,7 @@
 import React from 'react';
 import './StaffCompletedReceptionCard.css';
 import { Phone, Mars, Venus, Weight } from 'lucide-react';
+import { toTitleCase } from '../../utils/textFormat';
 
 const StaffCompletedReceptionCard = ({
     customer = "Nguyễn Anh Đức",
@@ -17,7 +18,7 @@ const StaffCompletedReceptionCard = ({
         <div className="completed-reception-card">
             <div className="card-header">
                 <div className="header-left">
-                    <h2 className="customer-name">{customer}</h2>
+                    <h2 className="customer-name">{toTitleCase(customer) || customer}</h2>
                     <div className="phone-row">
                         <Phone size={18} className="phone-icon" />
                         <span className="phone-number">{phone}</span>
@@ -36,8 +37,8 @@ const StaffCompletedReceptionCard = ({
             <div className="pet-info-box">
                 {pets.map((pet, index) => (
                     <div key={index} className="pet-tag">
-                        <span className="pet-name">{pet.name}</span>
-                        <span className="pet-breed">{pet.breed}</span>
+                        <span className="pet-name">{toTitleCase(pet.name) || pet.name}</span>
+                        <span className="pet-breed">{toTitleCase(pet.breed) || pet.breed}</span>
                         {pet.gender === 'male' ? (
                             <Mars size={18} className="gender-icon male" />
                         ) : (

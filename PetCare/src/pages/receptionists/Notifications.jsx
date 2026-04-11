@@ -4,6 +4,7 @@ import { Bell } from 'lucide-react';
 import ReceptionistLayout from '../../layouts/ReceptionistLayout';
 import { RECEPTIONIST_PATHS } from '../../routes/receptionistPaths';
 import notificationService from '../../api/notificationService';
+import { toTitleCase } from '../../utils/textFormat';
 import './Notifications.css';
 
 const Notifications = () => {
@@ -104,7 +105,7 @@ const Notifications = () => {
                                 <span className="rnotif-time">{item.time}</span>
                             </div>
                             <p className="rnotif-desc">
-                                Phiếu tiếp đón <strong>{item.orderCode}</strong> của khách hàng <strong>{item.customerName}</strong> đã hoàn thành. Hãy tiến hành thanh toán ngay!
+                                Phiếu tiếp đón <strong>{item.orderCode}</strong> của khách hàng <strong>{toTitleCase(item.customerName) || item.customerName}</strong> đã hoàn thành. Hãy tiến hành thanh toán ngay!
                             </p>
                         </div>
                     </button>

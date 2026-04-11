@@ -1,7 +1,7 @@
 .new-reception-page {
     display: flex;
     flex-direction: column;
-    height: 100vh;
+    min-height: 100vh;
     background-color: #F8FEFB;
     font-family: "Roboto", Helvetica, Arial, sans-serif;
     color: #1a1a1a;
@@ -17,6 +17,31 @@
     padding: 16px;
     background-color: #fff;
     border-bottom: 1px solid #f0f4f8;
+    /* fixed header so it never scrolls away */
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 220;
+    width: min(480px, 100%);
+    /* subtle shadow to separate from content when pinned */
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+.new-reception-page {
+    /* ensure content doesn't go under the fixed header */
+    padding-top: 72px; /* header height + gap */
+    /* allow scrolling within the page container but hide scrollbar for a mobile-like look */
+    height: 100vh;
+    overflow-y: auto;
+    -ms-overflow-style: none; /* IE/Edge */
+    scrollbar-width: none; /* Firefox */
+}
+
+.new-reception-page::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+    width: 0;
+    height: 0;
 }
 
 .nr-btn-icon {
@@ -45,8 +70,9 @@
 
 /* Content */
 .nr-content {
-    flex: 1;
-    overflow-y: auto;
+    flex: 1 0 auto;
+    /* allow content to grow so the page/body can scroll instead of this inner container */
+    overflow-y: visible;
     padding: 16px;
     padding-bottom: 100px;
 }
@@ -312,6 +338,15 @@
     color: #6b7280;
 }
 
+/* clearly style disabled inputs and textareas */
+.nr-input:disabled,
+.nr-textarea:disabled,
+.nr-input[disabled] {
+    background-color: #f3f4f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
 .nr-input-suffix {
     padding: 14px 16px 14px 0;
     font-size: 15px;
@@ -369,6 +404,14 @@
 .nr-dropup.is-disabled .nr-dropup-trigger {
     cursor: not-allowed;
     opacity: 0.7;
+}
+.nr-dropup.is-disabled .nr-dropup-text {
+    color: #9ca3af;
+}
+
+.nr-dropup-trigger[disabled] {
+    cursor: not-allowed;
+    opacity: 0.65;
 }
 
 .nr-dropup-text {
@@ -599,7 +642,8 @@
 }
 
 .nr-toggle.active {
-    background-color: #E43700;
+    /* green when active to match primary theme */
+    background-color: #209D80;
 }
 
 .nr-toggle-thumb {
@@ -622,6 +666,12 @@
     font-size: 15px;
     font-weight: 500;
     color: #333;
+}
+
+/* disabled toggle state (when control should not be interactive) */
+.nr-toggle.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* Bottom Actions */

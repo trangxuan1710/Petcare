@@ -1,6 +1,7 @@
 import React from 'react';
 import './TicketCard.css';
 import { Mars, Venus, Weight, AlertTriangle } from 'lucide-react';
+import { toTitleCase } from '../../utils/textFormat';
 
 const MaleIcon = () => <Mars size={12} color="#3b82f6" style={{ display: 'inline', marginLeft: '4px' }} />;
 const FemaleIcon = () => <Venus size={12} color="#ec4899" style={{ display: 'inline', marginLeft: '4px' }} />;
@@ -29,6 +30,10 @@ const TicketCard = ({
     services,
     onClick
 }) => {
+    const displayCustomerName = toTitleCase(customerName) || customerName;
+    const displayPetName = toTitleCase(pet?.name || 'Chưa có tên') || 'Chưa có tên';
+    const displayPetBreed = toTitleCase(pet?.breed || '') || '--';
+
     return (
         <div
             className="ticket-card"
@@ -44,7 +49,7 @@ const TicketCard = ({
         >
             <div className="ticket-header">
                 <div className="ticket-info-left">
-                    <h3 className="customer-name">{customerName}</h3>
+                    <h3 className="customer-name">{displayCustomerName}</h3>
                     <p className="datetime">{dateTime}</p>
                 </div>
                 {/* <div className="ticket-info-right">
@@ -54,9 +59,9 @@ const TicketCard = ({
             </div>
             <div className={`ticket-pet-info-box ${pet.hasAlert ? 'has-alert' : ''}`}>
                 <span className="ticket-pet-details">
-                    <span className="ticket-pet-name">{pet.name}</span>
+                    <span className="ticket-pet-name">{displayPetName}</span>
                     <span className="ticket-pet-breed">
-                        {pet.breed}
+                        {displayPetBreed}
                         {pet.gender === 'male' ? <MaleIcon /> : <FemaleIcon />}
                     </span>
                     <span className="ticket-pet-stat">

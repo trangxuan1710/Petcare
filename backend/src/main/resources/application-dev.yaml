@@ -6,7 +6,7 @@ spring:
   application:
     name: example
   datasource:
-    url: jdbc:mysql://mysql:3306/petical
+    url: jdbc:mysql://localhost:3306/petical
     username: root
     password: 12345
     driver-class-name: com.mysql.cj.jdbc.Driver

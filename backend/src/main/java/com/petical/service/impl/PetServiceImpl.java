@@ -136,6 +136,7 @@ public class PetServiceImpl implements PetService {
                 .map(rs -> PetExamHistoryServiceResponse.builder()
                     .serviceId(rs.getService().getId())
                     .serviceName(rs.getService().getName())
+                    .status(rs.getStatus() != null ? rs.getStatus().getValue() : null)
                     .build())
                 .toList();
 
@@ -174,6 +175,7 @@ public class PetServiceImpl implements PetService {
                 return PetExamHistoryMedicineResponse.builder()
                     .medicineId(detail.getMedicine().getId())
                     .medicineName(detail.getMedicine().getName())
+                    .description(detail.getMedicine().getDescription())
                     .quantity(detail.getQuantity())
                     .unit(detail.getMedicine().getUnit())
                     .dosage(dosage)
@@ -196,7 +198,6 @@ public class PetServiceImpl implements PetService {
                 .receptionTime(reception.getReceptionTime())
                 .examDate(examDate)
                 .examReason(reception.getExamReason())
-                .symptomDescription(reception.getSymptomDescription())
                 .note(reception.getNote())
                 .conclusion(examResult == null ? null : examResult.getConclusion())
                 .treatmentDirection(examResult == null || examResult.getTreatmentDirection() == null

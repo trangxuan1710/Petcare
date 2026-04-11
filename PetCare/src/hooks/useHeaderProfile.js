@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import userService from '../api/userService';
+import { toTitleCase } from '../utils/textFormat';
 
 const readLocalUser = () => {
     try {
@@ -10,7 +11,7 @@ const readLocalUser = () => {
 };
 
 const getDisplayName = (user, fallbackName) => {
-    return user?.fullName || user?.name || fallbackName;
+    return toTitleCase(user?.fullName || user?.name || fallbackName) || fallbackName;
 };
 
 const getRoleLabel = (role, fallbackRoleLabel) => {

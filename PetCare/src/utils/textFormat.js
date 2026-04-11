@@ -1,0 +1,22 @@
+export const toTitleCase = (value) => {
+    const text = String(value || '').trim();
+    if (!text) return '';
+
+    return text
+        .toLocaleLowerCase('vi-VN')
+        .split(/\s+/)
+        .map((word) => word.charAt(0).toLocaleUpperCase('vi-VN') + word.slice(1))
+        .join(' ');
+};
+
+export const toSentenceCase = (value) => {
+    const text = String(value || '').trim();
+    if (!text) return '';
+    const lowered = text.toLocaleLowerCase('vi-VN');
+    return lowered.charAt(0).toLocaleUpperCase('vi-VN') + lowered.slice(1);
+};
+
+export const toDisplayName = (value, fallback = '--') => {
+    const formatted = toTitleCase(value);
+    return formatted || fallback;
+};

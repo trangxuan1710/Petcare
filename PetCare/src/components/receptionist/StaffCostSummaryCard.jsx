@@ -29,6 +29,7 @@ const StaffCostSummaryCard = ({
         total: 750000,
     },
     paymentHistoryAmount = 0,
+    showPaymentHistory = true,
 }) => {
     const normalizedGroups = useMemo(
         () => (Array.isArray(costGroups) ? costGroups : []).map((group, index) => ({
@@ -146,20 +147,22 @@ const StaffCostSummaryCard = ({
                 <div className="payment-total"><span>Tổng thanh toán</span>{formatCurrency(paymentSummary?.total)}</div>
             </div>
 
-            <div className="payment-history">
-                <div className="history-head">
-                    <span>Lịch sử thanh toán</span>
-                    <strong>{formatCurrency(paymentHistoryAmount)}</strong>
-                </div>
-                {Number(paymentHistoryAmount || 0) > 0 ? (
-                    <div className="history-row">
-                        <span>Đã thanh toán</span>
+            {showPaymentHistory ? (
+                <div className="payment-history">
+                    <div className="history-head">
+                        <span>Lịch sử thanh toán</span>
                         <strong>{formatCurrency(paymentHistoryAmount)}</strong>
                     </div>
-                ) : (
-                    <div className="history-empty">Chưa có dữ liệu</div>
-                )}
-            </div>
+                    {Number(paymentHistoryAmount || 0) > 0 ? (
+                        <div className="history-row">
+                            <span>Đã thanh toán</span>
+                            <strong>{formatCurrency(paymentHistoryAmount)}</strong>
+                        </div>
+                    ) : (
+                        <div className="history-empty">Chưa có dữ liệu</div>
+                    )}
+                </div>
+            ) : null}
         </section>
     );
 };

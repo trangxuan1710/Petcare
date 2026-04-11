@@ -33,7 +33,7 @@ const getStockValue = (item) => {
 const mapMedicineItem = (item) => ({
     id: item?.id,
     name: item?.name || 'Thuoc vat tu',
-    desc: item?.description || item?.type || '',
+    desc: item?.description || item?.desc || item?.type || '',
     price: formatVnd(getPriceNumber(item)),
     unitPrice: getPriceNumber({ price: item?.unitPrice ?? item?.price }),
     boxPrice: getPriceNumber({ price: item?.boxPrice ?? item?.price }),

@@ -129,11 +129,36 @@ const mapMedicineToUi = (item) => ({
     },
 });
 
+const hydrateUploadedFilesFromDraft = (items) => (Array.isArray(items) ? items : [])
+    .map((item, index) => {
+        const file = item?.file || item;
+        if (!(file instanceof File)) return null;
+        return {
+            key: `${Date.now()}-${index}-${file.name}-${Math.random()}`,
+            file,
+            previewUrl: file.type?.startsWith('image/') ? URL.createObjectURL(file) : null,
+            fileName: item?.fileName || file.name,
+        };
+    })
+    .filter(Boolean);
+
+const serializeUploadedFilesForDraft = (items) => (Array.isArray(items) ? items : [])
+    .map((item) => {
+        const file = item?.file || item;
+        if (!(file instanceof File)) return null;
+        return {
+            file,
+            fileName: item?.fileName || file.name,
+        };
+    })
+    .filter(Boolean);
+
 export const RecordResult = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams();
     const treatmentSlipId = location.state?.treatmentSlipId;
+    const recordResultDraft = location.state?.recordResultDraft;
     const fileInputRef = useRef(null);
     const [isMedsExpanded, setIsMedsExpanded] = useState(true);
     const [conclusionText, setConclusionText] = useState('');
@@ -191,7 +216,20 @@ export const RecordResult = () => {
                     || treatmentData?.prescriptions
                 ).map(mapMedicineToUi);
                 const medicinesFromState = toArray(location.state?.selectedMedicines).map(mapMedicineToUi);
+                const medicinesFromDraft = toArray(recordResultDraft?.medsList).map(mapMedicineToUi);
                 const defaultClinicalServiceId = Number(defaultClinicalService?.serviceId || defaultClinicalService?.id || 1);
+                const hasDraftConclusion = Boolean(
+                    recordResultDraft
+                    && Object.prototype.hasOwnProperty.call(recordResultDraft, 'conclusionText')
+                );
+                const hasDraftSelectedConclusion = Boolean(
+                    recordResultDraft
+                    && Object.prototype.hasOwnProperty.call(recordResultDraft, 'selectedConclusion')
+                );
+                const hasDraftMedsExpanded = Boolean(
+                    recordResultDraft
+                    && Object.prototype.hasOwnProperty.call(recordResultDraft, 'isMedsExpanded')
+                );
 
                 const ensureMedicineService = (items) =>
                     items.map((medicine) => ({
@@ -205,18 +243,33 @@ export const RecordResult = () => {
                 setMedsList(
                     medicinesFromState.length > 0
                         ? ensureMedicineService(medicinesFromState)
+                        : medicinesFromDraft.length > 0
+                            ? ensureMedicineService(medicinesFromDraft)
                         : ensureMedicineService(medicinesFromApi)
                 );
                 setClinicalStartedAt(defaultClinicalService?.startedAt || null);
 
-                if (typeof treatmentData?.plan === 'string' && treatmentData.plan.trim()) {
+                if (hasDraftConclusion) {
+                    setConclusionText(String(recordResultDraft?.conclusionText || ''));
+                } else if (typeof treatmentData?.plan === 'string' && treatmentData.plan.trim()) {
                     setConclusionText(treatmentData.plan);
                 }
-                if (typeof treatmentData?.type === 'string' && treatmentData.type.trim()) {
+
+                if (hasDraftSelectedConclusion) {
+                    setSelectedConclusion(recordResultDraft?.selectedConclusion ?? null);
+                } else if (typeof treatmentData?.type === 'string' && treatmentData.type.trim()) {
                     const found = RADIO_OPTIONS.find((option) => option.label === treatmentData.type);
                     if (found) {
                         setSelectedConclusion(found.id);
                     }
+                }
+
+                if (Array.isArray(recordResultDraft?.uploadedFiles)) {
+                    setUploadedFiles(hydrateUploadedFilesFromDraft(recordResultDraft.uploadedFiles));
+                }
+
+                if (hasDraftMedsExpanded) {
+                    setIsMedsExpanded(Boolean(recordResultDraft?.isMedsExpanded));
                 }
             } catch {
                 if (!isMounted) return;
@@ -233,7 +286,7 @@ export const RecordResult = () => {
         return () => {
             isMounted = false;
         };
-    }, [id, treatmentSlipId, location.state?.selectedMedicines]);
+    }, [id, treatmentSlipId, location.state?.selectedMedicines, recordResultDraft]);
 
     const petInfo = useMemo(() => {
         const pet = receptionDetail?.pet;
@@ -266,6 +319,16 @@ export const RecordResult = () => {
             setShowDosageModal(false);
         }
     }, [isReadonlyMode]);
+
+    const uploadedImageFiles = useMemo(
+        () => uploadedFiles.filter((item) => item?.file?.type?.startsWith('image/')),
+        [uploadedFiles]
+    );
+
+    const uploadedDocumentFiles = useMemo(
+        () => uploadedFiles.filter((item) => !item?.file?.type?.startsWith('image/')),
+        [uploadedFiles]
+    );
 
     const handleConfirm = async () => {
         if (isSaving || isReadonlyMode) return;
@@ -302,7 +365,7 @@ export const RecordResult = () => {
             };
 
             if (id) {
-                await treatmentService.recordExamResult(id, payload, uploadedFiles);
+                await treatmentService.recordExamResult(id, payload, uploadedFiles.map(item => item.file || item));
                 const conclusionLabel = payload.conclusionType;
                 if (conclusionLabel === 'Kết thúc cho về') {
                     showToast('success', 'Đã chuyển phiếu sang chờ thanh toán.');
@@ -347,9 +410,38 @@ export const RecordResult = () => {
         if (isReadonlyMode) return;
         const files = Array.from(event.target.files || []);
         if (files.length === 0) return;
-        setUploadedFiles((prev) => [...prev, ...files]);
+
+        const nextItems = files.map((file) => ({
+            key: `${Date.now()}-${file.name}-${Math.random()}`,
+            file,
+            previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+            fileName: file.name,
+        }));
+
+        setUploadedFiles((prev) => [...prev, ...nextItems]);
         event.target.value = '';
     };
+
+    const handleRemoveSelectedImage = (targetKey) => {
+        if (isReadonlyMode) return;
+        setUploadedFiles((prev) => {
+            const target = prev.find((item) => item.key === targetKey);
+            if (target?.previewUrl?.startsWith('blob:')) {
+                URL.revokeObjectURL(target.previewUrl);
+            }
+            return prev.filter((item) => item.key !== targetKey);
+        });
+    };
+
+    useEffect(() => {
+        return () => {
+            uploadedFiles.forEach((image) => {
+                if (image?.previewUrl?.startsWith('blob:')) {
+                    URL.revokeObjectURL(image.previewUrl);
+                }
+            });
+        };
+    }, [uploadedFiles]);
 
     const openDosageModal = (medicine) => {
         if (!medicine?.id || isReadonlyMode) return;
@@ -412,7 +504,7 @@ export const RecordResult = () => {
                             </div>
                         </div>
                     </div>
-
+                    
                     <div className="rr-ticket-type-row">
                         <span className="rr-ticket-type">{receptionDetail?.examForm?.examType || 'Phiếu khám lâm sàng'}</span>
                     </div>
@@ -487,26 +579,63 @@ export const RecordResult = () => {
                     </div>
                 </div>
 
-                <button className="rr-upload-btn" type="button" onClick={handleOpenUpload} disabled={isReadonlyMode}>
-                    <Upload size={18} color="#666" />
-                    <span>Tải lên file kết quả khám bệnh</span>
-                </button>
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    style={{ display: 'none' }}
-                    onChange={handleSelectFiles}
-                    disabled={isReadonlyMode}
-                />
-                {uploadedFiles.length > 0 && (
-                    <div className="rr-uploaded-files">
-                        {uploadedFiles.map((file, index) => (
-                            <div key={`${file.name}-${index}`}>{file.name}</div>
-                        ))}
+                <div className="rr-upload-panel">
+                    <div className="rr-upload-header">
+                        <h4>FILE VÀ ẢNH TẢI LÊN</h4>
+                        <ChevronUp size={16} color="#7f878d" />
                     </div>
-                )}
+                    
+                    {uploadedImageFiles.length > 0 && (
+                        <div className="rr-images-grid">
+                            {uploadedImageFiles.map((image, index) => (
+                                <div className="rr-image-item" key={image.key}>
+                                    <div className="rr-image-item-header">
+                                        <span>Ảnh kết quả {index + 1}</span>
+                                        {!isReadonlyMode && (
+                                            <button
+                                                type="button"
+                                                className="rr-image-item-remove"
+                                                onClick={() => handleRemoveSelectedImage(image.key)}
+                                                aria-label="Xóa ảnh"
+                                            >
+                                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="rr-image-item-content">
+                                        <img src={image.previewUrl} alt={image.fileName} />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {uploadedDocumentFiles.length > 0 && (
+                        <div className="rr-upload-files-list">
+                            {uploadedDocumentFiles.map((fileItem, index) => (
+                                <div className="rr-upload-file-row" key={fileItem.key || `${fileItem.fileName}-${index}`}>
+                                    <span>{fileItem.fileName || `Tệp đính kèm ${index + 1}`}</span>
+                                    {!isReadonlyMode && (
+                                        <button
+                                            type="button"
+                                            className="rr-image-item-remove"
+                                            onClick={() => handleRemoveSelectedImage(fileItem.key)}
+                                            aria-label="Xóa tệp"
+                                        >
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <label className="rr-file-upload-btn" style={isReadonlyMode ? { opacity: 0.55, pointerEvents: 'none' } : {}}>
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect><path d="M12 16v-8"></path><path d="M8 12l4-4 4 4"></path></svg>
+                        <span>Tải lên file kết quả khám bệnh</span>
+                        <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple onChange={handleSelectFiles} hidden disabled={isReadonlyMode} />
+                    </label>
+                </div>
 
                 <div className="rr-accordion">
                     <div className="rr-accordion-header" onClick={() => setIsMedsExpanded(!isMedsExpanded)}>
@@ -567,7 +696,7 @@ export const RecordResult = () => {
                                 </div>
                             ) : null}
 
-                            <div className="rr-add-btn-wrapper">
+                            <div className={`rr-add-btn-wrapper ${medsList.length > 0 ? 'rr-add-btn-wrapper-has-list' : 'rr-add-btn-wrapper-empty'}`}>
                                 <button
                                     className="rr-add-btn"
                                     type="button"
@@ -577,12 +706,19 @@ export const RecordResult = () => {
                                             receptionId: id,
                                             treatmentSlipId,
                                             selectedMedicines: medsList,
+                                            recordResultDraft: {
+                                                conclusionText,
+                                                selectedConclusion,
+                                                uploadedFiles: serializeUploadedFilesForDraft(uploadedFiles),
+                                                isMedsExpanded,
+                                                medsList,
+                                            },
                                             returnPath: `/doctors/record-result/${id ?? 1}`,
                                         },
                                     })}
                                     disabled={isReadonlyMode}
                                 >
-                                    <Plus size={24} color="#fff" />
+                                    <Plus size={34} strokeWidth={1.6} />
                                 </button>
                             </div>
                         </div>

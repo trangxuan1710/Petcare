@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './StaffReceptionCard.css';
 import { Phone, PawPrint, Weight, ShieldCheck } from 'lucide-react';
 import { Button } from 'semantic-ui-react';
+import { toTitleCase } from '../../utils/textFormat';
 
 const statusStyles = {
     received: { label: 'Chờ thanh toán', color: '#f0a020' },
@@ -33,7 +34,7 @@ const StaffReceptionCard = ({
         <div className={`staff-card ${pressed ? 'is-pressed' : ''}`} onClick={handlePress}>
             <div className="staff-card-header">
                 <div>
-                    <h3 className="staff-card-name">{customer}</h3>
+                    <h3 className="staff-card-name">{toTitleCase(customer) || customer}</h3>
                     <div className="staff-card-phone">
                         <Phone size={14} />
                         <span>{phone}</span>
@@ -53,8 +54,8 @@ const StaffReceptionCard = ({
             <div className="staff-card-pets">
                 {pets.map((pet, index) => (
                     <div className="staff-card-pet" key={`${pet.name}-${index}`}>
-                        <span className="pet-name">{pet.name}</span>
-                        <span className="pet-breed">{pet.breed}</span>
+                        <span className="pet-name">{toTitleCase(pet.name) || pet.name}</span>
+                        <span className="pet-breed">{toTitleCase(pet.breed) || pet.breed}</span>
                         <span className="pet-meta"><PawPrint size={14} /> {pet.type}</span>
                         <span className="pet-meta"><Weight size={14} /> {pet.weight}</span>
                         {pet.alert && (

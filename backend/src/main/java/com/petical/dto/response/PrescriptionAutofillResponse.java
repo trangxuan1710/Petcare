@@ -31,6 +31,7 @@ public class PrescriptionAutofillResponse {
     public static class MedicineItem {
         private Long id;
         private String name;
+        private String description;
         private String type;
         private String unit;
         private BigDecimal price;

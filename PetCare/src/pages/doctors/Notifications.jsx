@@ -4,6 +4,7 @@ import { Bell, ChevronLeft } from 'lucide-react';
 import DoctorLayout from '../../layouts/DoctorLayout';
 import './Notifications.css';
 import notificationService from '../../api/notificationService';
+import { toTitleCase } from '../../utils/textFormat';
 
 const Notifications = () => {
     const navigate = useNavigate();
@@ -61,7 +62,7 @@ const Notifications = () => {
                                     <span className="notif-time">{notif.time}</span>
                                 </div>
                                 <p className="notif-desc">
-                                    Thú cưng <strong>{notif.petName}</strong> của khách hàng <strong>{notif.customerName}</strong> {notif.message}
+                                    Thú cưng <strong>{toTitleCase(notif.petName) || notif.petName}</strong> của khách hàng <strong>{toTitleCase(notif.customerName) || notif.customerName}</strong> {notif.message}
                                 </p>
                             </div>
                         </div>

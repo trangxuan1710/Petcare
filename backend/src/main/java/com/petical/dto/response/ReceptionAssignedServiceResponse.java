@@ -7,6 +7,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -39,4 +40,13 @@ public class ReceptionAssignedServiceResponse {
 
     @Schema(description = "Thời gian bắt đầu thực hiện dịch vụ", example = "2026-04-04T09:30:00")
     private LocalDateTime startedAt;
+
+    @Schema(description = "Kết quả dịch vụ", example = "Đã hoàn tất siêu âm ổ bụng")
+    private String result;
+
+    @Schema(description = "Danh sách file/ảnh đính kèm của dịch vụ")
+    private List<String> evidencePaths;
+
+    @Schema(description = "Danh sách thuốc/vật tư thực tế sử dụng của dịch vụ")
+    private List<TechnicianUsedMedicineItemResponse> medicines;
 }

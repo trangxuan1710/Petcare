@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './StaffPaymentInfoCard.css';
 import { Headset, Printer } from 'lucide-react';
+import { toTitleCase } from '../../utils/textFormat';
 
 const localAssetImages = import.meta.glob('../../assets/*.{png,jpg,jpeg,webp,svg}', {
     eager: true,
@@ -55,12 +56,19 @@ const StaffPaymentInfoCard = ({
         name: "Nguyễn Thu Hương", 
         phone: "0912345678" 
     },
+    showQr = false,
+    showPrintButton = false,
     qrImageSrc = '/assets/sample_qr.png',
     onPrintInvoice,
 }) => {
     const [resolvedQrImage, setResolvedQrImage] = useState(null);
 
     useEffect(() => {
+        if (!showQr) {
+            setResolvedQrImage(null);
+            return undefined;
+        }
+
         let active = true;
 
         const resolveFirstAvailableImage = async () => {
@@ -86,9 +94,9 @@ const StaffPaymentInfoCard = ({
         return () => {
             active = false;
         };
-    }, [qrImageSrc]);
+    }, [qrImageSrc, showQr]);
 
-    const canShowQrImage = Boolean(resolvedQrImage);
+    const canShowQrImage = showQr && Boolean(resolvedQrImage);
 
     const handlePrintInvoice = () => {
         if (typeof onPrintInvoice === 'function') {
@@ -103,7 +111,7 @@ const StaffPaymentInfoCard = ({
 
     return (
         <section className="staff-payment-info-card">
-            <div className={`staff-payment-qr-box ${canShowQrImage ? 'has-image' : ''}`}>
+            <div className={`staff-payment-qr-box ${canShowQrImage ? 'has-image' : ''} ${!showQr ? 'is-placeholder' : ''}`}>
                 {canShowQrImage ? (
                     <img
                         src={resolvedQrImage}
@@ -117,17 +125,27 @@ const StaffPaymentInfoCard = ({
                             <Headset size={32} strokeWidth={1.5} />
                         </div>
                         <p className="qr-note">
-                            Chưa hỗ trợ tạo mã,<br /> 
-                            vui lòng chọn hình thức<br /> 
-                            thanh toán QR
+                            {showQr ? (
+                                <>
+                                    Chưa tạo được mã QR,<br />
+                                    vui lòng thử lại sau.
+                                </>
+                            ) : (
+                                <>
+                                    Chọn phương thức chuyển khoản<br />
+                                    để hiển thị QR động.
+                                </>
+                            )}
                         </p>
                     </>
                 )}
 
-                <button type="button" className="qr-print-btn" onClick={handlePrintInvoice}>
-                    <Printer size={14} strokeWidth={2} />
-                    <span>In hóa đơn</span>
-                </button>
+                {showPrintButton && (
+                    <button type="button" className="qr-print-btn" onClick={handlePrintInvoice}>
+                        <Printer size={14} strokeWidth={2} />
+                        <span>In hóa đơn</span>
+                    </button>
+                )}
             </div>
 
             <div className="staff-payment-order-info">
@@ -137,13 +155,13 @@ const StaffPaymentInfoCard = ({
 
                 <div className="info-group">
                     <span className="group-label">Khách hàng</span>
-                    <strong className="group-value">{customer.name}</strong>
+                    <strong className="group-value">{toTitleCase(customer.name) || customer.name}</strong>
                     <span className="group-sub">{customer.phone}</span>
                 </div>
 
                 <div className="info-group">
                     <span className="group-label">Thu ngân</span>
-                    <strong className="group-value">{cashier.name}</strong>
+                    <strong className="group-value">{toTitleCase(cashier.name) || cashier.name}</strong>
                     <span className="group-sub">{cashier.phone}</span>
                 </div>
             </div>

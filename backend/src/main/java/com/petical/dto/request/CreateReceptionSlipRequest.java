@@ -37,8 +37,6 @@ public class CreateReceptionSlipRequest {
     @Schema(description = "Lý do khám", example = "Bỏ ăn, mệt")
     private String examReason;
 
-    @Schema(description = "Mô tả triệu chứng", example = "Lừ đừ 2 ngày")
-    private String symptomDescription;
 
     @Schema(description = "Lưu ý thêm", example = "Khó tiếp cận, cần giữ nhẹ")
     private String note;

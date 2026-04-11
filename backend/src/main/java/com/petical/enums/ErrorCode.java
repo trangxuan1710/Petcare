@@ -18,6 +18,7 @@ public enum ErrorCode {
     PET_NOT_FOUND(1009, "Pet not found", HttpStatus.NOT_FOUND),
     RECEPTIONIST_NOT_FOUND(1010, "Receptionist not found", HttpStatus.NOT_FOUND),
     PET_NOT_BELONG_TO_CLIENT(1011, "Pet does not belong to client", HttpStatus.BAD_REQUEST),
+    RECEPTION_ALREADY_OPEN(1020, "There is an existing open reception for this pet", HttpStatus.BAD_REQUEST),
     INVALID_REQUEST_BODY(1012, "Invalid request body", HttpStatus.BAD_REQUEST),
     METHOD_NOT_ALLOWED(1013, "Method not allowed", HttpStatus.METHOD_NOT_ALLOWED),
     API_NOT_FOUND(1014, "API not found", HttpStatus.NOT_FOUND),

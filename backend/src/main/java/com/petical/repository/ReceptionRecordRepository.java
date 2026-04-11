@@ -57,6 +57,8 @@ public interface ReceptionRecordRepository extends JpaRepository<ReceptionRecord
 	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
 	List<ReceptionRecord> findByPetIdOrderByReceptionTimeDesc(Long petId);
 
+	boolean existsByPetIdAndStatusNot(Long petId, com.petical.enums.ReceptionStatus status);
+
 	long countByExamFormIsEmergencyTrueAndReceptionTimeBetween(LocalDateTime start, LocalDateTime end);
 
 	long countByStatusInAndReceptionTimeBetween(Collection<ReceptionStatus> statuses, LocalDateTime start, LocalDateTime end);

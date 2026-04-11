@@ -1,17 +1,30 @@
 import React, { useState } from 'react';
 import './StaffPaymentFooterBar.css';
 
-const StaffPaymentFooterBar = ({ onPayClick, onBackClick, remainAmount = '0đ' }) => {
+const StaffPaymentFooterBar = ({
+    onPrimaryClick,
+    onBackClick,
+    remainAmount = '0đ',
+    primaryLabel = 'Xác nhận',
+    isPrimaryDisabled = false,
+    isPrimaryLoading = false,
+}) => {
     const [pressed, setPressed] = useState('');
 
     const handlePress = (value) => {
+        if (value === 'primary' && (isPrimaryDisabled || isPrimaryLoading)) {
+            return;
+        }
+
         setPressed(value);
         window.setTimeout(() => setPressed(''), 140);
+
         if (value === 'back' && onBackClick) {
             onBackClick();
         }
-        if (value === 'pay' && onPayClick) {
-            onPayClick();
+
+        if (value === 'primary' && onPrimaryClick) {
+            onPrimaryClick();
         }
     };
 
@@ -32,10 +45,11 @@ const StaffPaymentFooterBar = ({ onPayClick, onBackClick, remainAmount = '0đ' }
                     </button>
                     <button
                         type="button"
-                        className={`btn-base btn-primary ${pressed === 'pay' ? 'is-pressed' : ''}`}
-                        onClick={() => handlePress('pay')}
+                        className={`btn-base btn-primary ${pressed === 'primary' ? 'is-pressed' : ''}`}
+                        onClick={() => handlePress('primary')}
+                        disabled={isPrimaryDisabled || isPrimaryLoading}
                     >
-                        Thu tiền
+                        {isPrimaryLoading ? 'Đang xử lý...' : primaryLabel}
                     </button>
                 </div>
             </div>

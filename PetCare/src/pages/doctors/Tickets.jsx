@@ -9,6 +9,7 @@ import "@fontsource/roboto/500.css";
 import { Search, Bell, ChevronLeft } from 'lucide-react';
 import receptionService from '../../api/receptionService';
 import useHeaderProfile from '../../hooks/useHeaderProfile';
+import { toTitleCase } from '../../utils/textFormat';
 
 const SearchIcon = () => <Search size={20} color="#209D80" />;
 const BellIcon = () => <Bell size={24} color="#111827" />;
@@ -241,11 +242,11 @@ const Tickets = () => {
                         id: record?.id,
                         code: `PK${record?.id || ''}`,
                         status: mappedStatus,
-                        customerName: record?.client?.fullName || 'Khách hàng',
+                        customerName: toTitleCase(record?.client?.fullName || 'Khách hàng') || 'Khách hàng',
                         dateTime: displayDate,
                         pet: {
-                            name: petName,
-                            breed: record?.pet?.breed || record?.pet?.species || 'Chưa rõ giống',
+                            name: toTitleCase(petName) || petName,
+                            breed: toTitleCase(record?.pet?.breed || record?.pet?.species || 'Chưa rõ giống') || 'Chưa rõ giống',
                             gender: (record?.pet?.gender || '').toLowerCase() === 'female' ? 'female' : 'male',
                             weight: resolvePetWeightLabel(record),
                             hasAlert: isEmergencyCase(record)

@@ -14,6 +14,8 @@ public class PetExamHistoryMedicineResponse {
     private long medicineId;
     @Schema(description = "Tên thuốc", example = "Buspiron HCl")
     private String medicineName;
+    @Schema(description = "Mô tả thuốc", example = "Giảm co thắt và hỗ trợ tiêu hóa")
+    private String description;
     @Schema(description = "Số lượng", example = "2")
     private int quantity;
     @Schema(description = "Đơn vị", example = "viên")

@@ -348,59 +348,363 @@
     cursor: not-allowed;
 }
 
-/* Accordion Meds */
-.rr-accordion {
-    background-color: #fff;
-    border: 1px solid #eaeaea;
-    border-radius: 12px;
+.rr-uploaded-files {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: -16px 0 20px;
+}
+
+.rr-uploaded-file-item {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    color: #4b5563;
+    white-space: nowrap;
     overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Medicine Panel */
+.rr-meds-panel {
+    border: 1px solid #e5e9eb;
+    border-radius: 16px;
+    padding: 16px;
+    background: #ffffff;
     margin-bottom: 24px;
+}
+
+.rr-meds-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f3f5;
+    padding: 0 0 12px;
+    cursor: pointer;
+}
+
+.rr-meds-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1c1e;
+}
+
+.rr-meds-empty-action {
+    width: 100%;
+    margin-top: 12px;
+    min-height: 160px;
+    border: none;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.rr-meds-empty-plus {
+    width: 86px;
+    height: 86px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rr-meds-selected-wrap {
+    margin-top: 4px;
+}
+
+.rr-meds-selected-item {
+    border-bottom: 1px solid #f0f3f5;
+    padding: 20px 0;
+}
+
+.rr-meds-selected-item:last-child {
+    border-bottom: none;
+}
+
+.rr-meds-item-top {
+    display: grid;
+    grid-template-columns: 72px 1fr;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.rr-meds-item-top img {
+    width: 72px;
+    height: 72px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.rr-meds-item-main strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+}
+
+.rr-meds-item-main p {
+    margin: 4px 0 0;
+    color: #8b9198;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.rr-meds-item-meta {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: #4f5660;
+    font-size: 12px;
+}
+
+.rr-meds-item-controls {
+    margin-top: 12px;
+    margin-left: 88px;
+    padding-top: 12px;
+    border-top: 1px solid #edf1f2;
+    display: grid;
+    grid-template-columns: 1fr 78px auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.rr-meds-stepper {
+    border: 1px solid #dfe5e8;
+    border-radius: 11px;
+    height: 38px;
+    display: grid;
+    grid-template-columns: 36px 1fr 36px;
+    align-items: center;
+}
+
+.rr-meds-stepper button {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+}
+
+.rr-meds-stepper span {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.rr-meds-unit-select {
+    border: 1px solid #dfe5e8;
+    border-radius: 11px;
+    height: 38px;
+    padding: 0 10px;
+    font-size: 13px;
+    color: #4b5563;
+    background: #fff;
+}
+
+.rr-meds-dosage-btn {
+    height: 38px;
+    border-radius: 11px;
+    border: 1px solid #1c9b84;
+    padding: 0 10px;
+    background: #ffffff;
+    color: #1c9b84;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.rr-meds-route-btn {
+    margin: 12px 10px 0;
+    width: calc(100% - 20px);
+    height: 42px;
+    border-radius: 12px;
+    border: 1px dashed #1c9b84;
+    background: transparent;
+    color: #1c9b84;
+    font-size: 14px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.rr-meds-route-btn:disabled,
+.rr-meds-dosage-btn:disabled,
+.rr-meds-empty-action:disabled,
+.rr-meds-stepper button:disabled,
+.rr-meds-unit-select:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.rr-accordion {
+    border: 1px solid #e5e9eb;
+    border-radius: 16px;
+    background: #ffffff;
+    margin-bottom: 16px;
+    overflow: hidden;
 }
 
 .rr-accordion-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 16px;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid #eef2f3;
     cursor: pointer;
 }
 
 .rr-accordion-header h3 {
     margin: 0;
-    font-size: 13px;
-    font-family: "Roboto", sans-serif !important;
-    font-weight: 500;
-    color: #333;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1f2937;
 }
 
 .rr-accordion-content {
-    border-top: 1px solid #f0f0f0;
-    padding: 24px 16px;
+    padding: 0 16px 16px;
 }
 
 .rr-meds-empty {
+    min-height: 180px;
+}
+
+.rr-meds-list-minimal {
     display: flex;
     flex-direction: column;
-    justify-content: center;
+}
+
+.rr-med-item-minimal {
+    padding: 14px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.rr-med-item-minimal:last-child {
+    border-bottom: none;
+}
+
+.rr-med-row-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.rr-med-name-min {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #374151;
+    line-height: 1.35;
+}
+
+.rr-med-edit-btn {
+    border: none;
+    background: transparent;
+    color: #14a38b;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
+}
+
+.rr-med-edit-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.rr-med-row-price {
+    margin-top: 4px;
+}
+
+.rr-med-price-min {
+    color: #0f9f86;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.rr-med-unit-min {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.rr-med-row-note,
+.rr-med-row-dosage {
+    margin-top: 8px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.rr-note-lbl,
+.rr-dosage-lbl {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.rr-note-val,
+.rr-dosage-val {
+    color: #4b5563;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: right;
+}
+
+.rr-note-val {
+    max-width: 68%;
 }
 
 .rr-add-btn-wrapper {
-    width: 100%;
     display: flex;
     justify-content: center;
+}
+
+.rr-add-btn-wrapper-empty {
+    min-height: 170px;
+    align-items: center;
+}
+
+.rr-add-btn-wrapper-has-list {
     margin-top: 12px;
+    align-items: center;
 }
 
 .rr-add-btn {
-    width: 50px;
-    height: 50px;
+    width: 84px;
+    height: 84px;
     border-radius: 50%;
-    background-color: #e5e7eb;
     border: none;
-    display: flex;
-    justify-content: center;
+    background: #f0f2f5;
+    color: #ffffff;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     cursor: pointer;
 }
 
@@ -511,114 +815,6 @@
     cursor: not-allowed;
 }
 
-/* Meds List */
-.rr-accordion-content.rr-meds-list-container {
-    padding: 16px 0;
-}
-
-.rr-meds-list-minimal {
-    display: flex;
-    flex-direction: column;
-}
-
-.rr-med-item-minimal {
-    padding: 16px 16px;
-    border-bottom: 1px solid #f0f0f0;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.rr-med-item-minimal:last-child {
-    border-bottom: none;
-}
-
-.rr-med-row-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.rr-med-name-min {
-    font-size: 15px;
-    font-family: "Roboto", sans-serif !important;
-    font-weight: 500;
-    color: #333;
-    margin: 0;
-}
-
-.rr-med-edit-icon {
-    cursor: pointer;
-}
-
-.rr-med-edit-btn {
-    border: none;
-    background: transparent;
-    padding: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.rr-med-edit-btn:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
-.rr-med-row-price {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.rr-med-price-min {
-    font-size: 15px;
-    font-weight: 700;
-    color: #209D80;
-}
-
-.rr-med-unit-min {
-    font-size: 14px;
-    color: #666;
-}
-
-.rr-med-qty-min {
-    font-size: 14px;
-    color: #666;
-}
-
-.rr-med-row-dosage {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.rr-dosage-lbl {
-    font-size: 14px;
-    color: #666;
-}
-
-.rr-dosage-val {
-    font-size: 14px;
-    color: #666;
-}
-
-.rr-med-row-note {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.rr-note-lbl {
-    font-size: 14px;
-    color: #666;
-}
-
-.rr-note-val {
-    font-size: 14px;
-    color: #666;
-}
 /* === DOSAGE MODAL === */
 .rr-dosage-modal-overlay {
     position: fixed;
@@ -821,4 +1017,130 @@
     background: #fef2f2;
     color: #991b1b;
     border: 1px solid #fca5a5;
+}
+.rr-upload-panel {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 14px 12px 12px;
+    background: #ffffff;
+    margin-bottom: 16px;
+}
+
+.rr-upload-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f3f5;
+    padding: 0 4px 12px;
+    margin-bottom: 16px;
+}
+
+.rr-upload-header h4 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a1c1e;
+    text-transform: uppercase;
+}
+
+.rr-images-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.rr-image-item {
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.rr-image-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+}
+
+.rr-image-item-remove {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rr-image-item-remove:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.rr-image-item-content {
+    background: #f4f5f5;
+    border-radius: 12px;
+    aspect-ratio: 1/1;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rr-image-item-content img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.rr-file-upload-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 16px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #555;
+    cursor: pointer;
+    background: #ffffff;
+    /* margin-bottom: 16px; */
+}
+
+.rr-upload-files-list {
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    margin: 0 0 12px;
+    overflow: hidden;
+}
+
+.rr-upload-file-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #f1f5f9;
+    font-size: 13px;
+    color: #334155;
+}
+
+.rr-upload-file-row:last-child {
+    border-bottom: none;
+}
+
+.rr-upload-file-row span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }

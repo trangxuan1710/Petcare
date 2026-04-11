@@ -95,6 +95,183 @@
     gap: 16px;
 }
 
+.ms-lite-card {
+    background: #ffffff;
+    border: 1px solid #e5e9eb;
+    border-radius: 14px;
+    padding: 12px;
+}
+
+.ms-lite-card.selected {
+    border-color: #d8e7e2;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+}
+
+.ms-lite-head {
+    display: grid;
+    grid-template-columns: 24px 62px 1fr;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.ms-lite-check {
+    display: inline-flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding-top: 18px;
+}
+
+.ms-lite-check input {
+    width: 16px;
+    height: 16px;
+    accent-color: #1c9b84;
+    cursor: pointer;
+}
+
+.ms-lite-thumb {
+    width: 62px;
+    height: 62px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.ms-lite-main {
+    min-width: 0;
+}
+
+.ms-lite-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.ms-lite-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.3;
+}
+
+.ms-lite-top strong:last-child {
+    font-size: 15px;
+    color: #333;
+}
+
+.ms-lite-desc {
+    margin: 4px 0 0;
+    color: #8b9198;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.ms-lite-meta {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: #4f5660;
+    font-size: 12px;
+}
+
+.ms-lite-meta span:last-child {
+    font-weight: 500;
+}
+
+.ms-lite-controls {
+    margin:12px;
+    border-top: 1px solid #edf1f2;
+    display: grid;
+    grid-template-columns: 1fr 78px auto;
+    gap: 10px;
+    align-items: center;
+}
+
+.ms-lite-stepper {
+    border: 1px solid #dfe5e8;
+    border-radius: 11px;
+    height: 38px;
+    display: grid;
+    grid-template-columns: 36px 1fr 36px;
+    align-items: center;
+}
+
+.ms-lite-stepper button {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+}
+
+.ms-lite-stepper span {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.ms-lite-unit {
+    border: 1px solid #dfe5e8;
+    border-radius: 11px;
+    height: 38px;
+    padding: 0 10px;
+    font-size: 13px;
+    color: #4b5563;
+    background: #fff;
+}
+
+.ms-lite-dosage {
+    height: 38px;
+    border-radius: 11px;
+    border: 1px solid #1c9b84;
+    padding: 0 10px;
+    background: #ffffff;
+    color: #1c9b84;
+    font-size: 13px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+.ms-lite-dosage-summary {
+    margin:12px;
+    border-top: 1px dashed #e5eaec;
+    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ms-lite-dosage-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.ms-lite-dosage-row span:last-child {
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.ms-lite-dosage-row.note span:last-child {
+    max-width: 62%;
+    text-align: right;
+    color: #6b7280;
+    font-weight: 400;
+}
+
 /* Cards */
 .ms-med-card {
     background-color: #fff;

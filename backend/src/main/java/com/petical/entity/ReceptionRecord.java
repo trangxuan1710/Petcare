@@ -40,11 +40,8 @@ public class ReceptionRecord {
     @JoinColumn(name = "exam_form_id", nullable = false)
     private ExamForm examForm;
 
-    @Column(nullable = false)
-    private String examReason;
-
-    @Column(columnDefinition = "TEXT")
-    private String symptomDescription;
+    @Column(length = 1000)
+    private String examReason; // previously 'symptomDescription' renamed to 'examReason' and kept as text input
 
     @Column(columnDefinition = "TEXT")
     private String note;

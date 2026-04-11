@@ -62,7 +62,7 @@ public class ClientServiceImpl implements ClientService {
             return List.of();
         }
 
-        List<Client> clients = clientRepository.findByPhoneNumberLike("%"+keyword+"%");
+        List<Client> clients = clientRepository.findByPhoneNumberLike(keyword+"%");
         if (clients.isEmpty()) {
             return List.of();
         }

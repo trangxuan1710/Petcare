@@ -24,6 +24,10 @@
     gap: 0;
 }
 
+.staff-payment-qr-box.is-placeholder {
+    justify-content: center;
+}
+
 .staff-payment-qr-box.has-image {
     padding: 0 0 12px;
     overflow: hidden;
@@ -86,6 +90,10 @@
     transition: all 0.2s ease;
     border-radius: 999px;
     padding: 6px 10px;
+}
+
+.staff-payment-qr-box.is-placeholder .qr-print-btn {
+    display: none;
 }
 
 .staff-payment-qr-box.has-image .qr-print-btn {

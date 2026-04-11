@@ -30,9 +30,11 @@ const parseDelimitedPaths = (value) => {
         .filter(Boolean);
 };
 
-const getBackendOrigin = () => {
+const getBackendBaseUrl = () => {
     try {
-        return new URL(authApi?.defaults?.baseURL || window.location.origin).origin;
+        const parsed = new URL(authApi?.defaults?.baseURL || window.location.origin);
+        const basePath = parsed.pathname.replace(/\/+$/, '');
+        return `${parsed.origin}${basePath}`;
     } catch {
         return window.location.origin;
     }
@@ -45,9 +47,27 @@ const buildAttachmentUrl = (rawPath) => {
         return value;
     }
 
-    const normalized = value.replace(/^\.\//, '/');
+    const normalizedSlashes = value.replace(/\\/g, '/');
+    const normalized = normalizedSlashes.replace(/^\.\//, '/');
+
+    if (normalized.startsWith('/storage/')) {
+        return `${getBackendBaseUrl()}${normalized}`;
+    }
+
+    if (/^storage\//i.test(normalized)) {
+        return `${getBackendBaseUrl()}/${normalized}`;
+    }
+
+    if (/^exam-result-.*\.(png|jpe?g|gif|webp|bmp|svg|pdf|docx?|xlsx?|txt)$/i.test(normalized)) {
+        return `${getBackendBaseUrl()}/storage/exam-results/${normalized}`;
+    }
+
+    if (/^tech-result-.*\.(png|jpe?g|gif|webp|bmp|svg|pdf|docx?|xlsx?|txt)$/i.test(normalized)) {
+        return `${getBackendBaseUrl()}/storage/tech-results/${normalized}`;
+    }
+
     const normalizedWithLeadingSlash = normalized.startsWith('/') ? normalized : `/${normalized}`;
-    return `${getBackendOrigin()}${normalizedWithLeadingSlash}`;
+    return `${getBackendBaseUrl()}${normalizedWithLeadingSlash}`;
 };
 
 const getFileNameFromPath = (value) => {
@@ -100,12 +120,15 @@ const extractAttachmentPaths = (item) => {
 };
 
 const normalizeStatusLabel = (rawStatus) => {
-    const status = String(rawStatus || '').trim().toLowerCase();
-    if (status.includes('completed') || status.includes('paid') || status.includes('hoàn thành') || status.includes('đã thanh toán')) {
+    const status = String(rawStatus || '').trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (status.includes('completed') || status.includes('paid') || status.includes('hoan thanh') || status.includes('da thanh toan') || status.includes('thanh toan') || status.includes('waiting_payment') || status.includes('cho thanh toan') || status.includes('done')) {
         return { label: 'Hoàn thành', className: 'rs-status-completed' };
     }
-    if (status.includes('in_progress') || status.includes('đang thực hiện') || status.includes('waiting_conclusion')) {
+    if (status.includes('in_progress') || status.includes('dang thuc hien') || status.includes('waiting_conclusion') || status.includes('cho ket luan') || status.includes('ket luan')) {
         return { label: 'Đang thực hiện', className: 'rs-status-in-progress' };
+    }
+    if (status.includes('cho') || status.includes('pending') || status.includes('waiting') || status.includes('received') || status.includes('da tiep don')) {
+        return { label: 'Chờ thực hiện', className: 'rs-status-pending' };
     }
     return { label: 'Chưa bắt đầu', className: 'rs-status-pending' };
 };
@@ -145,7 +168,7 @@ const buildServiceCards = ({ assignedServices, selectedServices, treatmentDetail
     const clinicalSummary = firstNonEmptyString([
         historyItem?.conclusion,
         treatmentDetail?.plan,
-        receptionDetail?.symptomDescription,
+        receptionDetail?.examReason,
     ]) || 'Chưa có kết quả cho dịch vụ này.';
 
     const clinicalAttachments = [

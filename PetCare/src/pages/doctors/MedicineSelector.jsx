@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Search, SlidersHorizontal, Minus, Plus, ChevronDown } from 'lucide-react';
-import MedicineCard from '../../components/doctor/MedicineCard';
+import { ChevronLeft, Search, Minus, Plus, ChevronDown, PencilLine } from 'lucide-react';
 import './MedicineSelector.css';
 import medicineService from '../../api/medicineService';
 import treatmentService from '../../api/treatmentService';
@@ -51,6 +50,13 @@ const getPriceNumber = (item) => {
 };
 
 const formatVnd = (value) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
+
+const formatStock = (value) => {
+    if (value == null || value === '') return '--';
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return String(value);
+    return parsed.toLocaleString('vi-VN');
+};
 
 const UNIT_LABEL_MAP = {
     tablet: 'viên',
@@ -195,6 +201,7 @@ const MedicineSelector = () => {
     const returnPath = location.state?.returnPath;
     const treatmentSlipId = location.state?.treatmentSlipId;
     const receptionId = location.state?.receptionId;
+    const recordResultDraft = location.state?.recordResultDraft;
     const [showDosageModal, setShowDosageModal] = useState(false);
     const [activeDosageMedId, setActiveDosageMedId] = useState(null);
     const [dosageDraft, setDosageDraft] = useState({
@@ -339,20 +346,6 @@ const MedicineSelector = () => {
         );
     };
 
-    const toggleExpand = (id) => {
-        
-        setMedsList((prevList) =>
-            prevList.map((med) => {
-                if (med.id === id) {
-                    const becomesSelected = !med.selected;
-                    const expandedMed = becomesSelected ? applyAutofillIfAvailable(med) : med;
-                    return { ...expandedMed, expanded: !med.expanded, selected: true };
-                }
-                return { ...med, expanded: false };
-            })
-        );
-    };
-
     const openDosageModal = (id) => {
         const target = medsList.find((med) => med.id === id);
         if (!target) return;
@@ -393,23 +386,34 @@ const MedicineSelector = () => {
         return `${med.name} ${med.desc}`.toLowerCase().includes(keyword);
     });
 
+    const getSelectedMedicines = () => medsList.filter((med) => med.selected);
+
+    const navigateBackToRecordResult = (selectedMedicines) => {
+        if (!returnPath) {
+            navigate(-1);
+            return;
+        }
+
+        navigate(returnPath, {
+            state: {
+                receptionId,
+                treatmentSlipId,
+                selectedMedicines,
+                recordResultDraft: {
+                    ...(recordResultDraft || {}),
+                    medsList: selectedMedicines,
+                },
+            },
+        });
+    };
+
     const handleConfirm = async () => {
         if (isSubmitting) return;
         setIsSubmitting(true);
         try {
-            const selectedMedicines = medsList.filter((med) => med.selected);
+            const selectedMedicines = getSelectedMedicines();
             await medicineService.saveSelection(selectedMedicines);
-            if (returnPath) {
-                navigate(returnPath, {
-                    state: {
-                        receptionId,
-                        treatmentSlipId,
-                        selectedMedicines,
-                    },
-                });
-                return;
-            }
-            navigate(-1);
+            navigateBackToRecordResult(selectedMedicines);
         } finally {
             setIsSubmitting(false);
         }
@@ -419,7 +423,7 @@ const MedicineSelector = () => {
         <div className="med-selector-page">
             {/* Header */}
             <header className="ms-header">
-                <button className="ms-btn-icon" onClick={() => navigate(-1)}><ChevronLeft size={24} color="#1a1a1a" /></button>
+                <button className="ms-btn-icon" onClick={() => navigateBackToRecordResult(getSelectedMedicines())}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="ms-title">Thuốc & Vật tư đi kèm</h1>
                 <div style={{ width: 32 }}></div>
             </header>
@@ -439,22 +443,94 @@ const MedicineSelector = () => {
             <div className="ms-content">
                 <div className="ms-meds-list">
                     {filteredMeds.map(med => (
-                        <MedicineCard
-                            key={med.id}
-                            med={med}
-                            onToggleSelection={toggleSelection}
-                            onToggleExpand={toggleExpand}
-                            onUpdateQty={updateQty}
-                            onChangeUnit={updateSelectedUnit}
-                            onOpenDosageModal={openDosageModal}
-                        />
+                        <article key={med.id} className={`ms-lite-card ${med.selected ? 'selected' : ''}`}>
+                            <div className="ms-lite-head">
+                                <label className="ms-lite-check" aria-label={`Chọn ${med.name}`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={med.selected}
+                                        onChange={() => toggleSelection(med.id)}
+                                    />
+                                </label>
+
+                                <img src={med.image} alt={med.name} className="ms-lite-thumb" />
+
+                                <div className="ms-lite-main">
+                                    <div className="ms-lite-top">
+                                        <strong className="ms-lite-name">{med.name}</strong>
+                                        <strong>{med.price}</strong>
+                                    </div>
+
+                                    {med.desc ? <p className="ms-lite-desc">{med.desc}</p> : null}
+
+                                    <div className="ms-lite-meta">
+                                        <span>Dự kiến: {med.qty} {med.selectedUnit}</span>
+                                        <span>Tồn: {formatStock(med.stock)}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {med.selected && (
+                                <>
+                                    <div className="ms-lite-controls">
+                                        <div className="ms-lite-stepper">
+                                            <button onClick={() => updateQty(med.id, -1)} type="button">
+                                                <Minus size={16} />
+                                            </button>
+                                            <span>{med.qty}</span>
+                                            <button onClick={() => updateQty(med.id, 1)} type="button">
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
+
+                                        <select
+                                            className="ms-lite-unit"
+                                            value={med.selectedUnit}
+                                            onChange={(event) => updateSelectedUnit(med.id, event.target.value)}
+                                            aria-label={`Đơn vị của ${med.name}`}
+                                        >
+                                            {(med.unitOptions || []).map((unitOption) => (
+                                                <option key={unitOption} value={unitOption}>{unitOption}</option>
+                                            ))}
+                                        </select>
+
+                                        <button className="ms-lite-dosage" type="button" onClick={() => openDosageModal(med.id)}>
+                                            <PencilLine size={14} /> Chỉnh liều
+                                        </button>
+                                    </div>
+
+                                    <div className="ms-lite-dosage-summary">
+                                        <div className="ms-lite-dosage-row">
+                                            <span>Sáng</span>
+                                            <span>{med?.dosage?.morning || 0} Viên</span>
+                                        </div>
+                                        <div className="ms-lite-dosage-row">
+                                            <span>Trưa</span>
+                                            <span>{med?.dosage?.noon || 0} Viên</span>
+                                        </div>
+                                        <div className="ms-lite-dosage-row">
+                                            <span>Chiều</span>
+                                            <span>{med?.dosage?.afternoon || 0} Viên</span>
+                                        </div>
+                                        <div className="ms-lite-dosage-row">
+                                            <span>Tối</span>
+                                            <span>{med?.dosage?.evening || 0} Viên</span>
+                                        </div>
+                                        <div className="ms-lite-dosage-row note">
+                                            <span>Chỉ định khác</span>
+                                            <span>{med?.dosage?.note || '---'}</span>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </article>
                     ))}
                 </div>
             </div>
 
             {/* Bottom Actions */}
             <div className="ms-bottom-actions">
-                <button className="ms-btn-skip" onClick={() => navigate(-1)}>Bỏ qua</button>
+                <button className="ms-btn-skip" onClick={() => navigateBackToRecordResult(getSelectedMedicines())}>Bỏ qua</button>
                 <button className="ms-btn-confirm" onClick={handleConfirm}>{isSubmitting ? 'Đang lưu...' : 'Xác nhận'}</button>
             </div>
 

@@ -27,6 +27,7 @@ import java.util.List;
 @Tag(name = "Khách hàng", description = "API tra cứu và tạo mới khách hàng")
 public class ClientController {
     private final ClientService clientService;
+    private final com.petical.repository.ReceptionRecordRepository receptionRecordRepository;
 
     @GetMapping
     @Operation(summary = "Tra cứu khách hàng theo số điện thoại", description = "Dùng trong tiếp đón để tìm khách hàng cũ; trả về null nếu không tồn tại")
@@ -45,13 +46,25 @@ public class ClientController {
                 .build();
     }
 
-    @GetMapping("/{id}/pets")
-    @Operation(summary = "Lấy danh sách thú cưng của khách hàng", description = "Phục vụ bước chọn thú cưng khi tạo phiếu tiếp đón")
-    public ApiResponse<List<Pet>> listPets(@PathVariable("id") long customerId) {
-        return ApiResponse.<List<Pet>>builder()
-                .data(clientService.getPetsByCustomerId(customerId))
-                .build();
-    }
+        @GetMapping("/{id}/pets")
+        @Operation(summary = "Lấy danh sách thú cưng của khách hàng", description = "Phục vụ bước chọn thú cưng khi tạo phiếu tiếp đón")
+        public ApiResponse<java.util.List<com.petical.dto.response.PetResponse>> listPets(@PathVariable("id") long customerId) {
+        java.util.List<com.petical.entity.Pet> pets = clientService.getPetsByCustomerId(customerId);
+        java.util.List<com.petical.dto.response.PetResponse> responses = java.util.Optional.ofNullable(pets)
+            .orElse(java.util.List.of())
+            .stream()
+            .map(pet -> {
+                boolean hasHistory = receptionRecordRepository.findByPetIdOrderByReceptionTimeDesc(pet.getId())
+                    .stream()
+                    .anyMatch(record -> record.getStatus() != null && "PAID".equalsIgnoreCase(record.getStatus().name()));
+                return com.petical.dto.response.PetResponse.fromEntity(pet, hasHistory);
+            })
+            .toList();
+
+        return ApiResponse.<java.util.List<com.petical.dto.response.PetResponse>>builder()
+            .data(responses)
+            .build();
+        }
     @GetMapping("/search")
     @Operation(summary = "Tìm khách hàng theo từ khóa số điện thoại", description = "Trả về danh sách rút gọn để autocomplete tại màn tiếp đón")
     public ApiResponse<List<ClientResponse>> searchClient(@RequestParam("phone") String phone) {

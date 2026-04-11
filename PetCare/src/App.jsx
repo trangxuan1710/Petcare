@@ -16,6 +16,7 @@ import ReceptionistNotifications from './pages/receptionists/Notifications';
 import ReceptionistPayment from './pages/receptionists/Payment';
 import TechHome from './pages/techStaffs/Home';
 import TechRecordResult from './pages/techStaffs/RecordResult';
+import TechMedicineSelector from './pages/techStaffs/MedicineSelector';
 import {RequireAuth, RequireRole} from './routes/routeGuard';
 import { RECEPTIONIST_PATHS } from './routes/receptionistPaths';
 import { TECH_PATHS } from './routes/techPaths';
@@ -67,6 +68,7 @@ function App() {
         <Route element={<RequireRole allowedRoles={['TECHNICIAN']} />}>
           <Route path={TECH_PATHS.HOME} element={<TechHome />} />
           <Route path={`${TECH_PATHS.RECORD_RESULT}/:id`} element={<TechRecordResult />} />
+          <Route path={TECH_PATHS.MEDICINE_SELECTOR} element={<TechMedicineSelector />} />
         </Route>
       </Route>
 

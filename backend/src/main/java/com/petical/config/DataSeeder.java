@@ -1,10 +1,29 @@
 package com.petical.config;
 
 import com.github.javafaker.Faker;
-import com.petical.entity.*;
+import com.petical.entity.Client;
+import com.petical.entity.Doctor;
+import com.petical.entity.ExamForm;
+import com.petical.entity.ExamResult;
+import com.petical.entity.ExamStatus;
+import com.petical.entity.Invoice;
+import com.petical.entity.MedicalRecord;
+import com.petical.entity.Medicine;
+import com.petical.entity.PaymentMethod;
+import com.petical.entity.Pet;
+import com.petical.entity.Prescription;
+import com.petical.entity.PrescriptionDetail;
+import com.petical.entity.ReceptionRecord;
+import com.petical.entity.ReceptionService;
+import com.petical.entity.Receptionist;
+import com.petical.entity.Service;
+import com.petical.entity.ServiceOrder;
+import com.petical.entity.ServiceResult;
+import com.petical.entity.Technician;
+import com.petical.entity.TreatmentDirection;
 import com.petical.enums.ExamType;
-import com.petical.enums.ReceptionStatus;
 import com.petical.enums.ReceptionServiceStatus;
+import com.petical.enums.ReceptionStatus;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,10 +35,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 
 @Slf4j
 @Component
@@ -27,8 +52,11 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class DataSeeder implements CommandLineRunner {
 
-    private static final int SEED_SIZE = 20;
-    private static final long FAKER_SEED = 20260401L;
+    private static final int CLIENT_COUNT = 24;
+    private static final int DOCTOR_COUNT = 8;
+    private static final int RECEPTIONIST_COUNT = 6;
+    private static final int TECHNICIAN_COUNT = 10;
+    private static final long FAKER_SEED = 20260411L;
     private static final String DEFAULT_AVATAR_PATH = "./storage/Untitled.jpg";
 
     private final EntityManager entityManager;
@@ -43,45 +71,47 @@ public class DataSeeder implements CommandLineRunner {
             return;
         }
 
-        if (countOf(Client.class) > 0 || countOf(Doctor.class) > 0) {
+        if (countOf(Client.class) > 0 || countOf(ReceptionRecord.class) > 0) {
             log.info("Mock data exists already. Skipping seeding.");
             return;
         }
 
         Faker faker = new Faker(new Random(FAKER_SEED));
-        String defaultPassword = new BCryptPasswordEncoder(12).encode("123456");
+        String encodedPassword = new BCryptPasswordEncoder(12).encode("123456");
 
         List<Client> clients = seedClients(faker);
-        List<Doctor> doctors = seedDoctors(faker, defaultPassword);
-        List<Receptionist> receptionists = seedReceptionists(faker, defaultPassword);
-        List<Technician> technicians = seedTechnicians(faker, defaultPassword);
-        List<ExamStatus> statuses = seedExamStatuses();
+        List<Doctor> doctors = seedDoctors(faker, encodedPassword);
+        List<Receptionist> receptionists = seedReceptionists(faker, encodedPassword);
+        List<Technician> technicians = seedTechnicians(faker, encodedPassword);
+        List<ExamStatus> examStatuses = seedExamStatuses();
         List<TreatmentDirection> directions = seedTreatmentDirections();
         List<PaymentMethod> paymentMethods = seedPaymentMethods();
         List<ExamForm> examForms = seedExamForms();
         List<Pet> pets = seedPets(faker, clients);
-        List<Medicine> medicines = seedMedicines(faker);
-        List<Service> services = seedServices(faker);
+        List<Medicine> medicines = seedMedicines();
+        List<Service> services = seedServices();
+
         List<ReceptionRecord> receptionRecords = seedReceptionRecords(clients, pets, receptionists, doctors, examForms);
-        seedReceptionServices(receptionRecords, services);
-        List<MedicalRecord> medicalRecords = seedMedicalRecords(receptionRecords, doctors, statuses);
+        List<ReceptionService> receptionServices = seedReceptionServices(receptionRecords, services);
+        List<MedicalRecord> medicalRecords = seedMedicalRecords(receptionRecords, doctors, examStatuses);
         List<ExamResult> examResults = seedExamResults(medicalRecords, directions);
-        List<Prescription> prescriptions = seedPrescriptions(examResults);
-        List<ServiceOrder> serviceOrders = seedServiceOrders(medicalRecords, services, technicians);
+        List<Prescription> prescriptions = seedPrescriptions(examResults, receptionServices, services.getFirst().getId());
         seedPrescriptionDetails(prescriptions, medicines);
+
+        List<ServiceOrder> serviceOrders = seedServiceOrders(medicalRecords, receptionServices, technicians, services.getFirst().getId());
         seedServiceResults(serviceOrders);
         seedInvoices(medicalRecords, receptionRecords, paymentMethods);
 
-        log.info("Seeded deterministic mock data with {} records per table (seed={}).", SEED_SIZE, FAKER_SEED);
-        log.info("Seed quick refs: DOCTOR login phone=0901000000 password=123456, CLIENT phone=0914000000, TECHNICIAN phone=0903000000");
+        log.info("Seeded deterministic mock data (seed={})", FAKER_SEED);
+        log.info("Quick login refs: doctor 0901000000 / 123456, receptionist 0902000000 / 123456, technician 0903000000 / 123456");
     }
 
     private List<Client> seedClients(Faker faker) {
         List<Client> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
+        for (int i = 0; i < CLIENT_COUNT; i++) {
             Client client = Client.builder()
                     .fullName(faker.name().fullName())
-                    .phoneNumber(String.format("0914000%03d", index))
+                    .phoneNumber(String.format("0914000%03d", i))
                     .build();
             entityManager.persist(client);
             result.add(client);
@@ -91,10 +121,10 @@ public class DataSeeder implements CommandLineRunner {
 
     private List<Doctor> seedDoctors(Faker faker, String encodedPassword) {
         List<Doctor> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
+        for (int i = 0; i < DOCTOR_COUNT; i++) {
             Doctor doctor = new Doctor();
-            doctor.setFullName("Dr. " + faker.name().fullName());
-            doctor.setPhoneNumber(String.format("0901000%03d", index));
+            doctor.setFullName("BS. " + faker.name().fullName());
+            doctor.setPhoneNumber(String.format("0901000%03d", i));
             doctor.setPassword(encodedPassword);
             doctor.setAvatarPath(DEFAULT_AVATAR_PATH);
             entityManager.persist(doctor);
@@ -105,10 +135,10 @@ public class DataSeeder implements CommandLineRunner {
 
     private List<Receptionist> seedReceptionists(Faker faker, String encodedPassword) {
         List<Receptionist> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
+        for (int i = 0; i < RECEPTIONIST_COUNT; i++) {
             Receptionist receptionist = new Receptionist();
             receptionist.setFullName(faker.name().fullName());
-            receptionist.setPhoneNumber(String.format("0902000%03d", index));
+            receptionist.setPhoneNumber(String.format("0902000%03d", i));
             receptionist.setPassword(encodedPassword);
             receptionist.setAvatarPath(DEFAULT_AVATAR_PATH);
             entityManager.persist(receptionist);
@@ -119,10 +149,10 @@ public class DataSeeder implements CommandLineRunner {
 
     private List<Technician> seedTechnicians(Faker faker, String encodedPassword) {
         List<Technician> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
+        for (int i = 0; i < TECHNICIAN_COUNT; i++) {
             Technician technician = new Technician();
             technician.setFullName(faker.name().fullName());
-            technician.setPhoneNumber(String.format("0903000%03d", index));
+            technician.setPhoneNumber(String.format("0903000%03d", i));
             technician.setPassword(encodedPassword);
             technician.setAvatarPath(DEFAULT_AVATAR_PATH);
             entityManager.persist(technician);
@@ -132,15 +162,10 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private List<ExamStatus> seedExamStatuses() {
-        String[] baseStatuses = {"IN_PROGRESS", "COMPLETED", "PENDING"};
+        List<String> statusNames = List.of("PENDING", "IN_PROGRESS", "COMPLETED");
         List<ExamStatus> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
-            String statusName = index < baseStatuses.length
-                    ? baseStatuses[index]
-                    : "STATUS_" + (index + 1);
-            ExamStatus status = ExamStatus.builder()
-                    .name(statusName)
-                    .build();
+        for (String statusName : statusNames) {
+            ExamStatus status = ExamStatus.builder().name(statusName).build();
             entityManager.persist(status);
             result.add(status);
         }
@@ -148,20 +173,16 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private List<TreatmentDirection> seedTreatmentDirections() {
-        String[] defaultDirections = {
+        List<String> names = List.of(
                 "Cho về",
                 "Điều trị nội trú",
                 "Điều trị ngoại trú",
                 "Khám cận lâm sàng"
-        };
+        );
+
         List<TreatmentDirection> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
-            String directionName = index < defaultDirections.length
-                    ? defaultDirections[index]
-                    : "Direction " + (index + 1);
-            TreatmentDirection direction = TreatmentDirection.builder()
-                    .name(directionName)
-                    .build();
+        for (String name : names) {
+            TreatmentDirection direction = TreatmentDirection.builder().name(name).build();
             entityManager.persist(direction);
             result.add(direction);
         }
@@ -169,49 +190,46 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private List<PaymentMethod> seedPaymentMethods() {
-        String[] defaultMethods = {"Tiền mặt", "Chuyển khoản", "Thẻ"};
+        List<String> names = List.of("Tiền mặt", "Chuyển khoản", "Thẻ");
+
         List<PaymentMethod> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
-            String paymentMethodName = index < defaultMethods.length
-                    ? defaultMethods[index]
-                    : "Payment Method " + (index + 1);
-            PaymentMethod paymentMethod = PaymentMethod.builder()
-                    .name(paymentMethodName)
-                    .build();
-            entityManager.persist(paymentMethod);
-            result.add(paymentMethod);
+        for (String name : names) {
+            PaymentMethod method = PaymentMethod.builder().name(name).build();
+            entityManager.persist(method);
+            result.add(method);
         }
         return result;
     }
 
     private List<ExamForm> seedExamForms() {
-        ExamType[] examTypes = {
-            ExamType.NEW_EXAM,
-            ExamType.RE_EXAM
-        };
         List<ExamForm> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
-            ExamForm examForm = ExamForm.builder()
-                    .examType(examTypes[index % examTypes.length])
-                    .isEmergency(index % 5 == 0)
+        for (int i = 0; i < CLIENT_COUNT; i++) {
+            ExamForm form = ExamForm.builder()
+                    .examType(i % 3 == 0 ? ExamType.RE_EXAM : ExamType.NEW_EXAM)
+                    .isEmergency(i % 7 == 0)
                     .build();
-            entityManager.persist(examForm);
-            result.add(examForm);
+            entityManager.persist(form);
+            result.add(form);
         }
         return result;
     }
 
     private List<Pet> seedPets(Faker faker, List<Client> clients) {
-        String[] genders = {"Male", "Female"};
         String[] species = {"Dog", "Cat"};
-        String[] breeds = {"Poodle", "Corgi", "Golden", "Pug", "Shiba"};
+        String[] breeds = {"Poodle", "Corgi", "Golden", "Pug", "Shiba", "Munchkin", "British Shorthair"};
+        String[] nameSeeds = {"Milo", "Kuro", "Luna", "Nabi", "Mochi", "Bim", "Bun", "Coco"};
+
         List<Pet> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
+        for (int i = 0; i < clients.size(); i++) {
+            int ageYears = 1 + (i % 11);
+            LocalDate dateOfBirth = LocalDate.now().minusYears(ageYears).minusMonths(i % 10);
+
             Pet pet = Pet.builder()
-                    .client(clients.get(index))
-                    .name("Pet " + faker.name().firstName())
-                    .species(species[index % species.length])
-                    .breed(breeds[index % breeds.length])
+                    .client(clients.get(i))
+                    .name(nameSeeds[i % nameSeeds.length] + " " + faker.number().digits(2))
+                    .species(species[i % species.length])
+                    .breed(breeds[i % breeds.length])
+                    .dateOfBirth(dateOfBirth)
                     .build();
             entityManager.persist(pet);
             result.add(pet);
@@ -219,47 +237,94 @@ public class DataSeeder implements CommandLineRunner {
         return result;
     }
 
-    private List<Medicine> seedMedicines(Faker faker) {
-        String[] units = {"tablet", "ml", "bottle", "tube"};
-        String[] types = {"Antibiotic", "Vitamin", "Pain Relief", "Anti-inflammatory"};
+    private List<Medicine> seedMedicines() {
+        String[] names = {
+                "Ringer Lactate",
+                "Bộ dây truyền dịch",
+                "Amoxicillin 500mg",
+                "Cefalexin",
+                "Vitamin B-Complex",
+                "Meloxicam",
+                "Men tiêu hóa BioPet",
+                "Băng gạc vô trùng",
+                "Dung dịch sát khuẩn",
+                "Kim tiêm 5ml",
+                "Prednisolone",
+                "Smecta Vet"
+        };
+
+        String[] descriptions = {
+                "Điều trị viêm loét dạ dày, rối loạn tiêu hóa",
+                "Bộ dây truyền dịch và vô trùng",
+                "Kháng sinh phổ rộng cho nhiễm khuẩn nhẹ",
+                "Kháng sinh hỗ trợ nhiễm khuẩn hô hấp",
+                "Bổ sung vitamin và tăng sức đề kháng",
+                "Giảm đau, kháng viêm sau thủ thuật",
+                "Ổn định hệ tiêu hóa và giảm tiêu chảy",
+                "Dùng trong chăm sóc vết thương hở",
+                "Sát khuẩn vùng da tổn thương",
+                "Vật tư tiêu hao cho tiêm truyền",
+                "Kháng viêm corticosteroid liều thấp",
+                "Hỗ trợ điều trị rối loạn tiêu hóa cấp"
+        };
+
+        String[] units = {"ml", "set", "tablet", "tablet", "tablet", "tablet", "sachet", "pack", "bottle", "piece", "tablet", "sachet"};
+        String[] types = {"Fluid", "Supply", "Antibiotic", "Antibiotic", "Vitamin", "Pain Relief", "Digestive", "Supply", "Antiseptic", "Supply", "Anti-inflammatory", "Digestive"};
+
         List<Medicine> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
+        for (int i = 0; i < names.length; i++) {
+            BigDecimal unitPrice = BigDecimal.valueOf(5000L + i * 2500L);
+            BigDecimal boxPrice = unitPrice.multiply(BigDecimal.valueOf(10));
             Medicine medicine = Medicine.builder()
-                    .name("Medicine " + faker.lorem().word() + " " + (index + 1))
-                    .stockQuantity(50 + index)
-                    .unit(units[index % units.length])
-                    .price(BigDecimal.valueOf(12000 + (long) index * 2000))
-                    .unitPrice(BigDecimal.valueOf(4000 + (long) index * 600))
-                    .boxPrice(BigDecimal.valueOf(12000 + (long) index * 2000))
-                    .type(types[index % types.length])
+                    .name(names[i])
+                    .description(descriptions[i])
+                    .stockQuantity(40 + i * 5)
+                    .unit(units[i])
+                    .unitPrice(unitPrice)
+                    .boxPrice(boxPrice)
+                    .price(boxPrice)
+                    .type(types[i])
                     .build();
             entityManager.persist(medicine);
             result.add(medicine);
         }
+
         return result;
     }
 
-    private List<Service> seedServices(Faker faker) {
-        String[] defaultServices = {
-            "Khám lâm sàng",
-            "Xét nghiệm máu",
-            "Siêu âm",
-            "X-quang",
-            "Truyền dịch",
-            "Theo dõi nội trú"
-        };
+    private List<Service> seedServices() {
+        List<String> names = List.of(
+                "Khám lâm sàng",
+                "Xét nghiệm máu",
+                "Xét nghiệm nước tiểu",
+                "Siêu âm ổ bụng",
+                "X-Quang",
+                "Truyền dịch",
+                "Theo dõi nội trú",
+                "Test nhanh ký sinh trùng"
+        );
+
+        List<BigDecimal> prices = List.of(
+                BigDecimal.valueOf(120_000),
+                BigDecimal.valueOf(180_000),
+                BigDecimal.valueOf(160_000),
+                BigDecimal.valueOf(220_000),
+                BigDecimal.valueOf(250_000),
+                BigDecimal.valueOf(150_000),
+                BigDecimal.valueOf(300_000),
+                BigDecimal.valueOf(140_000)
+        );
+
         List<Service> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
-            String serviceName = index < defaultServices.length
-                ? defaultServices[index]
-                : "Service " + faker.company().industry();
+        for (int i = 0; i < names.size(); i++) {
             Service service = Service.builder()
-                .name(serviceName)
-                    .unitPrice(BigDecimal.valueOf(50000 + (long) index * 15000))
+                    .name(names.get(i))
+                    .unitPrice(prices.get(i))
                     .build();
             entityManager.persist(service);
             result.add(service);
         }
+
         return result;
     }
 
@@ -270,140 +335,208 @@ public class DataSeeder implements CommandLineRunner {
             List<Doctor> doctors,
             List<ExamForm> examForms
     ) {
-        List<ReceptionRecord> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
-            ReceptionStatus status = switch (index % 5) {
-            case 0 -> ReceptionStatus.WAITING_EXECUTION;
-            case 1 -> ReceptionStatus.IN_PROGRESS;
-            case 2 -> ReceptionStatus.WAITING_CONCLUSION;
-            case 3 -> ReceptionStatus.WAITING_PAYMENT;
-            default -> ReceptionStatus.PAID;
-            };
+        ReceptionStatus[] statusCycle = {
+                ReceptionStatus.WAITING_EXECUTION,
+                ReceptionStatus.IN_PROGRESS,
+                ReceptionStatus.WAITING_CONCLUSION,
+                ReceptionStatus.WAITING_PAYMENT,
+                ReceptionStatus.PAID,
+                ReceptionStatus.IN_PROGRESS,
+                ReceptionStatus.WAITING_PAYMENT
+        };
 
-            LocalDateTime receptionTime = LocalDateTime.now()
-                .minusDays(SEED_SIZE - index)
-                .withHour(8 + (index % 9))
-                .withMinute((index * 7) % 60)
-                .withSecond(0)
-                .withNano(0);
+        String[] reasons = {
+                "Bỏ ăn, nôn nhẹ 2 ngày",
+                "Tiêu chảy kéo dài",
+                "Ho, khó thở nhẹ",
+                "Tái khám theo chỉ định",
+                "Mệt, ít vận động",
+                "Kiểm tra sức khỏe định kỳ"
+        };
+
+        LocalDateTime base = LocalDateTime.now().minusDays(CLIENT_COUNT + 5).withHour(8).withMinute(0).withSecond(0).withNano(0);
+
+        List<ReceptionRecord> result = new ArrayList<>();
+        for (int i = 0; i < clients.size(); i++) {
+            ReceptionStatus status = statusCycle[i % statusCycle.length];
+            LocalDateTime receptionTime = base.plusDays(i).plusMinutes((i * 13L) % 50L);
+            BigDecimal weightKg = BigDecimal.valueOf(2.2 + (i % 9) * 0.85).setScale(2, RoundingMode.HALF_UP);
 
             ReceptionRecord receptionRecord = ReceptionRecord.builder()
-                    .client(clients.get(index))
-                    .pet(pets.get(index))
-                    .receptionist(receptionists.get(index))
-                .doctor(doctors.get(index % doctors.size()))
-                    .examForm(examForms.get(index))
-                .examReason(index % 2 == 0 ? "Khám tổng quát" : "Tái khám định kỳ")
-                .symptomDescription(index % 3 == 0
-                    ? "Thú cưng có biểu hiện mệt và bỏ ăn"
-                    : "Kiểm tra sức khỏe định kỳ theo lịch")
-                .note(status == ReceptionStatus.WAITING_PAYMENT
-                    ? "Đã kết thúc khám, chờ thu ngân xác nhận"
-                    : null)
-                .weight(BigDecimal.valueOf(250 + (index % 10) * 45L, 2))
-                .status(status)
-                .receptionTime(receptionTime)
+                    .client(clients.get(i))
+                    .pet(pets.get(i))
+                    .receptionist(receptionists.get(i % receptionists.size()))
+                    .doctor(doctors.get(i % doctors.size()))
+                    .examForm(examForms.get(i % examForms.size()))
+                    .examReason(reasons[i % reasons.length])
+                    .note(status == ReceptionStatus.WAITING_PAYMENT ? "Đã hoàn tất khám, chờ thu ngân xác nhận." : null)
+                    .weight(weightKg)
+                    .status(status)
+                    .receptionTime(receptionTime)
                     .build();
             entityManager.persist(receptionRecord);
             result.add(receptionRecord);
         }
+
         return result;
     }
 
-        private void seedReceptionServices(List<ReceptionRecord> receptionRecords, List<Service> services) {
-        if (services.isEmpty()) {
-            return;
-        }
+    private List<ReceptionService> seedReceptionServices(List<ReceptionRecord> receptions, List<Service> services) {
+        Service clinical = services.getFirst();
+        List<ReceptionService> result = new ArrayList<>();
 
-        Service clinicalService = services.getFirst();
-        int paraclinicalPoolSize = Math.max(services.size() - 1, 0);
+        for (int i = 0; i < receptions.size(); i++) {
+            ReceptionRecord reception = receptions.get(i);
+            ReceptionStatus receptionStatus = reception.getStatus();
+            Set<Long> usedServiceIds = new HashSet<>();
 
-        for (int index = 0; index < SEED_SIZE; index++) {
-            ReceptionRecord receptionRecord = receptionRecords.get(index);
-            ReceptionStatus receptionStatus = receptionRecord.getStatus();
+            ReceptionService clinicalService = ReceptionService.builder()
+                    .receptionRecord(reception)
+                    .service(clinical)
+                    .status(mapClinicalStatus(receptionStatus))
+                    .startedAt(receptionStatus == ReceptionStatus.WAITING_EXECUTION ? null : reception.getReceptionTime().plusMinutes(25))
+                    .createdAt(reception.getReceptionTime().plusMinutes(10))
+                    .build();
+            entityManager.persist(clinicalService);
+            result.add(clinicalService);
+            usedServiceIds.add(clinical.getId());
 
-            ReceptionService clinical = ReceptionService.builder()
-                .receptionRecord(receptionRecord)
-                .service(clinicalService)
-                .status(mapClinicalServiceStatus(receptionStatus))
-                .createdAt(receptionRecord.getReceptionTime() == null
-                    ? LocalDateTime.now()
-                    : receptionRecord.getReceptionTime().plusMinutes(20))
-                .build();
-            entityManager.persist(clinical);
+            if (receptionStatus != ReceptionStatus.WAITING_EXECUTION && services.size() > 1) {
+                Service firstParaclinical = pickUnusedParaclinicalService(services, usedServiceIds, i);
+                if (firstParaclinical != null) {
+                    ReceptionService firstService = ReceptionService.builder()
+                            .receptionRecord(reception)
+                            .service(firstParaclinical)
+                            .status(mapParaclinicalStatus(receptionStatus))
+                            .startedAt(receptionStatus == ReceptionStatus.IN_PROGRESS ? reception.getReceptionTime().plusHours(1) : reception.getReceptionTime().plusMinutes(50))
+                            .createdAt(reception.getReceptionTime().plusMinutes(40))
+                            .build();
+                    entityManager.persist(firstService);
+                    result.add(firstService);
+                    usedServiceIds.add(firstParaclinical.getId());
+                }
+            }
 
-            if (paraclinicalPoolSize > 0 && index % 2 == 0) {
-            Service paraclinicalService = services.get(1 + (index % paraclinicalPoolSize));
-            ReceptionService paraclinical = ReceptionService.builder()
-                .receptionRecord(receptionRecord)
-                .service(paraclinicalService)
-                .status(mapParaclinicalServiceStatus(receptionStatus))
-                .createdAt(receptionRecord.getReceptionTime() == null
-                    ? LocalDateTime.now()
-                    : receptionRecord.getReceptionTime().plusHours(1))
-                .build();
-            entityManager.persist(paraclinical);
+            if ((receptionStatus == ReceptionStatus.WAITING_PAYMENT || receptionStatus == ReceptionStatus.PAID) && services.size() > 2) {
+                Service secondParaclinical = pickUnusedParaclinicalService(services, usedServiceIds, i + 3);
+                if (secondParaclinical != null) {
+                    ReceptionService secondService = ReceptionService.builder()
+                            .receptionRecord(reception)
+                            .service(secondParaclinical)
+                            .status(ReceptionServiceStatus.COMPLETED)
+                            .startedAt(reception.getReceptionTime().plusHours(2))
+                            .createdAt(reception.getReceptionTime().plusHours(1).plusMinutes(15))
+                            .build();
+                    entityManager.persist(secondService);
+                    result.add(secondService);
+                }
             }
         }
+
+        return result;
+    }
+
+    private Service pickUnusedParaclinicalService(List<Service> services, Set<Long> usedServiceIds, int offset) {
+        if (services.size() <= 1) {
+            return null;
         }
 
+        int poolSize = services.size() - 1;
+        for (int step = 0; step < poolSize; step++) {
+            Service candidate = services.get(1 + ((offset + step) % poolSize));
+            if (!usedServiceIds.contains(candidate.getId())) {
+                return candidate;
+            }
+        }
+
+        return null;
+    }
+
     private List<MedicalRecord> seedMedicalRecords(
-            List<ReceptionRecord> receptionRecords,
+            List<ReceptionRecord> receptions,
             List<Doctor> doctors,
-            List<ExamStatus> statuses
+            List<ExamStatus> examStatuses
     ) {
+        Map<String, ExamStatus> examStatusByName = new HashMap<>();
+        for (ExamStatus examStatus : examStatuses) {
+            examStatusByName.put(examStatus.getName(), examStatus);
+        }
+
         List<MedicalRecord> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
+        for (int i = 0; i < receptions.size(); i++) {
+            ReceptionRecord reception = receptions.get(i);
+            ExamStatus status = resolveExamStatus(examStatusByName, reception.getStatus());
+
             MedicalRecord medicalRecord = MedicalRecord.builder()
-                    .receptionRecord(receptionRecords.get(index))
-                    .doctor(doctors.get(index))
-                    .status(statuses.get(index))
-                    .examDate(LocalDateTime.now().minusDays(SEED_SIZE - index).plusHours(2))
+                    .receptionRecord(reception)
+                    .doctor(doctors.get(i % doctors.size()))
+                    .status(status)
+                    .examDate(reception.getReceptionTime().plusMinutes(35))
                     .build();
             entityManager.persist(medicalRecord);
             result.add(medicalRecord);
         }
+
         return result;
+    }
+
+    private ExamStatus resolveExamStatus(Map<String, ExamStatus> examStatusByName, ReceptionStatus receptionStatus) {
+        if (receptionStatus == ReceptionStatus.WAITING_EXECUTION) {
+            return examStatusByName.get("PENDING");
+        }
+        if (receptionStatus == ReceptionStatus.IN_PROGRESS) {
+            return examStatusByName.get("IN_PROGRESS");
+        }
+        return examStatusByName.get("COMPLETED");
     }
 
     private List<ExamResult> seedExamResults(List<MedicalRecord> medicalRecords, List<TreatmentDirection> directions) {
         List<ExamResult> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
-            LocalDateTime start = LocalDateTime.now().minusDays(SEED_SIZE - index).plusHours(3);
+        for (int i = 0; i < medicalRecords.size(); i++) {
+            MedicalRecord medicalRecord = medicalRecords.get(i);
+            ReceptionStatus receptionStatus = medicalRecord.getReceptionRecord().getStatus();
+            LocalDateTime startTime = medicalRecord.getExamDate();
+            LocalDateTime endTime = receptionStatus == ReceptionStatus.WAITING_EXECUTION
+                    ? null
+                    : startTime.plusMinutes(30);
+
+            TreatmentDirection direction = switch (receptionStatus) {
+                case WAITING_EXECUTION -> directions.get(3); // Khám cận lâm sàng
+                case IN_PROGRESS, WAITING_CONCLUSION -> directions.get(2); // Điều trị ngoại trú
+                case WAITING_PAYMENT, PAID -> directions.get(0); // Cho về
+            };
+
+            String conclusion = receptionStatus == ReceptionStatus.WAITING_EXECUTION
+                    ? null
+                    : "Theo dõi đáp ứng tốt, đề nghị tiếp tục phác đồ hiện tại.";
+
             ExamResult examResult = ExamResult.builder()
-                    .medicalRecord(medicalRecords.get(index))
-                    .treatmentDirection(directions.get(index))
-                    .conclusion("Conclusion for medical record " + (index + 1))
-                    .startTime(start)
-                    .endTime(start.plusMinutes(30))
+                    .medicalRecord(medicalRecord)
+                    .treatmentDirection(direction)
+                    .conclusion(conclusion)
+                    .evidencePath(endTime == null ? null : "./storage/exam-results/exam-result-seed-" + (i + 1) + ".jpg")
+                    .startTime(startTime)
+                    .endTime(endTime)
                     .build();
             entityManager.persist(examResult);
             result.add(examResult);
         }
+
         return result;
     }
 
-    private List<Prescription> seedPrescriptions(List<ExamResult> examResults) {
-        List<Prescription> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
-            ExamResult examResult = examResults.get(index);
-            long receptionRecordId = examResult.getMedicalRecord().getReceptionRecord().getId();
-            ReceptionService ownerService = entityManager.createQuery(
-                            """
-                            select rs
-                            from ReceptionService rs
-                            where rs.receptionRecord.id = :receptionRecordId
-                            order by rs.id asc
-                            """,
-                            ReceptionService.class
-                    )
-                    .setParameter("receptionRecordId", receptionRecordId)
-                    .setMaxResults(1)
-                    .getResultList()
-                    .stream()
-                    .findFirst()
-                    .orElse(null);
+    private List<Prescription> seedPrescriptions(List<ExamResult> examResults, List<ReceptionService> receptionServices, long clinicalServiceId) {
+        Map<Long, ReceptionService> clinicalServiceByReceptionId = new HashMap<>();
+        for (ReceptionService receptionService : receptionServices) {
+            if (receptionService.getService() != null && receptionService.getService().getId() == clinicalServiceId) {
+                clinicalServiceByReceptionId.put(receptionService.getReceptionRecord().getId(), receptionService);
+            }
+        }
 
+        List<Prescription> result = new ArrayList<>();
+        for (ExamResult examResult : examResults) {
+            long receptionId = examResult.getMedicalRecord().getReceptionRecord().getId();
+            ReceptionService ownerService = clinicalServiceByReceptionId.get(receptionId);
             Prescription prescription = Prescription.builder()
                     .examResult(examResult)
                     .receptionService(ownerService)
@@ -411,56 +544,102 @@ public class DataSeeder implements CommandLineRunner {
             entityManager.persist(prescription);
             result.add(prescription);
         }
+
         return result;
+    }
+
+    private void seedPrescriptionDetails(List<Prescription> prescriptions, List<Medicine> medicines) {
+        for (int i = 0; i < prescriptions.size(); i++) {
+            Prescription prescription = prescriptions.get(i);
+            Medicine primaryMedicine = medicines.get((i * 2) % medicines.size());
+
+            PrescriptionDetail mainDetail = PrescriptionDetail.builder()
+                    .prescription(prescription)
+                    .medicine(primaryMedicine)
+                    .quantity(1 + (i % 3))
+                    .morning(1)
+                    .noon(i % 2)
+                    .afternoon(1)
+                    .evening(i % 2)
+                    .instruction(i % 4 == 0 ? "Uống sau ăn" : "Theo dõi phản ứng trong 24h")
+                    .dosageUnit(primaryMedicine.getUnit())
+                    .build();
+            entityManager.persist(mainDetail);
+
+            if (i % 3 == 0) {
+                Medicine secondaryMedicine = medicines.get((i * 2 + 1) % medicines.size());
+                PrescriptionDetail extraDetail = PrescriptionDetail.builder()
+                        .prescription(prescription)
+                        .medicine(secondaryMedicine)
+                        .quantity(1)
+                        .morning(1)
+                        .noon(0)
+                        .afternoon(0)
+                        .evening(1)
+                        .instruction("Dùng khi có triệu chứng")
+                        .dosageUnit(secondaryMedicine.getUnit())
+                        .build();
+                entityManager.persist(extraDetail);
+            }
+        }
     }
 
     private List<ServiceOrder> seedServiceOrders(
             List<MedicalRecord> medicalRecords,
-            List<Service> services,
-            List<Technician> technicians
+            List<ReceptionService> receptionServices,
+            List<Technician> technicians,
+            long clinicalServiceId
     ) {
+        Map<Long, MedicalRecord> medicalRecordByReceptionId = new HashMap<>();
+        for (MedicalRecord medicalRecord : medicalRecords) {
+            medicalRecordByReceptionId.put(medicalRecord.getReceptionRecord().getId(), medicalRecord);
+        }
+
         List<ServiceOrder> result = new ArrayList<>();
-        for (int index = 0; index < SEED_SIZE; index++) {
+        int technicianCursor = 0;
+
+        for (ReceptionService receptionService : receptionServices) {
+            if (receptionService.getService() == null || receptionService.getService().getId() == clinicalServiceId) {
+                continue;
+            }
+
+            MedicalRecord medicalRecord = medicalRecordByReceptionId.get(receptionService.getReceptionRecord().getId());
+            if (medicalRecord == null) {
+                continue;
+            }
+
             ServiceOrder serviceOrder = ServiceOrder.builder()
-                    .medicalRecord(medicalRecords.get(index))
-                    .service(services.get(index))
-                    .technician(technicians.get(index))
+                    .medicalRecord(medicalRecord)
+                    .service(receptionService.getService())
+                    .technician(technicians.get(technicianCursor % technicians.size()))
                     .build();
             entityManager.persist(serviceOrder);
             result.add(serviceOrder);
+
+            technicianCursor++;
         }
+
         return result;
     }
 
-        private void seedPrescriptionDetails(
-            List<Prescription> prescriptions,
-            List<Medicine> medicines
-        ) {
-        for (int index = 0; index < SEED_SIZE; index++) {
-            PrescriptionDetail prescriptionDetail = PrescriptionDetail.builder()
-                    .prescription(prescriptions.get(index))
-                    .medicine(medicines.get(index))
-                    .quantity(1 + (index % 4))
-                    .morning(1)
-                    .noon(1)
-                    .afternoon(1)
-                    .evening(1)
-                    .instruction(index % 5 == 0 ? "Uống sau ăn" : "")
-                    .dosageUnit(medicines.get(index).getUnit())
-                    .build();
-            entityManager.persist(prescriptionDetail);
-        }
-    }
-
     private void seedServiceResults(List<ServiceOrder> serviceOrders) {
-        for (int index = 0; index < SEED_SIZE; index++) {
-            LocalDateTime start = LocalDateTime.now().minusDays(SEED_SIZE - index).plusHours(4);
+        for (int i = 0; i < serviceOrders.size(); i++) {
+            ServiceOrder serviceOrder = serviceOrders.get(i);
+            ReceptionStatus receptionStatus = serviceOrder.getMedicalRecord().getReceptionRecord().getStatus();
+            LocalDateTime start = serviceOrder.getMedicalRecord().getExamDate().plusMinutes(20);
+
+            LocalDateTime end = switch (receptionStatus) {
+                case WAITING_PAYMENT, PAID, WAITING_CONCLUSION -> start.plusMinutes(35);
+                case IN_PROGRESS -> null;
+                case WAITING_EXECUTION -> null;
+            };
+
             ServiceResult serviceResult = ServiceResult.builder()
-                    .serviceOrder(serviceOrders.get(index))
-                    .result("Service result " + (index + 1))
-                    .evidencePath("./storage/service-result-" + (index + 1) + ".jpg")
-                    .startTime(start)
-                    .endTime(start.plusMinutes(45))
+                    .serviceOrder(serviceOrder)
+                    .result(end == null ? null : "Kết quả ổn định, không ghi nhận bất thường lớn.")
+                    .evidencePath(end == null ? null : "./storage/tech-results/tech-result-seed-" + (i + 1) + ".jpg")
+                    .startTime(receptionStatus == ReceptionStatus.WAITING_EXECUTION ? null : start)
+                    .endTime(end)
                     .build();
             entityManager.persist(serviceResult);
         }
@@ -468,53 +647,57 @@ public class DataSeeder implements CommandLineRunner {
 
     private void seedInvoices(
             List<MedicalRecord> medicalRecords,
-            List<ReceptionRecord> receptionRecords,
+            List<ReceptionRecord> receptions,
             List<PaymentMethod> paymentMethods
     ) {
-        for (int index = 0; index < SEED_SIZE; index++) {
-            ReceptionStatus receptionStatus = receptionRecords.get(index).getStatus();
-            if (receptionStatus != ReceptionStatus.WAITING_PAYMENT && receptionStatus != ReceptionStatus.PAID) {
+        for (int i = 0; i < receptions.size(); i++) {
+            ReceptionRecord reception = receptions.get(i);
+            ReceptionStatus status = reception.getStatus();
+
+            if (status != ReceptionStatus.WAITING_PAYMENT && status != ReceptionStatus.PAID) {
                 continue;
             }
 
-            LocalDateTime createdAt = LocalDateTime.now().minusDays(SEED_SIZE - index).plusHours(5);
-            boolean paid = receptionStatus == ReceptionStatus.PAID;
+            LocalDateTime createdAt = reception.getReceptionTime().plusHours(3);
+            boolean paid = status == ReceptionStatus.PAID;
+
             Invoice invoice = Invoice.builder()
-                    .medicalRecord(medicalRecords.get(index))
-                    .paymentMethod(paymentMethods.get(index % paymentMethods.size()))
-                    .receptionist(receptionRecords.get(index).getReceptionist())
-                    .totalAmount(BigDecimal.valueOf(300000 + (long) index * 25000))
+                    .medicalRecord(medicalRecords.get(i))
+                    .paymentMethod(paymentMethods.get(i % paymentMethods.size()))
+                    .receptionist(reception.getReceptionist())
+                    .totalAmount(BigDecimal.valueOf(350_000 + i * 25_000L))
                     .status(paid ? "PAID" : "PENDING")
-                    .note(paid ? "Đã thanh toán đầy đủ" : "Chờ thanh toán")
+                    .note(paid ? "Đã thanh toán đủ." : "Chờ khách xác nhận thanh toán.")
                     .createdAt(createdAt)
-                    .paymentDate(paid ? createdAt.plusMinutes(25) : null)
+                    .paymentDate(paid ? createdAt.plusMinutes(20) : null)
                     .build();
             entityManager.persist(invoice);
         }
     }
 
-    private ReceptionServiceStatus mapClinicalServiceStatus(ReceptionStatus receptionStatus) {
-        if (receptionStatus == ReceptionStatus.PAID) {
-            return ReceptionServiceStatus.COMPLETED;
-        }
+    private ReceptionServiceStatus mapClinicalStatus(ReceptionStatus receptionStatus) {
         if (receptionStatus == ReceptionStatus.WAITING_EXECUTION) {
             return ReceptionServiceStatus.PENDING;
         }
-        return ReceptionServiceStatus.IN_PROGRESS;
+        if (receptionStatus == ReceptionStatus.IN_PROGRESS || receptionStatus == ReceptionStatus.WAITING_CONCLUSION) {
+            return ReceptionServiceStatus.IN_PROGRESS;
+        }
+        return ReceptionServiceStatus.COMPLETED;
     }
 
-    private ReceptionServiceStatus mapParaclinicalServiceStatus(ReceptionStatus receptionStatus) {
-        if (receptionStatus == ReceptionStatus.PAID || receptionStatus == ReceptionStatus.WAITING_PAYMENT) {
-            return ReceptionServiceStatus.COMPLETED;
+    private ReceptionServiceStatus mapParaclinicalStatus(ReceptionStatus receptionStatus) {
+        if (receptionStatus == ReceptionStatus.IN_PROGRESS) {
+            return ReceptionServiceStatus.IN_PROGRESS;
         }
         if (receptionStatus == ReceptionStatus.WAITING_EXECUTION) {
             return ReceptionServiceStatus.PENDING;
         }
-        return ReceptionServiceStatus.IN_PROGRESS;
+        return ReceptionServiceStatus.COMPLETED;
     }
 
     private long countOf(Class<?> entityClass) {
-        return entityManager.createQuery("select count(e) from " + entityClass.getSimpleName() + " e", Long.class)
+        return entityManager
+                .createQuery("select count(e) from " + entityClass.getSimpleName() + " e", Long.class)
                 .getSingleResult();
     }
 }

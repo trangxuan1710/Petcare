@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { ChevronLeft, Mars, Venus, Phone, ClipboardList, PawPrint } from 'lucide-react';
+import { toTitleCase } from '../../utils/textFormat';
 import './ReceivedDetailLayout.css';
 
 const toPetKey = (pet) => String(pet?.id || pet?.name || '');
@@ -47,7 +48,7 @@ const ReceivedDetailLayout = ({ order, onBack, onSubmit }) => {
             <div className='rod-content'>
                 <div className="rod-summary">
                     <div>
-                        <div className="rod-name">{order?.customerName}</div>
+                        <div className="rod-name">{toTitleCase(order?.customerName) || order?.customerName}</div>
                         <div className="rod-phone">
                             <Phone size={20} color="#209D80" />
                             <span>{order?.phone || '--'}</span>
@@ -69,7 +70,7 @@ const ReceivedDetailLayout = ({ order, onBack, onSubmit }) => {
                                 disabled
                             >
                                 <PawPrint size={14} />
-                                <span>{pet?.name || 'Thú cưng'}</span>
+                                <span>{toTitleCase(pet?.name || 'Thú cưng') || 'Thú cưng'}</span>
                             </button>
                         );
                     })}
@@ -80,8 +81,8 @@ const ReceivedDetailLayout = ({ order, onBack, onSubmit }) => {
 
                     <div className="rod-pet-bar">
                         <div className="rod-pet-meta">
-                            <span className="rod-pet-name">{selectedPet?.name || 'Thú cưng'}</span>
-                            <span className="rod-pet-breed">{selectedPet?.breed || '--'}</span>
+                            <span className="rod-pet-name">{toTitleCase(selectedPet?.name || 'Thú cưng') || 'Thú cưng'}</span>
+                            <span className="rod-pet-breed">{toTitleCase(selectedPet?.breed || '--') || '--'}</span>
                             {isFemale
                                 ? <Venus size={12} color="#ec4899" />
                                 : <Mars size={12} color="#3b82f6" />}
@@ -99,17 +100,14 @@ const ReceivedDetailLayout = ({ order, onBack, onSubmit }) => {
                         <span className="rod-label">Lý do khám</span>
                         <span className="rod-value">{receptionRecord?.examReason || '--'}</span>
                     </div>
-                    <div className="rod-field">
-                        <span className="rod-label">Mô tả</span>
-                        <span className="rod-value rod-value-wrap">{receptionRecord?.symptomDescription || '--'}</span>
-                    </div>
+                    {/* 'symptomDescription' removed; description is stored in examReason */}
                     <div className="rod-field">
                         <span className="rod-label">Hình thức khám</span>
                         <span className="rod-value">{receptionRecord?.examForm?.examType || '--'}</span>
                     </div>
                     <div className="rod-field">
                         <span className="rod-label">Bác sĩ phụ trách</span>
-                        <span className="rod-value">{receptionRecord?.doctor?.fullName || '--'}</span>
+                        <span className="rod-value">{toTitleCase(receptionRecord?.doctor?.fullName || '--') || '--'}</span>
                     </div>
                     <div className="rod-field">
                         <span className="rod-label">Lưu ý</span>

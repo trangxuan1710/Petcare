@@ -53,6 +53,11 @@
     cursor: pointer;
 }
 
+.footer-actions .btn-base:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
 .footer-actions .btn-outline {
     border: 2px solid #1da088;
     background: #ffffff;

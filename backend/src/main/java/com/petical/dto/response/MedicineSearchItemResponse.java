@@ -18,6 +18,9 @@ public class MedicineSearchItemResponse {
     @Schema(description = "Tên thuốc", example = "Đài Tràng Trường Phúc")
     private String name;
 
+    @Schema(description = "Mô tả ngắn", example = "Điều trị viêm loét dạ dày, rối loạn tiêu hóa")
+    private String description;
+
     @Schema(description = "Đơn vị", example = "hộp")
     private String unit;
 
