@@ -34,6 +34,7 @@ const mapMedicineItem = (item) => ({
     id: item?.id,
     name: item?.name || 'Thuoc vat tu',
     desc: item?.description || item?.desc || item?.type || '',
+    type: item?.type || 'THUOC',
     price: formatVnd(getPriceNumber(item)),
     unitPrice: getPriceNumber({ price: item?.unitPrice ?? item?.price }),
     boxPrice: getPriceNumber({ price: item?.boxPrice ?? item?.price }),

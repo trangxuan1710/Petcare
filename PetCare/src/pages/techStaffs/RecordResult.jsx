@@ -295,6 +295,10 @@ const TechRecordResult = () => {
                 quantity: Number(medicine.quantity),
                 instruction: medicine.instruction?.trim() || undefined,
                 dosageUnit: String(medicine.selectedUnit || medicine.dosageUnit || '').replace(/^\//, '').trim() || undefined,
+                morning: Math.max(0, Number(medicine.morning ?? 1)),
+                noon: Math.max(0, Number(medicine.noon ?? 1)),
+                afternoon: Math.max(0, Number(medicine.afternoon ?? 1)),
+                evening: Math.max(0, Number(medicine.evening ?? 1)),
             }));
 
         const payload = {
@@ -484,36 +488,29 @@ const TechRecordResult = () => {
                                                     <div className="trs-meds-item-main">
                                                         <strong>{medicine.medicineName || 'Thuốc/Vật tư'}</strong>
                                                         {medicine.desc ? <p>{medicine.desc}</p> : null}
+                                                        
+                                                        {medicine.type === 'THUOC' ? (
+                                                            <div className="trs-med-dosage-micro">
+                                                                Sáng {medicine.morning || 0}, Trưa {medicine.noon || 0}, Chiều {medicine.afternoon || 0}, Tối {medicine.evening || 0}
+                                                                {medicine.instruction ? ` (${medicine.instruction})` : ''}
+                                                            </div>
+                                                        ) : null}
+
                                                         <div className="trs-meds-item-meta">
-                                                            <span>Dự kiến: <strong>{medicine.quantity} {medicine.selectedUnit || medicine.dosageUnit || ''}</strong></span>
-                                                            <span>Tồn: <strong>{formatStock(medicine.stock)}</strong></span>
+                                                            <span>Số lượng: <strong>{medicine.quantity} {medicine.type === 'THUOC' ? 'hộp' : (medicine.selectedUnit || medicine.dosageUnit || '')}</strong></span>
                                                         </div>
                                                     </div>
                                                 </div>
-
-                                                <div className="trs-meds-item-controls">
-                                                    <div className="trs-meds-stepper">
-                                                        <button type="button" onClick={() => handleMedicineQuantityChange(medicine.medicineId, -1)}>
-                                                            <Minus size={16} />
-                                                        </button>
-                                                        <span>{medicine.quantity}</span>
-                                                        <button type="button" onClick={() => handleMedicineQuantityChange(medicine.medicineId, 1)}>
-                                                            <Plus size={16} />
-                                                        </button>
-                                                    </div>
-
-                                                    <select
-                                                        className="trs-meds-unit-select"
-                                                        value={medicine.selectedUnit || medicine.dosageUnit || ''}
-                                                        onChange={(event) => handleMedicineUnitChange(medicine.medicineId, event.target.value)}
-                                                    >
-                                                        {(medicine.unitOptions || [medicine.selectedUnit || medicine.dosageUnit || 'đơn vị']).map((unitOption) => (
-                                                            <option key={`${medicine.medicineId}-${unitOption}`} value={unitOption}>
-                                                                {unitOption}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </div>
+                                                
+                                                <button
+                                                    type="button"
+                                                    className="trs-med-edit-btn"
+                                                    onClick={handleOpenMedicineSelector}
+                                                    aria-label={`Sửa ${medicine.medicineName}`}
+                                                    style={{ background: 'none', border: 'none', color: '#209d80', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', alignSelf: 'flex-start', marginTop: '12px' }}
+                                                >
+                                                    Chỉnh sửa
+                                                </button>
                                             </div>
                                         ))}
                                     </div>

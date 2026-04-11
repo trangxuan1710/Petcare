@@ -1,116 +1,147 @@
-.tms-page {
-    min-height: 100vh;
-    background: #f4f6f6;
-    font-family: "Roboto", sans-serif;
-    color: #1f2937;
+.med-selector-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background-color: #f5f9f8; /* slightly green-tinted background from the design */
+    font-family: "Roboto", Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
 }
 
-.tms-header {
+/* Header */
+.ms-header {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: flex-start;
     padding: 16px 20px;
-    background: #ffffff;
+    background-color: #fff;
     border-bottom: 1px solid #e8eced;
     box-shadow: 0 1px 4px 0 rgba(28, 155, 132, 0.04);
+    gap: 8px;
 }
 
-.tms-header h1 {
-    margin: 0;
-    font-size: 20px;
-    font-weight: 700;
-}
-
-.tms-icon-btn {
+.ms-btn-icon {
+    background: none;
     border: none;
-    background: transparent;
-    display: inline-flex;
+    padding: 4px;
+    cursor: pointer;
+    display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     border-radius: 10px;
     transition: background-color 0.15s ease;
 }
 
-.tms-icon-btn:hover {
+.ms-btn-icon:hover {
     background-color: #f3f6f6;
 }
 
-.tms-icon-btn:active {
+.ms-btn-icon:active {
     transform: scale(0.95);
 }
 
-.tms-search-box {
-    margin: 12px 16px 0;
-    background: #ffffff;
-    border: 1px solid #e0e5e7;
-    border-radius: 12px;
+.ms-title {
+    font-family: "Roboto", sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Search */
+.ms-search-container {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 0 12px;
-    height: 42px;
+    padding: 12px 16px;
+    background-color: #fff;
+    border-bottom: 1px solid #f0f4f8;
+    gap: 12px;
 }
 
-.tms-search-box input {
+.ms-search-box {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    padding: 8px 16px;
+    background-color: #fff;
+}
+
+.ms-search-icon {
+    margin-right: 8px;
+}
+
+.ms-search-input {
     border: none;
     outline: none;
-    width: 100%;
-    background: transparent;
     font-size: 14px;
+    flex: 1;
+    color: #333;
 }
 
-.tms-content {
-    padding: 14px 16px 96px;
+.ms-search-input::placeholder {
+    color: #d1d5db;
+}
+
+.ms-filter-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+/* Content */
+.ms-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    padding-bottom: 100px;
+}
+
+.ms-meds-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 16px;
 }
 
-.tms-empty {
-    background: #ffffff;
-    border: 1px dashed #c9d8d2;
-    border-radius: 14px;
-    text-align: center;
-    padding: 18px;
-    color: #6b7780;
-    font-size: 14px;
-}
-
-.tms-card {
+.ms-lite-card {
     background: #ffffff;
     border: 1px solid #e5e9eb;
     border-radius: 14px;
-    padding: 12px 12px 10px;
+    padding: 12px;
 }
 
-.tms-card.is-selected {
+.ms-lite-card.selected {
     border-color: #d8e7e2;
     box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
 
-.tms-item-head {
+.ms-lite-head {
     display: grid;
     grid-template-columns: 24px 62px 1fr;
     gap: 10px;
-    align-items: start;
+    align-items: flex-start;
 }
 
-.tms-check {
+.ms-lite-check {
     display: inline-flex;
     justify-content: center;
     align-items: flex-start;
     padding-top: 18px;
 }
 
-.tms-check input {
+.ms-lite-check input {
     width: 16px;
     height: 16px;
     accent-color: #1c9b84;
     cursor: pointer;
 }
 
-.tms-thumb {
+.ms-lite-thumb {
     width: 62px;
     height: 62px;
     object-fit: contain;
@@ -118,39 +149,37 @@
     background: #ffffff;
 }
 
-.tms-item-main {
+.ms-lite-main {
     min-width: 0;
 }
 
-.tms-main-row {
+.ms-lite-top {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     gap: 10px;
 }
 
-.tms-main-row strong {
+.ms-lite-name {
     font-size: 15px;
     font-weight: 700;
     color: #333;
     line-height: 1.3;
 }
 
-.tms-name {
+.ms-lite-top strong:last-child {
     font-size: 15px;
-    font-weight: 700;
     color: #333;
-    line-height: 1.3;
 }
 
-.tms-desc {
+.ms-lite-desc {
     margin: 4px 0 0;
     color: #8b9198;
     font-size: 12px;
     line-height: 1.35;
 }
 
-.tms-meta-row {
+.ms-lite-meta {
     margin-top: 8px;
     display: flex;
     justify-content: space-between;
@@ -159,31 +188,29 @@
     font-size: 12px;
 }
 
-.tms-meta-row span:last-child {
+.ms-lite-meta span:last-child {
     font-weight: 500;
 }
 
-.tms-controls {
-    margin-top: 12px;
-    margin-left: 96px;
-    padding-top: 12px;
+.ms-lite-controls {
+    margin:12px;
     border-top: 1px solid #edf1f2;
     display: grid;
-    grid-template-columns: 1fr 78px;
+    grid-template-columns: 1fr 78px auto;
     gap: 10px;
+    align-items: center;
 }
 
-.tms-stepper {
+.ms-lite-stepper {
     border: 1px solid #dfe5e8;
     border-radius: 11px;
     height: 38px;
     display: grid;
     grid-template-columns: 36px 1fr 36px;
     align-items: center;
-    background: #fff;
 }
 
-.tms-stepper button {
+.ms-lite-stepper button {
     width: 100%;
     height: 100%;
     border: none;
@@ -195,14 +222,14 @@
     color: #6b7280;
 }
 
-.tms-stepper span {
+.ms-lite-stepper span {
     text-align: center;
     font-size: 14px;
     font-weight: 500;
     color: #374151;
 }
 
-.tms-unit-select {
+.ms-lite-unit {
     border: 1px solid #dfe5e8;
     border-radius: 11px;
     height: 38px;
@@ -212,47 +239,495 @@
     background: #fff;
 }
 
-.tms-note {
-    margin-top: 8px;
-    margin-left: 96px;
-    width: calc(100% - 96px);
-    height: 34px;
-    border: 1px solid #e1e7ea;
-    border-radius: 10px;
+.ms-lite-dosage {
+    height: 38px;
+    border-radius: 11px;
+    border: 1px solid #1c9b84;
     padding: 0 10px;
+    background: #ffffff;
+    color: #1c9b84;
     font-size: 13px;
-}
-
-.tms-footer {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: #eff3f1;
-    border-top: 1px solid #dce6e2;
-    padding: 10px 16px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.tms-btn-outline,
-.tms-btn-primary {
-    height: 46px;
-    border-radius: 14px;
-    font-size: 16px;
-    font-weight: 700;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     cursor: pointer;
 }
 
-.tms-btn-outline {
-    background: #ffffff;
-    border: 1.5px solid #14957d;
-    color: #14957d;
+.ms-lite-dosage-summary {
+    margin:12px;
+    border-top: 1px dashed #e5eaec;
+    padding-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
-.tms-btn-primary {
-    background: #14957d;
+.ms-lite-dosage-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.ms-lite-dosage-row span:last-child {
+    color: #1f2937;
+    font-weight: 500;
+}
+
+.ms-lite-dosage-row.note span:last-child {
+    max-width: 62%;
+    text-align: right;
+    color: #6b7280;
+    font-weight: 400;
+}
+
+/* Cards */
+.ms-med-card {
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.ms-med-card:focus-visible {
+    outline: 2px solid #209D80;
+    outline-offset: 2px;
+}
+
+/* Selection state */
+.ms-med-card.selected {
+    box-shadow: 0 4px 12px rgba(32, 157, 128, 0.08); /* slight greenish shadow */
+}
+
+.ms-med-main-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+/* Custom Checkbox mimicking the image */
+.ms-med-checkbox {
+    padding-top: 18px; /* align with image */
+    cursor: pointer;
+}
+
+.ms-checkbox-box {
+    width: 20px;
+    height: 20px;
+    border: 1.5px solid #a1a1aa;
+    border-radius: 6px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ms-checkbox-box.checked {
+    border-color: #209D80;
+}
+
+.ms-checkbox-box.checked::after {
+    content: '';
+    width: 12px;
+    height: 12px;
+    background-color: #209D80;
+    border-radius: 3px;
+}
+
+/* Info */
+.ms-med-image-sm {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    border-radius: 4px;
+    background-color: #fff;
+}
+
+.ms-med-info-box {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.ms-med-name-sm {
+    font-family: "Roboto", sans-serif !important;
+    font-size: 14px;
+    font-weight: 600;
+    color: #3f3f46;
+    margin: 0 0 4px 0;
+}
+
+.ms-med-desc-sm {
+    font-family: "Roboto", sans-serif !important;
+    font-size: 13px;
+    color: #888;
+    margin: 0 0 10px 0;
+    line-height: 1.4;
+}
+
+.ms-med-footer-sm {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.ms-med-price-tag .ms-price-num {
+    font-size: 15px;
+    font-weight: 700;
+    color: #209D80;
+}
+
+.ms-med-price-tag .ms-price-unit {
+    font-size: 13px;
+    color: #666;
+}
+
+.ms-stock-txt {
+    font-size: 13px;
+    color: #666;
+}
+
+.ms-stock-txt strong {
+    color: #4a4a4a;
+    font-weight: 600;
+}
+
+/* Expanded Area */
+.ms-med-expanded-area {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #ebebeb;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ms-qty-row, .ms-dosage-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ms-qty-row{
+    border-bottom: 1px solid #ebebeb;
+    padding-bottom: 16px;
+}
+
+.ms-qty-label {
+    font-size: 16px;
+    font-weight: 600;
+    color: #4a4a4a;
+    margin-left: 32px; /* indent to align with text */
+}
+
+/* Controls */
+.ms-qty-controls-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.ms-unit-select {
+    width: 110px;
+    height: 40px;
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 14px;
+    color: #444;
+    cursor: pointer;
+    background-color: #fff;
+    appearance: auto;
+}
+
+.ms-qty-stepper {
+    display: flex;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.ms-stepper-btn {
+    background: none;
     border: none;
-    color: #ffffff;
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ms-stepper-btn:hover {
+    background-color: #f3f4f6;
+}
+
+.ms-qty-val {
+    width: 36px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.ms-btn-dosage {
+    padding: 10px 14px;
+    background-color: #fff;
+    border: 1px solid #209D80;
+    color: #209D80;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 10px;
+    width: fit-content;
+    cursor: pointer;
+    margin-left: 32px;
+}
+
+.ms-btn-dosage-edit {
+    border: none;
+    background: transparent;
+    color: #209D80;
+    cursor: pointer;
+    margin-right: 4px;
+    display: flex;
+    align-items: center;
+}
+
+.ms-dosage-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-left: 32px;
+    color: #444;
+    font-size: 16px;
+}
+
+.ms-dosage-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.ms-dosage-summary-row.note span:last-child {
+    text-align: right;
+    max-width: 64%;
+    color: #525252;
+}
+
+/* Bottom Actions */
+.ms-bottom-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 16px;
+    background-color: #fff;
+    display: flex;
+    gap: 12px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+    border-top: 1px solid #f0f0f0;
+}
+
+.ms-btn-skip, .ms-btn-confirm {
+    flex: 1;
+    padding: 14px;
+    border-radius: 20px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+}
+
+.ms-btn-skip {
+    background-color: #fff;
+    border: 1px solid #209D80;
+    color: #209D80;
+}
+
+.ms-btn-confirm {
+    background-color: #209D80;
+    color: #fff;
+}
+
+/* === DOSAGE MODAL / BOTTOM SHEET === */
+.dosage-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+}
+
+.dosage-modal-content {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #fff;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh; /* up to 90% of screen */
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+.dosage-modal-handle {
+    width: 40px;
+    height: 4px;
+    background-color: #d1d5db;
+    border-radius: 2px;
+    margin: 12px auto 8px auto;
+}
+
+.dosage-modal-title {
+    font-family: "Roboto", sans-serif !important;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 8px 0 16px 0;
+}
+
+.dosage-main-area {
+    padding: 0 16px 16px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.dosage-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dosage-label {
+    font-size: 15px;
+    font-weight: 600;
+    color: #555;
+    width: 100px;
+}
+
+.dosage-controls {
+    display: flex;
+    gap: 12px;
+    flex: 1;
+}
+
+.dosage-stepper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background-color: #fff;
+}
+
+.dosage-step-btn {
+    background: none;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dosage-step-val {
+    flex: 1;
+    text-align: center;
+    font-size: 15px;
+    color: #444;
+}
+
+.dosage-unit {
+    width: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #444;
+    cursor: pointer;
+    background-color: #fff;
+}
+
+/* Note text area inline */
+.dosage-note-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-top: 4px;
+}
+
+.dosage-note-row .dosage-label {
+    margin-top: 8px;
+}
+
+.dosage-textarea-box {
+    flex: 1;
+    position: relative;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dosage-textarea {
+    width: 100%;
+    min-height: 90px;
+    border: none;
+    padding: 12px;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    resize: none;
+    outline: none;
+}
+
+.dosage-char-count {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 12px;
+    color: #d1d5db;
+}
+
+.dosage-bottom-action {
+    padding: 16px;
+    background-color: #fff;
+    border-top: 1px solid #f0f0f0;
+}
+
+.dosage-btn-confirm-final {
+    width: 100%;
+    padding: 14px;
+    background-color: #209D80;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
 }

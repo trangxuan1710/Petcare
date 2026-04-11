@@ -1,10 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Search, Minus, Plus, Bell } from 'lucide-react';
-import { useNotificationSSE } from '../../hooks/useNotificationSSE';
-import { TECH_PATHS } from '../../routes/techPaths';
-import medicineService from '../../api/medicineService';
+import { ChevronLeft, Search, Minus, Plus, ChevronDown, PencilLine } from 'lucide-react';
 import './MedicineSelector.css';
+import medicineService from '../../api/medicineService';
+import treatmentService from '../../api/treatmentService';
 
 const toArray = (raw) => {
     if (Array.isArray(raw)) return raw;
@@ -14,7 +13,43 @@ const toArray = (raw) => {
     return [];
 };
 
-const normalizeUnit = (value) => String(value || '').replace(/^\//, '').trim();
+const getPriceNumber = (item) => {
+    const rawPrice = item?.price
+        ?? item?.unitPrice
+        ?? item?.sellingPrice
+        ?? item?.retailPrice
+        ?? item?.cost
+        ?? item?.amount;
+
+    if (rawPrice == null || rawPrice === '') return 0;
+    if (typeof rawPrice === 'number') return rawPrice;
+
+    const rawText = String(rawPrice).trim();
+    if (!rawText) return 0;
+
+    const digitsAndSeparators = rawText.replace(/[^\d,.-]/g, '');
+    if (!digitsAndSeparators) return 0;
+
+    // Handle common VN currency formatting, e.g. 12.000 or 12.000,50.
+    if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(digitsAndSeparators)) {
+        const normalizedVn = digitsAndSeparators.replace(/\./g, '').replace(',', '.');
+        const parsedVn = Number(normalizedVn);
+        return Number.isFinite(parsedVn) ? parsedVn : 0;
+    }
+
+    // Handle EN-style grouping, e.g. 12,000 or 12,000.50.
+    if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(digitsAndSeparators)) {
+        const normalizedEn = digitsAndSeparators.replace(/,/g, '');
+        const parsedEn = Number(normalizedEn);
+        return Number.isFinite(parsedEn) ? parsedEn : 0;
+    }
+
+    const normalized = digitsAndSeparators.replace(/,/g, '');
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatVnd = (value) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
 
 const formatStock = (value) => {
     if (value == null || value === '') return '--';
@@ -23,153 +58,309 @@ const formatStock = (value) => {
     return parsed.toLocaleString('vi-VN');
 };
 
-const getUnitOptions = (item) => {
-    if (Array.isArray(item?.unitOptions) && item.unitOptions.length > 0) {
-        return item.unitOptions.map(normalizeUnit).filter(Boolean);
-    }
-
-    const oneUnit = normalizeUnit(item?.selectedUnit || item?.unit || 'đơn vị');
-    return oneUnit ? [oneUnit] : ['đơn vị'];
+const UNIT_LABEL_MAP = {
+    tablet: 'viên',
+    tablets: 'viên',
+    pill: 'viên',
+    pills: 'viên',
+    capsule: 'viên nang',
+    capsules: 'viên nang',
+    cap: 'viên nang',
+    vial: 'lọ',
+    bottle: 'chai',
+    box: 'hộp',
+    pack: 'gói',
+    packet: 'gói',
+    sachet: 'gói',
+    tube: 'tuýp',
+    ampoule: 'ống',
+    ampule: 'ống',
+    bag: 'túi',
+    ml: 'ml',
+    l: 'lít',
+    liter: 'lít',
+    litre: 'lít',
+    mg: 'mg',
+    g: 'g',
+    kg: 'kg',
+    unit: 'đơn vị',
 };
 
-const mapMedicine = (item, selectedMap) => {
-    const selected = selectedMap.get(Number(item?.id || 0));
-    const unitOptions = getUnitOptions(item);
-    const selectedUnit = normalizeUnit(selected?.selectedUnit || selected?.dosageUnit || item?.selectedUnit || item?.unit || unitOptions[0]);
+const TABLET_UNIT_OPTIONS = ['hộp', 'vỉ'];
+const BOX_ONLY_UNIT_OPTIONS = ['hộp'];
 
+const TABLET_UNIT_KEYS = new Set(['tablet', 'tablets', 'pill', 'pills', 'capsule', 'capsules', 'cap', 'vien', 'viên', 'vien nang', 'viên nang']);
+const LIQUID_UNIT_KEYS = new Set(['ml', 'bottle', 'vial', 'ampoule', 'ampule', 'drop', 'liquid', 'syrup', 'lọ', 'chai']);
+
+const toVietnameseUnit = (rawUnit) => {
+    const normalizedRaw = String(rawUnit || '')
+        .trim()
+        .toLowerCase()
+        .replace(/^\//, '');
+
+    if (!normalizedRaw) return 'đơn vị';
+    return UNIT_LABEL_MAP[normalizedRaw] || normalizedRaw;
+};
+
+const normalizeUnitKey = (rawUnit) => String(rawUnit || '').trim().toLowerCase().replace(/^\//, '');
+
+const resolveUnitOptions = (rawUnit) => {
+    const normalized = normalizeUnitKey(rawUnit);
+    if (TABLET_UNIT_KEYS.has(normalized)) {
+        return TABLET_UNIT_OPTIONS;
+    }
+    if (LIQUID_UNIT_KEYS.has(normalized)) {
+        return BOX_ONLY_UNIT_OPTIONS;
+    }
+    return BOX_ONLY_UNIT_OPTIONS;
+};
+
+const normalizeDoseValue = (rawValue) => {
+    const parsed = Number(rawValue);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 1;
+};
+
+const resolvePriceBySelectedUnit = (item, selectedUnit) => {
+    const boxPrice = Number(item?.boxPrice ?? item?.rawBoxPrice ?? 0);
+    const unitPrice = Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item));
+    const normalizedUnit = String(selectedUnit || '').trim().toLowerCase();
+
+    if (normalizedUnit === 'hộp' || normalizedUnit === 'hop' || normalizedUnit === 'box') {
+        if (Number.isFinite(boxPrice) && boxPrice > 0) {
+            return boxPrice;
+        }
+    }
+    return Number.isFinite(unitPrice) && unitPrice > 0 ? unitPrice : 0;
+};
+
+const normalizeMedicine = (item) => {
+    const baseUnit = item?.unit || item?.selectedUnit || '';
+    const normalizedSelectedUnit = toVietnameseUnit(baseUnit);
+    const selectedUnit = normalizedSelectedUnit || 'đơn vị';
+
+    const type = String(item?.type || 'THUOC').toUpperCase().trim();
     return {
-        id: Number(item?.id || 0),
-        name: item?.name || 'Thuốc/Vật tư',
-        desc: item?.description || item?.desc || '',
-        image: item?.image || 'https://placehold.co/84x84/f4f4f5/a1a1aa?text=Med',
-        stock: item?.stock ?? '--',
-        price: item?.price || '0đ',
-        selected: Boolean(selected),
-        qty: Math.max(Number(selected?.quantity || 1), 1),
-        instruction: selected?.instruction || '',
-        selectedUnit: selectedUnit || unitOptions[0] || 'đơn vị',
-        unitOptions: unitOptions.length > 0 ? unitOptions : ['đơn vị'],
+        ...item,
+        type,
+        desc: item?.desc || item?.description || type || '',
+        rawUnitPrice: Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item)),
+        rawBoxPrice: Number(item?.boxPrice ?? item?.rawBoxPrice ?? getPriceNumber(item)),
+        price: formatVnd(resolvePriceBySelectedUnit(item, selectedUnit)),
+        unit: `/${selectedUnit}`,
+        stock: item?.stock ?? item?.stockQuantity ?? item?.availableStock ?? '--',
+        qty: Math.max(1, Number(item?.qty ?? item?.quantity ?? 1)),
+        selectedUnit,
+        dosage: {
+            morning: normalizeDoseValue(item?.dosage?.morning),
+            noon: normalizeDoseValue(item?.dosage?.noon),
+            afternoon: normalizeDoseValue(item?.dosage?.afternoon),
+            evening: normalizeDoseValue(item?.dosage?.evening),
+            note: item?.dosage?.note || item?.note || '',
+        },
     };
+};
+
+const mergeMedicinesBySelected = (apiMedicines, selectedMedicines) => {
+    if (!Array.isArray(apiMedicines) || apiMedicines.length === 0) {
+        return Array.isArray(selectedMedicines) ? selectedMedicines : [];
+    }
+
+    if (!Array.isArray(selectedMedicines) || selectedMedicines.length === 0) {
+        return apiMedicines;
+    }
+
+    const selectedById = new Map(selectedMedicines.map((item) => [item.id, item]));
+    const merged = apiMedicines.map((med) => {
+        const selected = selectedById.get(med.id);
+        if (!selected) return med;
+        return {
+            ...med,
+            ...selected,
+            id: med.id,
+            name: med.name,
+            type: med.type,
+            desc: med.desc,
+            unit: med.unit,
+            unitOptions: med.unitOptions,
+            selected: true,
+        };
+    });
+
+    const selectedOnly = selectedMedicines.filter(
+        (selectedMed) => !merged.some((apiMed) => apiMed.id === selectedMed.id)
+    );
+
+    return [...merged, ...selectedOnly];
 };
 
 const TechMedicineSelector = () => {
     const navigate = useNavigate();
     const location = useLocation();
-
     const selectedFromState = useMemo(
-        () => toArray(location.state?.selectedMedicines),
+        () => toArray(location.state?.selectedMedicines)
+            .map(normalizeMedicine)
+            .filter((item) => Boolean(item?.selected)),
         [location.state?.selectedMedicines]
     );
-    const selectedImagesDraft = toArray(location.state?.selectedImagesDraft);
     const returnPath = location.state?.returnPath;
+    const selectedImagesDraft = location.state?.selectedImagesDraft;
     const recordDraft = location.state?.recordDraft;
-
-    const [isLoading, setIsLoading] = useState(true);
+    
+    const [showDosageModal, setShowDosageModal] = useState(false);
+    const [activeDosageMedId, setActiveDosageMedId] = useState(null);
+    const [dosageDraft, setDosageDraft] = useState({
+        morning: 1,
+        noon: 1,
+        afternoon: 1,
+        evening: 1,
+        note: ''
+    });
     const [searchTerm, setSearchTerm] = useState('');
-    const [medicineList, setMedicineList] = useState([]);
-    const { unreadCount, clearUnread } = useNotificationSSE();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const [medsList, setMedsList] = useState([]);
+    const [autofillByMedicineId, setAutofillByMedicineId] = useState({});
+
+    const applyAutofillIfAvailable = (medicine) => {
+        if (!medicine) return medicine;
+
+        const autofill = autofillByMedicineId[medicine.id];
+        if (!autofill) {
+            return medicine;
+        }
+
+        const selectedUnit = autofill.selectedUnit || medicine.selectedUnit;
+        const mergedMedicine = {
+            ...medicine,
+            qty: Math.max(1, Number(autofill.qty ?? medicine.qty ?? 1)),
+            selectedUnit,
+            dosage: {
+                morning: normalizeDoseValue(autofill?.dosage?.morning ?? medicine?.dosage?.morning),
+                noon: normalizeDoseValue(autofill?.dosage?.noon ?? medicine?.dosage?.noon),
+                afternoon: normalizeDoseValue(autofill?.dosage?.afternoon ?? medicine?.dosage?.afternoon),
+                evening: normalizeDoseValue(autofill?.dosage?.evening ?? medicine?.dosage?.evening),
+                note: autofill?.dosage?.note ?? medicine?.dosage?.note ?? '',
+            },
+        };
+
+        return {
+            ...mergedMedicine,
+            price: formatVnd(resolvePriceBySelectedUnit(mergedMedicine, selectedUnit)),
+            unit: `/${selectedUnit}`,
+        };
+    };
 
     useEffect(() => {
         let isMounted = true;
-
         const fetchMedicines = async () => {
-            setIsLoading(true);
-            try {
-                const response = await medicineService.listMedicines({ limit: 200 });
-                if (!isMounted) return;
+            const response = await medicineService.listMedicines();
+            if (!isMounted) return;
+            const apiMedicines = toArray(response?.data || []).map(normalizeMedicine);
+            setAutofillByMedicineId({});
 
-                const selectedMap = new Map(
-                    selectedFromState
-                        .filter((item) => Number(item?.medicineId || 0) > 0)
-                        .map((item) => [
-                            Number(item.medicineId),
-                            {
-                                quantity: Number(item.quantity || 1),
-                                instruction: item.instruction || '',
-                                selectedUnit: item.selectedUnit || item.dosageUnit || item.unit,
-                                dosageUnit: item.dosageUnit,
-                            },
-                        ])
-                );
-
-                const normalized = toArray(response?.data).map((item) => mapMedicine(item, selectedMap));
-                setMedicineList(normalized);
-            } catch {
-                if (!isMounted) return;
-                setMedicineList([]);
-            } finally {
-                if (isMounted) {
-                    setIsLoading(false);
-                }
+            if (selectedFromState.length > 0) {
+                setMedsList(mergeMedicinesBySelected(apiMedicines, selectedFromState));
+                return;
             }
+
+            // Autofill is not applicable for tech staff logic
+            setMedsList(apiMedicines);
         };
-
         fetchMedicines();
-
         return () => {
             isMounted = false;
         };
     }, [selectedFromState]);
 
-    const filteredMedicines = useMemo(() => {
-        const keyword = searchTerm.trim().toLowerCase();
-        if (!keyword) return medicineList;
-        return medicineList.filter((medicine) => `${medicine.name} ${medicine.desc}`.toLowerCase().includes(keyword));
-    }, [searchTerm, medicineList]);
-
-    const selectedMedicines = useMemo(
-        () => medicineList
-            .filter((medicine) => medicine.selected)
-            .map((medicine) => ({
-                medicineId: medicine.id,
-                medicineName: medicine.name,
-                quantity: medicine.qty,
-                instruction: medicine.instruction || '',
-                dosageUnit: medicine.selectedUnit || undefined,
-                selectedUnit: medicine.selectedUnit || undefined,
-                unitOptions: medicine.unitOptions || [medicine.selectedUnit || 'đơn vị'],
-                image: medicine.image,
-                desc: medicine.desc,
-                stock: medicine.stock,
-                price: medicine.price,
-            })),
-        [medicineList]
-    );
-
-    const handleToggle = (medicineId) => {
-        setMedicineList((prev) => prev.map((medicine) => (
-            medicine.id === medicineId
-                ? { ...medicine, selected: !medicine.selected }
-                : medicine
-        )));
+    const toggleSelection = (id) => {
+        setMedsList(prevList =>
+            prevList.map(med =>
+                med.id === id
+                    ? (() => {
+                        const isSelecting = !med.selected;
+                        const selectedMed = isSelecting ? applyAutofillIfAvailable(med) : med;
+                        return {
+                            ...selectedMed,
+                            selected: isSelecting,
+                            expanded: isSelecting ? selectedMed.expanded : false,
+                            qty: Math.max(1, Number(selectedMed.qty || 0)),
+                        };
+                    })()
+                    : med
+            )
+        );
     };
 
-    const updateQuantity = (medicineId, delta) => {
-        setMedicineList((prev) => prev.map((medicine) => {
-            if (medicine.id !== medicineId) return medicine;
-            const nextQty = Math.max(1, Number(medicine.qty || 1) + delta);
-            return { ...medicine, qty: nextQty, selected: true };
+    const updateQty = (id, delta) => {
+        setMedsList(prevList =>
+            prevList.map(med => {
+                if (med.id === id) {
+                    const newQty = med.qty + delta;
+                    return { ...med, qty: newQty < 1 ? 1 : newQty };
+                }
+                return med;
+            })
+        );
+    };
+
+    const updateSelectedUnit = (id, newUnit) => {
+        setMedsList((prevList) =>
+            prevList.map((med) => {
+                if (med.id !== id) return med;
+                return {
+                    ...med,
+                    selectedUnit: newUnit,
+                    price: formatVnd(resolvePriceBySelectedUnit(med, newUnit)),
+                    unit: `/${newUnit}`,
+                    selected: true,
+                };
+            })
+        );
+    };
+
+    const openDosageModal = (id) => {
+        const target = medsList.find((med) => med.id === id);
+        if (!target) return;
+        setActiveDosageMedId(id);
+        setDosageDraft({
+            morning: normalizeDoseValue(target?.dosage?.morning),
+            noon: normalizeDoseValue(target?.dosage?.noon),
+            afternoon: normalizeDoseValue(target?.dosage?.afternoon),
+            evening: normalizeDoseValue(target?.dosage?.evening),
+            note: target?.dosage?.note || '',
+        });
+        setShowDosageModal(true);
+    };
+
+    const updateDosageValue = (field, delta) => {
+        setDosageDraft((prev) => ({
+            ...prev,
+            [field]: Math.max(0, Number(prev?.[field] ?? 1) + delta)
         }));
     };
 
-    const updateInstruction = (medicineId, instruction) => {
-        setMedicineList((prev) => prev.map((medicine) => (
-            medicine.id === medicineId
-                ? { ...medicine, instruction, selected: true }
-                : medicine
-        )));
+    const saveDosage = () => {
+        if (!activeDosageMedId) return;
+        setMedsList((prevList) =>
+            prevList.map((med) =>
+                med.id === activeDosageMedId
+                    ? { ...med, dosage: { ...dosageDraft }, expanded: true, selected: true }
+                    : med
+            )
+        );
+        setShowDosageModal(false);
+        setActiveDosageMedId(null);
     };
 
-    const updateUnit = (medicineId, unit) => {
-        const normalizedUnit = normalizeUnit(unit);
-        setMedicineList((prev) => prev.map((medicine) => (
-            medicine.id === medicineId
-                ? { ...medicine, selectedUnit: normalizedUnit, selected: true }
-                : medicine
-        )));
-    };
+    const filteredMeds = medsList.filter((med) => {
+        const keyword = searchTerm.trim().toLowerCase();
+        if (!keyword) return true;
+        return `${med.name} ${med.desc}`.toLowerCase().includes(keyword);
+    });
 
-    const navigateBack = (confirmed) => {
+    const getSelectedMedicines = () => medsList.filter((med) => med.selected);
+
+    const navigateBackToRecordResult = (selectedMedicines) => {
         if (!returnPath) {
             navigate(-1);
             return;
@@ -177,131 +368,227 @@ const TechMedicineSelector = () => {
 
         navigate(returnPath, {
             state: {
-                selectedMedicines: confirmed ? selectedMedicines : selectedFromState,
+                selectedMedicines: selectedMedicines.map(med => ({
+                    medicineId: med.id,
+                    medicineName: med.name,
+                    quantity: med.qty,
+                    instruction: med.dosage?.note || '',
+                    dosageUnit: med.selectedUnit,
+                    selectedUnit: med.selectedUnit,
+                    unitOptions: med.unitOptions,
+                    image: med.image,
+                    desc: med.desc,
+                    stock: med.stock,
+                    price: med.price,
+                    type: med.type,
+                    morning: med.dosage?.morning || 1,
+                    noon: med.dosage?.noon || 1,
+                    afternoon: med.dosage?.afternoon || 1,
+                    evening: med.dosage?.evening || 1,
+                })),
                 selectedImagesDraft,
                 recordDraft,
             },
         });
     };
 
-    return (
-        <div className="tms-page">
-            <header className="tms-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: '#fff', borderBottom: '1px solid #e0e7e4' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <button type="button" className="icon-btn-back" onClick={() => navigateBack(false)} aria-label="Quay lại" style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px', margin: '-4px' }}>
-                        <ChevronLeft size={24} color="#1a1a1a" />
-                    </button>
-                    <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a1a1a', margin: 0 }}>Chọn thuốc & vật tư</h1>
-                </div>
-                <button type="button" className="tech-top-bell" onClick={() => { clearUnread(); navigate(TECH_PATHS.NOTIFICATIONS); }} aria-label="Thong bao" style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a' }}>
-                    <Bell size={24} strokeWidth={2} />
-                    {unreadCount > 0 && (
-                        <span style={{
-                            position: 'absolute',
-                            top: -4,
-                            right: -4,
-                            backgroundColor: 'red',
-                            color: 'white',
-                            borderRadius: '50%',
-                            width: 18,
-                            height: 18,
-                            fontSize: 12,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 'bold'
-                        }}>
-                            {unreadCount > 99 ? '99+' : unreadCount}
-                        </span>
-                    )}
-                </button>
-            </header>
+    const handleConfirm = async () => {
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+        try {
+            const selectedMedicines = getSelectedMedicines();
+            await medicineService.saveSelection(selectedMedicines);
+            navigateBackToRecordResult(selectedMedicines);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
-            <div className="tms-search-box">
-                <Search size={18} color="#14957d" />
-                <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(event) => setSearchTerm(event.target.value)}
-                    placeholder="Tìm thuốc hoặc vật tư"
-                />
+    return (
+        <div className="med-selector-page">
+            {/* Header */}
+            <div className="ms-header">
+                <button className="ms-btn-icon" onClick={() => navigateBackToRecordResult(getSelectedMedicines())}><ChevronLeft size={24} color="#1a1a1a" /></button>
+                <h1 className="ms-title">Thuốc & Vật tư đi kèm</h1>
+                <div style={{ width: 32 }}></div>
             </div>
 
-            <main className="tms-content">
-                {isLoading && <div className="tms-empty">Đang tải danh sách...</div>}
-                {!isLoading && filteredMedicines.length === 0 && <div className="tms-empty">Không tìm thấy thuốc/vật tư phù hợp.</div>}
+            {/* Search Bar */}
+            <div className="ms-search-container">
+                <div className="ms-search-box">
+                    <Search size={20} color="#209D80" className="ms-search-icon" />
+                    <input type="text" placeholder="Search" className="ms-search-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
+                </div>
+                {/* <button className="ms-filter-btn">
+                    <SlidersHorizontal size={20} color="#209D80" />
+                </button> */}
+            </div>
 
-                {!isLoading && filteredMedicines.map((medicine) => (
-                    <article key={medicine.id} className={`tms-card ${medicine.selected ? 'is-selected' : ''}`}>
-                        <div className="tms-item-head">
-                            <label className="tms-check" aria-label={`Chọn ${medicine.name}`}>
-                                <input type="checkbox" checked={medicine.selected} onChange={() => handleToggle(medicine.id)} />
-                            </label>
+            {/* Meds List */}
+            <div className="ms-content">
+                <div className="ms-meds-list">
+                    {filteredMeds.map(med => (
+                        <article key={med.id} className={`ms-lite-card ${med.selected ? 'selected' : ''}`}>
+                            <div className="ms-lite-head">
+                                <label className="ms-lite-check" aria-label={`Chọn ${med.name}`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={med.selected}
+                                        onChange={() => toggleSelection(med.id)}
+                                    />
+                                </label>
 
-                            <img src={medicine.image} alt={medicine.name} className="tms-thumb" />
+                                <img src={med.image} alt={med.name} className="ms-lite-thumb" />
 
-                            <div className="tms-item-main">
-                                <div className="tms-main-row">
-                                    <strong className="tms-name">{medicine.name}</strong>
-                                    <strong>{medicine.price}</strong>
+                                <div className="ms-lite-main">
+                                    <div className="ms-lite-top">
+                                        <strong className="ms-lite-name">{med.name}</strong>
+                                        <strong>{med.price}</strong>
+                                    </div>
+
+                                    {med.desc ? <p className="ms-lite-desc">{med.desc}</p> : null}
+
+                                    <div className="ms-lite-meta">
+                                        {/* <span>Dự kiến: {med.qty} {med.selectedUnit}</span> */}
+                                        <span>Tồn: {formatStock(med.stock)}</span>
+                                    </div>
                                 </div>
+                            </div>
 
-                                {medicine.desc ? <p className="tms-desc">{medicine.desc}</p> : null}
+                            {med.selected && (
+                                <>
+                                    <div className="ms-lite-controls">
+                                        <div className="ms-lite-stepper">
+                                            <button onClick={() => updateQty(med.id, -1)} type="button">
+                                                <Minus size={16} />
+                                            </button>
+                                            <span>{med.qty}</span>
+                                            <button onClick={() => updateQty(med.id, 1)} type="button">
+                                                <Plus size={16} />
+                                            </button>
+                                        </div>
 
-                                <div className="tms-meta-row">
-                                    <span>Dự kiến: {medicine.qty}{medicine.selectedUnit ? ` ${medicine.selectedUnit}` : ''}</span>
-                                    <span>Tồn: {formatStock(medicine.stock)}</span>
+                                        <div className="ms-lite-unit-text">
+                                            {med.type === 'THUOC' ? 'hộp' : med.selectedUnit}
+                                        </div>
+
+                                        {med.type === 'THUOC' && (
+                                            <button className="ms-lite-dosage" type="button" onClick={() => openDosageModal(med.id)}>
+                                                <PencilLine size={14} /> Chỉnh liều
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {med.type === 'THUOC' && (
+                                        <div className="ms-lite-dosage-summary">
+                                            <div className="ms-lite-dosage-row">
+                                                <span>Sáng</span>
+                                                <span>{med?.dosage?.morning || 0} {med.selectedUnit}</span>
+                                            </div>
+                                            <div className="ms-lite-dosage-row">
+                                                <span>Trưa</span>
+                                                <span>{med?.dosage?.noon || 0} {med.selectedUnit}</span>
+                                            </div>
+                                            <div className="ms-lite-dosage-row">
+                                                <span>Chiều</span>
+                                                <span>{med?.dosage?.afternoon || 0} {med.selectedUnit}</span>
+                                            </div>
+                                            <div className="ms-lite-dosage-row">
+                                                <span>Tối</span>
+                                                <span>{med?.dosage?.evening || 0} {med.selectedUnit}</span>
+                                            </div>
+                                            <div className="ms-lite-dosage-row note">
+                                                <span>Chỉ định khác</span>
+                                                <span>{med?.dosage?.note || '--'}</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </article>
+                    ))}
+                </div>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="ms-bottom-actions">
+                <button className="ms-btn-skip" onClick={() => navigateBackToRecordResult(getSelectedMedicines())}>Bỏ qua</button>
+                <button className="ms-btn-confirm" onClick={handleConfirm}>{isSubmitting ? 'Đang lưu...' : 'Xác nhận'}</button>
+            </div>
+
+            {/* Dosage Modal Bottom Sheet */}
+            {showDosageModal && (
+                <>
+                    <div className="dosage-modal-overlay" onClick={() => setShowDosageModal(false)}></div>
+                    <div className="dosage-modal-content">
+                        <div className="dosage-modal-handle"></div>
+                        <h2 className="dosage-modal-title">Liều dùng</h2>
+
+                        <div className="dosage-main-area">
+                            {['Sáng', 'Trưa', 'Chiều', 'Tối'].map((time, idx) => (
+                                <div key={time} className="dosage-row">
+                                    <span className="dosage-label">{time}</span>
+                                    <div className="dosage-controls">
+                                        <div className="dosage-stepper">
+                                            <button
+                                                className="dosage-step-btn"
+                                                type="button"
+                                                onClick={() => updateDosageValue(
+                                                    idx === 0 ? 'morning' : idx === 1 ? 'noon' : idx === 2 ? 'afternoon' : 'evening',
+                                                    -1
+                                                )}
+                                            >
+                                                <Minus size={16} color="#666" />
+                                            </button>
+                                            <span className="dosage-step-val">
+                                                {idx === 0
+                                                    ? dosageDraft.morning
+                                                    : idx === 1
+                                                        ? dosageDraft.noon
+                                                        : idx === 2
+                                                            ? dosageDraft.afternoon
+                                                            : dosageDraft.evening}
+                                            </span>
+                                            <button
+                                                className="dosage-step-btn"
+                                                type="button"
+                                                onClick={() => updateDosageValue(
+                                                    idx === 0 ? 'morning' : idx === 1 ? 'noon' : idx === 2 ? 'afternoon' : 'evening',
+                                                    1
+                                                )}
+                                            >
+                                                <Plus size={16} color="#666" />
+                                            </button>
+                                        </div>
+                                        <div className="dosage-unit">
+                                            <span>Viên</span>
+                                            <ChevronDown size={16} color="#888" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+
+                            <div className="dosage-note-row">
+                                <span className="dosage-label">Chỉ định khác</span>
+                                <div className="dosage-textarea-box">
+                                    <textarea
+                                        className="dosage-textarea"
+                                        value={dosageDraft.note}
+                                        onChange={(event) => setDosageDraft((prev) => ({ ...prev, note: event.target.value }))}
+                                    ></textarea>
+                                    <span className="dosage-char-count">2000</span>
                                 </div>
                             </div>
                         </div>
 
-                        {medicine.selected && (
-                            <div className="tms-controls">
-                                <div className="tms-stepper">
-                                    <button type="button" onClick={() => updateQuantity(medicine.id, -1)}>
-                                        <Minus size={14} />
-                                    </button>
-                                    <span>{medicine.qty}</span>
-                                    <button type="button" onClick={() => updateQuantity(medicine.id, 1)}>
-                                        <Plus size={14} />
-                                    </button>
-                                </div>
-
-                                <select
-                                    className="tms-unit-select"
-                                    value={medicine.selectedUnit || ''}
-                                    onChange={(event) => updateUnit(medicine.id, event.target.value)}
-                                >
-                                    {(medicine.unitOptions || [medicine.selectedUnit || 'đơn vị']).map((unitOption) => (
-                                        <option key={`${medicine.id}-${unitOption}`} value={unitOption}>
-                                            {unitOption}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        )}
-
-                        {medicine.selected && (
-                            <input
-                                type="text"
-                                className="tms-note"
-                                value={medicine.instruction}
-                                onChange={(event) => updateInstruction(medicine.id, event.target.value)}
-                                placeholder="Ghi chú dùng thuốc (tuỳ chọn)"
-                            />
-                        )}
-                    </article>
-                ))}
-            </main>
-
-            <footer className="tms-footer">
-                <button type="button" className="tms-btn-outline" onClick={() => navigateBack(false)}>
-                    Hủy
-                </button>
-                <button type="button" className="tms-btn-primary" onClick={() => navigateBack(true)}>
-                    Xác nhận
-                </button>
-            </footer>
+                        <div className="dosage-bottom-action">
+                            <button className="dosage-btn-confirm-final" onClick={saveDosage}>
+                                Xác nhận
+                            </button>
+                        </div>
+                    </div>
+                </>
+            )}
         </div>
     );
 };

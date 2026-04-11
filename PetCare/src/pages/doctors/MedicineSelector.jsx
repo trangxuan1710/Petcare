@@ -134,21 +134,19 @@ const resolvePriceBySelectedUnit = (item, selectedUnit) => {
 };
 
 const normalizeMedicine = (item) => {
-    const baseUnit = item?.selectedUnit || item?.unit;
-    const unitOptions = resolveUnitOptions(baseUnit);
+    const baseUnit = item?.unit || item?.selectedUnit || '';
     const normalizedSelectedUnit = toVietnameseUnit(baseUnit);
-    const selectedUnit = unitOptions.includes(normalizedSelectedUnit)
-        ? normalizedSelectedUnit
-        : unitOptions[0];
+    const selectedUnit = normalizedSelectedUnit || 'đơn vị';
 
+    const type = String(item?.type || 'THUOC').toUpperCase().trim();
     return {
         ...item,
-        desc: item?.desc || item?.description || item?.type || '',
+        type,
+        desc: item?.desc || item?.description || type || '',
         rawUnitPrice: Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item)),
         rawBoxPrice: Number(item?.boxPrice ?? item?.rawBoxPrice ?? getPriceNumber(item)),
         price: formatVnd(resolvePriceBySelectedUnit(item, selectedUnit)),
         unit: `/${selectedUnit}`,
-        unitOptions,
         stock: item?.stock ?? item?.stockQuantity ?? item?.availableStock ?? '--',
         qty: Math.max(1, Number(item?.qty ?? item?.quantity ?? 1)),
         selectedUnit,
@@ -178,6 +176,12 @@ const mergeMedicinesBySelected = (apiMedicines, selectedMedicines) => {
         return {
             ...med,
             ...selected,
+            id: med.id,
+            name: med.name,
+            type: med.type,
+            desc: med.desc,
+            unit: med.unit,
+            unitOptions: med.unitOptions,
             selected: true,
         };
     });
@@ -301,8 +305,8 @@ const MedicineSelector = () => {
     }, [selectedFromState, receptionId]);
 
     const toggleSelection = (id) => {
-        setMedsList(prevList => 
-            prevList.map(med => 
+        setMedsList(prevList =>
+            prevList.map(med =>
                 med.id === id
                     ? (() => {
                         const isSelecting = !med.selected;
@@ -320,7 +324,7 @@ const MedicineSelector = () => {
     };
 
     const updateQty = (id, delta) => {
-        setMedsList(prevList => 
+        setMedsList(prevList =>
             prevList.map(med => {
                 if (med.id === id) {
                     const newQty = med.qty + delta;
@@ -464,7 +468,7 @@ const MedicineSelector = () => {
                                     {med.desc ? <p className="ms-lite-desc">{med.desc}</p> : null}
 
                                     <div className="ms-lite-meta">
-                                        <span>Dự kiến: {med.qty} {med.selectedUnit}</span>
+                                        {/* <span>Dự kiến: {med.qty} {med.selectedUnit}</span> */}
                                         <span>Tồn: {formatStock(med.stock)}</span>
                                     </div>
                                 </div>
@@ -483,44 +487,41 @@ const MedicineSelector = () => {
                                             </button>
                                         </div>
 
-                                        <select
-                                            className="ms-lite-unit"
-                                            value={med.selectedUnit}
-                                            onChange={(event) => updateSelectedUnit(med.id, event.target.value)}
-                                            aria-label={`Đơn vị của ${med.name}`}
-                                        >
-                                            {(med.unitOptions || []).map((unitOption) => (
-                                                <option key={unitOption} value={unitOption}>{unitOption}</option>
-                                            ))}
-                                        </select>
+                                        <div className="ms-lite-unit-text">
+                                            {med.type === 'THUOC' ? 'hộp' : med.selectedUnit}
+                                        </div>
 
-                                        <button className="ms-lite-dosage" type="button" onClick={() => openDosageModal(med.id)}>
-                                            <PencilLine size={14} /> Chỉnh liều
-                                        </button>
+                                        {med.type === 'THUOC' && (
+                                            <button className="ms-lite-dosage" type="button" onClick={() => openDosageModal(med.id)}>
+                                                <PencilLine size={14} /> Chỉnh liều
+                                            </button>
+                                        )}
                                     </div>
 
-                                    <div className="ms-lite-dosage-summary">
-                                        <div className="ms-lite-dosage-row">
-                                            <span>Sáng</span>
-                                            <span>{med?.dosage?.morning || 0} Viên</span>
+                                    {med.type === 'THUOC' && (
+                                        <div className="ms-lite-dosage-summary">
+                                            <div className="ms-lite-dosage-row">
+                                                <span>Sáng</span>
+                                                <span>{med?.dosage?.morning || 0} {med.selectedUnit}</span>
+                                            </div>
+                                            <div className="ms-lite-dosage-row">
+                                                <span>Trưa</span>
+                                                <span>{med?.dosage?.noon || 0} {med.selectedUnit}</span>
+                                            </div>
+                                            <div className="ms-lite-dosage-row">
+                                                <span>Chiều</span>
+                                                <span>{med?.dosage?.afternoon || 0} {med.selectedUnit}</span>
+                                            </div>
+                                            <div className="ms-lite-dosage-row">
+                                                <span>Tối</span>
+                                                <span>{med?.dosage?.evening || 0} {med.selectedUnit}</span>
+                                            </div>
+                                            <div className="ms-lite-dosage-row note">
+                                                <span>Chỉ định khác</span>
+                                                <span>{med?.dosage?.note || '--'}</span>
+                                            </div>
                                         </div>
-                                        <div className="ms-lite-dosage-row">
-                                            <span>Trưa</span>
-                                            <span>{med?.dosage?.noon || 0} Viên</span>
-                                        </div>
-                                        <div className="ms-lite-dosage-row">
-                                            <span>Chiều</span>
-                                            <span>{med?.dosage?.afternoon || 0} Viên</span>
-                                        </div>
-                                        <div className="ms-lite-dosage-row">
-                                            <span>Tối</span>
-                                            <span>{med?.dosage?.evening || 0} Viên</span>
-                                        </div>
-                                        <div className="ms-lite-dosage-row note">
-                                            <span>Chỉ định khác</span>
-                                            <span>{med?.dosage?.note || '---'}</span>
-                                        </div>
-                                    </div>
+                                    )}
                                 </>
                             )}
                         </article>
@@ -541,7 +542,7 @@ const MedicineSelector = () => {
                     <div className="dosage-modal-content">
                         <div className="dosage-modal-handle"></div>
                         <h2 className="dosage-modal-title">Liều dùng</h2>
-                        
+
                         <div className="dosage-main-area">
                             {['Sáng', 'Trưa', 'Chiều', 'Tối'].map((time, idx) => (
                                 <div key={time} className="dosage-row">
@@ -589,8 +590,8 @@ const MedicineSelector = () => {
                             <div className="dosage-note-row">
                                 <span className="dosage-label">Chỉ định khác</span>
                                 <div className="dosage-textarea-box">
-                                    <textarea 
-                                        className="dosage-textarea" 
+                                    <textarea
+                                        className="dosage-textarea"
                                         value={dosageDraft.note}
                                         onChange={(event) => setDosageDraft((prev) => ({ ...prev, note: event.target.value }))}
                                     ></textarea>
