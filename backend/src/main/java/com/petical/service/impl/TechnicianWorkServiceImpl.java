@@ -35,7 +35,9 @@ import com.petical.repository.ServiceOrderRepository;
 import com.petical.repository.ServiceResultRepository;
 import com.petical.repository.TechnicianRepository;
 import com.petical.repository.TreatmentDirectionRepository;
+import com.petical.service.SseNotificationService;
 import com.petical.service.TechnicianWorkService;
+import com.petical.dto.response.NotificationMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -76,6 +78,7 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
     private final PrescriptionRepository prescriptionRepository;
     private final PrescriptionDetailRepository prescriptionDetailRepository;
     private final MedicineRepository medicineRepository;
+    private final SseNotificationService sseNotificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -187,6 +190,17 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
 
         upsertUsedMedicines(order, safeRequest.getMedicines());
         updateReceptionStatusesOnComplete(order);
+
+        Doctor assignedDoctor = order.getMedicalRecord().getDoctor();
+        if (assignedDoctor != null) {
+            sseNotificationService.sendNotificationToUser(assignedDoctor.getId(),
+                    NotificationMessage.builder()
+                            .title("Kết quả dịch vụ đã cập nhật")
+                            .message("KTV đã cập nhật kết quả dịch vụ " + order.getService().getName() + " cho thú cưng " + order.getMedicalRecord().getReceptionRecord().getPet().getName())
+                            .timestamp(LocalDateTime.now())
+                            .type("TECH_RESULT")
+                            .build());
+        }
 
         return toDetail(order, result);
     }

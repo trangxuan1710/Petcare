@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, Bell, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, UserRound, PlusCircle, LogOut } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, UserRound, PlusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ReceptionistLayout from '../../layouts/ReceptionistLayout';
 import ReceptionCard from '../../components/receptionist/ReceptionCard';
@@ -11,6 +11,8 @@ import paymentService from '../../api/paymentService';
 import customerService from '../../api/customerService';
 import authService from '../../api/authService';
 import useHeaderProfile from '../../hooks/useHeaderProfile';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import AppTopHeader from '../../components/common/AppTopHeader';
 import { toTitleCase } from '../../utils/textFormat';
 import './TodayOrders.css';
 
@@ -182,6 +184,7 @@ const TodayOrders = () => {
         fallbackName: 'Lễ tân',
         fallbackRoleLabel: 'Lễ tân',
     });
+    const { unreadCount, clearUnread } = useNotificationSSE();
     const [activeStatus, setActiveStatus] = useState(ORDER_STATUS.RECEIVED);
     const [calendarExpanded, setCalendarExpanded] = useState(false);
     const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
@@ -573,6 +576,7 @@ const TodayOrders = () => {
     };
 
     const handleGoToNotifications = () => {
+        clearUnread();
         navigate(RECEPTIONIST_PATHS.NOTIFICATIONS);
     };
 
@@ -670,38 +674,13 @@ const TodayOrders = () => {
         <ReceptionistLayout>
             <div className="today-orders-page">
                 {/* Header */}
-                <div className="to-header-area">
-                    <div className="to-header">
-                        <div className="to-header-user">
-                            <div className="to-header-avatar">
-                                <img src={profile.avatarUrl} alt={profile.displayName} />
-                            </div>
-                            <div className="to-header-texts">
-                                <p className="to-header-greeting">Xin chào</p>
-                                <h1 className="to-header-name">{profile.roleLabel} {profile.displayName}</h1>
-                            </div>
-                        </div>
-                        <div className="to-header-actions">
-                            <button
-                                className="to-header-bell-btn"
-                                type="button"
-                                aria-label="Thông báo"
-                                onClick={handleGoToNotifications}
-                            >
-                                <Bell size={20} color="#1a1a1a" strokeWidth={2} />
-                            </button>
-                            <button
-                                className="to-header-bell-btn to-header-logout-btn"
-                                type="button"
-                                aria-label="Đăng xuất"
-                                onClick={handleLogout}
-                                disabled={isLoggingOut}
-                            >
-                                <LogOut size={20} color="#b91c1c" strokeWidth={2} />
-                            </button>
-                        </div>
-                    </div>
-                </div>
+                <AppTopHeader
+                    profile={profile}
+                    notificationCount={unreadCount}
+                    onNotificationClick={handleGoToNotifications}
+                    onLogout={handleLogout}
+                    isLogoutDisabled={isLoggingOut}
+                />
 
                 {/* Calendar Strip */}
                 <div className="to-calendar-section">

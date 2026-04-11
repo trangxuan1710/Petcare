@@ -3,10 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { CalendarCheck, CreditCard, PlusCircle, Bell, Menu } from 'lucide-react';
 import { RECEPTIONIST_PATHS } from '../../routes/receptionistPaths';
 import './ReceptionistNavBar.css';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE';
 
 const ReceptionistNavBar = () => {
     const navigate = useNavigate();
     const { pathname } = useLocation();
+    const { unreadCount, clearUnread } = useNotificationSSE();
     const activeTab =
         pathname.includes('/receptionists/payment')
             ? 'thanhtoan'
@@ -48,9 +50,15 @@ const ReceptionistNavBar = () => {
 
                 <div
                     className={`rc-nav-item ${activeTab === 'thongbao' ? 'active' : ''}`}
-                    onClick={() => go(RECEPTIONIST_PATHS.NOTIFICATIONS)}
+                    onClick={() => { clearUnread(); go(RECEPTIONIST_PATHS.NOTIFICATIONS); }}
                 >
-                    <Bell size={26} strokeWidth={1.8} />
+                    <div className="rc-bell-icon">
+                        <Bell size={26} strokeWidth={1.8} />
+                        {unreadCount > 0 && <span className="rc-bell-dot" aria-hidden="true" />}
+                    </div>
+                    {unreadCount > 0 && (
+                        <span className="rc-bell-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                    )}
                     <span>Thông báo</span>
                 </div>
 

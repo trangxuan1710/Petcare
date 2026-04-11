@@ -4,54 +4,88 @@ import { Bell, ChevronLeft } from 'lucide-react';
 import DoctorLayout from '../../layouts/DoctorLayout';
 import './Notifications.css';
 import notificationService from '../../api/notificationService';
-import { toTitleCase } from '../../utils/textFormat';
 
 const Notifications = () => {
     const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [errorText, setErrorText] = useState('');
 
     useEffect(() => {
         let isMounted = true;
+
         const fetchNotifications = async () => {
-            const response = await notificationService.listDoctorNotifications();
-            if (!isMounted) return;
-            setNotifications(response?.data || []);
+            setIsLoading(true);
+            setErrorText('');
+
+            try {
+                const response = await notificationService.listDoctorNotifications();
+                if (!isMounted) return;
+                setNotifications(response?.data || []);
+            } catch {
+                if (!isMounted) return;
+                setNotifications([]);
+                setErrorText('Không thể tải thông báo. Vui lòng thử lại.');
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
         };
+
         fetchNotifications();
+
         return () => {
             isMounted = false;
         };
     }, []);
 
     const handleOpenNotification = async (notif) => {
-        await notificationService.markAsRead(notif.id);
-        navigate(`/doctors/tickets/${notif.receptionId || notif.id}`);
+        try {
+            if (!notif?.isRead) {
+                await notificationService.markAsRead(notif.id);
+                setNotifications((prev) => prev.map((item) => (
+                    item.id === notif.id
+                        ? { ...item, isRead: true }
+                        : item
+                )));
+            }
+        } catch {
+            // Keep UI responsive even when mark-read fails.
+        }
+
+        if (notif?.link) {
+            navigate(notif.link);
+            return;
+        }
+
+        if (notif?.receptionId) {
+            navigate(`/doctors/tickets/${notif.receptionId}`);
+        }
     };
 
     return (
         <DoctorLayout>
             <div className="notifications-page">
-                <header className="notif-page-header">
+                <div className="notif-page-toolbar">
                     <button className="notif-back-btn" type="button" onClick={() => navigate(-1)} aria-label="Quay lai trang truoc">
                         <ChevronLeft size={22} color="#1f2937" />
                     </button>
                     <h1 className="notif-page-title">Thông báo</h1>
-                </header>
+                </div>
 
                 <div className="notif-list">
-                    {notifications.map(notif => (
-                        <div
+                    {isLoading && <p className="notif-time">Đang tải thông báo...</p>}
+                    {!isLoading && errorText && <p className="notif-time">{errorText}</p>}
+                    {!isLoading && !errorText && notifications.length === 0 && (
+                        <p className="notif-time">Hiện chưa có thông báo.</p>
+                    )}
+                    {!isLoading && !errorText && notifications.map(notif => (
+                        <button
                             key={notif.id}
-                            className="notif-card"
+                            type="button"
+                            className={`notif-card ${!notif.isRead ? 'notif-card-unread' : ''}`}
                             onClick={() => handleOpenNotification(notif)}
-                            role="button"
-                            tabIndex={0}
-                            onKeyDown={(event) => {
-                                if (event.key === 'Enter' || event.key === ' ') {
-                                    event.preventDefault();
-                                    handleOpenNotification(notif);
-                                }
-                            }}
                         >
                             <div className="notif-icon-wrapper">
                                 <Bell size={18} color="#24C7A9" fill="#24C7A9" />
@@ -59,13 +93,13 @@ const Notifications = () => {
                             <div className="notif-body">
                                 <div className="notif-header-row">
                                     <h3 className="notif-title">{notif.title}</h3>
-                                    <span className="notif-time">{notif.time}</span>
+                                    <span className="notif-time">{notif.time || 'Vừa xong'}</span>
                                 </div>
                                 <p className="notif-desc">
-                                    Thú cưng <strong>{toTitleCase(notif.petName) || notif.petName}</strong> của khách hàng <strong>{toTitleCase(notif.customerName) || notif.customerName}</strong> {notif.message}
+                                    {notif.message || 'Bạn có thông báo mới.'}
                                 </p>
                             </div>
-                        </div>
+                        </button>
                     ))}
                 </div>
             </div>

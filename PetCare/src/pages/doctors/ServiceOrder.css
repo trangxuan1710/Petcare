@@ -12,8 +12,11 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding: 16px;
+    padding: 16px 20px;
     background-color: #fff;
+    border-bottom: 1px solid #e8eced;
+    box-shadow: 0 1px 4px 0 rgba(28, 155, 132, 0.04);
+    gap: 8px;
 }
 
 .so-btn-icon {
@@ -24,6 +27,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 10px;
+    transition: background-color 0.15s ease;
+}
+
+.so-btn-icon:hover {
+    background-color: #f3f6f6;
+}
+
+.so-btn-icon:active {
+    transform: scale(0.95);
 }
 
 .so-title {
@@ -36,6 +49,7 @@
 .so-content {
     flex: 1;
     overflow-y: auto;
+    padding-top: 8px;
     padding-bottom: 90px; /* space for bottom actions */
 }
 
@@ -199,7 +213,7 @@
     margin: 0;
     font-size: 13px;
     font-weight: 700;
-    color: #333;
+    color: #2c3136;
 }
 
 .so-accordion-content {

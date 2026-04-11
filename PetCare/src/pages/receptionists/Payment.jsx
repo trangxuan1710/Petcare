@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import './Payment.css';
 import StaffCostSummaryCard from '../../components/receptionist/StaffCostSummaryCard';
 import StaffPaymentFooterBar from '../../components/receptionist/StaffPaymentFooterBar';
+import PrintInvoice from '../../components/receptionist/PrintInvoice';
 import ReceptionistLayout from '../../layouts/ReceptionistLayout';
 import { RECEPTIONIST_PATHS } from '../../routes/receptionistPaths';
 import paymentService from '../../api/paymentService';
@@ -610,6 +611,13 @@ const Payment = () => {
                     {toast.message}
                 </div>
             )}
+
+            <PrintInvoice
+                invoicePreview={invoicePreview}
+                paymentSummary={paymentSummary}
+                receptionistName={invoicePreview?.receptionist?.fullName || 'Thu ngân'}
+                time={new Date().toLocaleString('vi-VN')}
+            />
         </div>
         </ReceptionistLayout>
     );

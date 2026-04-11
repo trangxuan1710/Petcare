@@ -12,8 +12,11 @@
     display: flex;
     align-items: center;
     justify-content: flex-start;
-    padding: 16px;
+    padding: 16px 20px;
     background-color: #fff;
+    border-bottom: 1px solid #e8eced;
+    box-shadow: 0 1px 4px 0 rgba(28, 155, 132, 0.04);
+    gap: 8px;
 }
 
 .ms-btn-icon {
@@ -24,6 +27,16 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 10px;
+    transition: background-color 0.15s ease;
+}
+
+.ms-btn-icon:hover {
+    background-color: #f3f6f6;
+}
+
+.ms-btn-icon:active {
+    transform: scale(0.95);
 }
 
 .ms-title {

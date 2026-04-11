@@ -1,15 +1,43 @@
 .rnotif-page {
     padding: 0 0 20px;
     background: #f6f8f8;
-    min-height: 100%;
+    min-height: 100vh;
     font-family: "Roboto", Helvetica, Arial, sans-serif;
 }
 
-.rnotif-header {
+.rnotif-page .app-top-header-area {
+    display: none;
+}
+
+.rnotif-toolbar {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
     background: #ffffff;
-    border-bottom: 1px solid #e6ecea;
-    padding: 22px 20px 26px;
-    margin-bottom: 16px;
+    border-bottom: 1px solid #e8eced;
+    box-shadow: 0 1px 4px 0 rgba(28, 155, 132, 0.04);
+}
+
+.rnotif-back-btn {
+    width: 34px;
+    height: 34px;
+    border: none;
+    background: transparent;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.rnotif-back-btn:hover {
+    background-color: #f3f6f6;
+}
+
+.rnotif-back-btn:active {
+    transform: scale(0.95);
 }
 
 .rnotif-title {
@@ -23,7 +51,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    padding: 0 16px;
+    padding: 16px 16px 0;
     background-color: #f8fefb;
 }
 
@@ -40,6 +68,12 @@
     width: 100%;
     text-align: left;
     cursor: pointer;
+}
+
+.rnotif-card-unread {
+    border-color: rgba(18, 145, 118, 0.5);
+    box-shadow: 0 1px 4px 0 rgba(18, 145, 118, 0.10),
+        0 4px 14px 0 rgba(18, 145, 118, 0.15);
 }
 
 .rnotif-card:focus-visible {
@@ -179,8 +213,7 @@
 }
 
 @media (max-width: 640px) {
-    .rnotif-header {
-        padding: 18px 16px 20px;
-        margin-bottom: 12px;
+    .rnotif-toolbar {
+        padding: 14px 16px;
     }
 }

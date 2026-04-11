@@ -2,10 +2,12 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './NavBar.css';
 import { ClipboardList, Package, Scan, Bell, Menu } from 'lucide-react';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE';
 
 const NavBar = () => {
     const navigate = useNavigate();
     const { pathname } = useLocation();
+    const { unreadCount, clearUnread } = useNotificationSSE();
     const activeTab = pathname.includes('/medicine-selector')
         ? 'kho'
         : pathname.includes('/notifications')
@@ -45,9 +47,15 @@ const NavBar = () => {
 
                 <div
                     className={`nav-item ${activeTab === 'thongbao' ? 'active' : ''}`}
-                    onClick={() => go('/doctors/notifications')}
+                    onClick={() => { clearUnread(); go('/doctors/notifications'); }}
                 >
-                    <Bell size={28} strokeWidth={1.8} />
+                    <div className="nav-bell-icon">
+                        <Bell size={28} strokeWidth={1.8} />
+                        {unreadCount > 0 && <span className="nav-bell-dot" aria-hidden="true" />}
+                    </div>
+                    {unreadCount > 0 && (
+                        <span className="nav-bell-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+                    )}
                     <span>Thông báo</span>
                 </div>
 

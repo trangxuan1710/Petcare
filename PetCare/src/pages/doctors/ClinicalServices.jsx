@@ -176,12 +176,12 @@ const ClinicalServices = () => {
 
     return (
         <div className="cs-page">
-            <header className="cs-header">
+            <div className="cs-header">
                 <button className="cs-icon-btn" type="button" onClick={() => navigate(-1)} aria-label="Quay lại">
                     <ChevronLeft size={24} color="#222" />
                 </button>
                 <h1 className="cs-title">Dịch vụ</h1>
-            </header>
+            </div>
 
             <div className="cs-search-wrap">
                 <div className="cs-search-box">

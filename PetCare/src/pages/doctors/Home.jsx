@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CircleArrowRight, Bell, LogOut } from 'lucide-react';
+import { CircleArrowRight } from 'lucide-react';
 import './Home.css';
 import StatCard from '../../components/doctor/StatCard';
 import DoctorLayout from '../../layouts/DoctorLayout';
@@ -8,6 +8,8 @@ import dashboardService from '../../api/dashboardService';
 import authService from '../../api/authService';
 import useHeaderProfile from '../../hooks/useHeaderProfile';
 import FeatureDevelopingModal from '../../components/common/FeatureDevelopingModal';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import AppTopHeader from '../../components/common/AppTopHeader';
 
 const Home = () => {
     const navigate = useNavigate();
@@ -15,6 +17,7 @@ const Home = () => {
         fallbackName: 'Bác sĩ',
         fallbackRoleLabel: 'Bác sĩ',
     });
+    const { unreadCount, clearUnread } = useNotificationSSE();
     const [activeTab, setActiveTab] = useState('Workspace');
     const [summary, setSummary] = useState({});
     const [isLoadingSummary, setIsLoadingSummary] = useState(true);
@@ -115,33 +118,16 @@ const Home = () => {
         <DoctorLayout>
             <div className="home-container">
                 {/* Header / Profile section */}
-                <div className="home-header">
-                    <div className="home-profile">
-                        <img
-                            src={profile.avatarUrl}
-                            alt={profile.displayName}
-                            className="home-avatar"
-                        />
-                        <div className="home-greeting">
-                            <span className="greeting-text">Xin chào</span>
-                            <span className="doctor-name">{profile.roleLabel} {profile.displayName}</span>
-                        </div>
-                    </div>
-                    <div className="home-quick-actions">
-                        <button className="home-quick-btn" type="button" onClick={() => navigate('/doctors/notifications')} aria-label="Thong bao">
-                            <Bell size={18} />
-                        </button>
-                        <button
-                            className="home-quick-btn home-quick-btn-logout"
-                            type="button"
-                            onClick={handleLogout}
-                            aria-label="Dang xuat"
-                            disabled={isLoggingOut}
-                        >
-                            <LogOut size={18} />
-                        </button>
-                    </div>
-                </div>
+                <AppTopHeader
+                    profile={profile}
+                    notificationCount={unreadCount}
+                    onNotificationClick={() => {
+                        clearUnread();
+                        navigate('/doctors/notifications');
+                    }}
+                    onLogout={handleLogout}
+                    isLogoutDisabled={isLoggingOut}
+                />
 
                 {/* Tabs */}
                 <div className="home-tabs">

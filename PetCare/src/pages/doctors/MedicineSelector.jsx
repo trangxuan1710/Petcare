@@ -422,11 +422,11 @@ const MedicineSelector = () => {
     return (
         <div className="med-selector-page">
             {/* Header */}
-            <header className="ms-header">
+            <div className="ms-header">
                 <button className="ms-btn-icon" onClick={() => navigateBackToRecordResult(getSelectedMedicines())}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="ms-title">Thuốc & Vật tư đi kèm</h1>
                 <div style={{ width: 32 }}></div>
-            </header>
+            </div>
 
             {/* Search Bar */}
             <div className="ms-search-container">

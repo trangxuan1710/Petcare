@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, ChevronUp, Plus, Minus, Camera } from 'lucide-react';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import { ChevronLeft, ChevronUp, Plus, Minus, Camera, Bell } from 'lucide-react';
 import { TECH_PATHS, buildTechRecordResultPath } from '../../routes/techPaths';
 import techService from '../../api/techService';
 import './RecordResult.css';
@@ -36,12 +37,25 @@ const isImageFilePath = (path) => /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(String
 const toUploadDraftItems = (items) => (Array.isArray(items) ? items : [])
     .map((item, index) => {
         const file = item?.file || item;
-        if (!(file instanceof File)) return null;
+        if (!file) return null;
+        
+        let previewUrl = item?.previewUrl;
+        const isImage = file?.type?.startsWith('image/') || previewUrl;
+        
+        try {
+            // Only recreate ObjectURL if we don't have a valid base64 previewUrl and it's a valid File/Blob
+            if (file && (file instanceof File || file instanceof Blob) && isImage && (!previewUrl || !previewUrl.startsWith('data:'))) {
+                previewUrl = URL.createObjectURL(file);
+            }
+        } catch (e) {
+            // Ignore preview generation issues
+        }
+
         return {
-            key: `${Date.now()}-${index}-${file.name}-${Math.random()}`,
+            key: item?.key || `${Date.now()}-${index}-${file?.name || 'file'}-${Math.random()}`,
             file,
-            previewUrl: file.type?.startsWith('image/') ? URL.createObjectURL(file) : null,
-            fileName: item?.fileName || file.name,
+            previewUrl: previewUrl || null,
+            fileName: item?.fileName || file?.name || 'Unknown file',
         };
     })
     .filter(Boolean);
@@ -49,10 +63,12 @@ const toUploadDraftItems = (items) => (Array.isArray(items) ? items : [])
 const serializeUploadDraftItems = (items) => (Array.isArray(items) ? items : [])
     .map((item) => {
         const file = item?.file || item;
-        if (!(file instanceof File)) return null;
+        if (!file) return null;
         return {
+            key: item?.key,
             file,
             fileName: item?.fileName || file.name,
+            previewUrl: item?.previewUrl,
         };
     })
     .filter(Boolean);
@@ -101,6 +117,7 @@ const TechRecordResult = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const { unreadCount, clearUnread } = useNotificationSSE();
 
     useEffect(() => {
         if (typeof recordDraft?.summary === 'string') {
@@ -161,13 +178,9 @@ const TechRecordResult = () => {
         };
     }, [id, recordDraft?.summary, selectedMedicinesFromState]);
 
-    useEffect(() => () => {
-        selectedImages.forEach((image) => {
-            if (image?.previewUrl?.startsWith('blob:')) {
-                URL.revokeObjectURL(image.previewUrl);
-            }
-        });
-    }, [selectedImages]);
+    useEffect(() => {
+        // Remove unmount revokeObjectURL to prevent breaking when navigating to MedicineSelector
+    }, []);
 
     const existingEvidence = useMemo(
         () => (taskDetail?.evidencePaths || []).map((path, index) => ({
@@ -189,26 +202,41 @@ const TechRecordResult = () => {
     );
 
     const selectedImageFiles = useMemo(
-        () => selectedImages.filter((item) => item?.file?.type?.startsWith('image/')),
+        () => selectedImages.filter((item) => item?.file?.type?.startsWith('image/') || item?.previewUrl),
         [selectedImages]
     );
 
     const selectedDocumentFiles = useMemo(
-        () => selectedImages.filter((item) => !item?.file?.type?.startsWith('image/')),
+        () => selectedImages.filter((item) => !(item?.file?.type?.startsWith('image/') || item?.previewUrl)),
         [selectedImages]
     );
 
     const statusLabel = STATUS_LABEL[taskDetail?.status] || '--';
 
-    const handleAddImages = (event) => {
+    const handleAddImages = async (event) => {
         const files = Array.from(event.target.files || []);
         if (files.length === 0) return;
 
-        const nextItems = files.map((file) => ({
-            key: `${Date.now()}-${file.name}-${Math.random()}`,
-            file,
-            previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
-            fileName: file.name,
+        const nextItems = await Promise.all(files.map(async (file) => {
+            let previewUrl = null;
+            if (file.type.startsWith('image/')) {
+                try {
+                    previewUrl = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (e) => resolve(e.target.result);
+                        reader.onerror = () => resolve(URL.createObjectURL(file));
+                        reader.readAsDataURL(file);
+                    });
+                } catch {
+                    previewUrl = URL.createObjectURL(file);
+                }
+            }
+            return {
+                key: `${Date.now()}-${file.name}-${Math.random()}`,
+                file,
+                previewUrl,
+                fileName: file.name,
+            };
         }));
 
         setSelectedImages((prev) => [...prev, ...nextItems]);
@@ -288,11 +316,35 @@ const TechRecordResult = () => {
 
     return (
         <div className="trs-page">
-            <header className="trs-header">
-                <button className="trs-icon-btn" type="button" onClick={() => navigate(-1)} aria-label="Quay lại">
-                    <ChevronLeft size={24} />
+            <header className="tech-record-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: '#fff', borderBottom: '1px solid #e0e7e4' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <button className="icon-btn-back" type="button" onClick={() => navigate(-1)} aria-label="Quay lại" style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px', margin: '-4px' }}>
+                        <ChevronLeft size={24} color="#1a1a1a" />
+                    </button>
+                    <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a1a1a', margin: 0 }}>Ghi nhận kết quả</h1>
+                </div>
+                <button type="button" className="tech-top-bell" onClick={() => { clearUnread(); navigate(TECH_PATHS.NOTIFICATIONS); }} aria-label="Thong bao" style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a' }}>
+                    <Bell size={24} strokeWidth={2} />
+                    {unreadCount > 0 && (
+                        <span style={{
+                            position: 'absolute',
+                            top: -4,
+                            right: -4,
+                            backgroundColor: 'red',
+                            color: 'white',
+                            borderRadius: '50%',
+                            width: 18,
+                            height: 18,
+                            fontSize: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 'bold'
+                        }}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                    )}
                 </button>
-                <h1>Ghi nhận kết quả</h1>
             </header>
 
             <main className="trs-content">
@@ -332,7 +384,7 @@ const TechRecordResult = () => {
                         <div className="trs-block">
                             <div className="trs-upload-panel">
                                 <div className="trs-upload-header">
-                                    <h4>FILE VÀ ẢNH TẢI LÊN</h4>
+                                    <h4>File và ảnh tải lên</h4>
                                     <ChevronUp size={16} color="#7f878d" />
                                 </div>
                                 
@@ -419,7 +471,7 @@ const TechRecordResult = () => {
                         <div className="trs-block">
                             <div className="trs-meds-panel">
                                 <div className="trs-meds-header">
-                                    <h4>THUỐC & VẬT TƯ TIÊU HAO</h4>
+                                    <h4>Thuốc & vật tư tiêu hao</h4>
                                     <ChevronUp size={16} color="#7f878d" />
                                 </div>
 
@@ -484,7 +536,7 @@ const TechRecordResult = () => {
                 <button type="button" className="trs-btn-outline" onClick={() => navigate(-1)}>
                     Hủy bỏ
                 </button>
-                <button type="button" className="trs-btn-primary" onClick={handleSubmit} disabled={isSubmitting || isLoading || !taskDetail}>
+                <button type="button" className="trs-btn-primary" onClick={handleSubmit} disabled={isSubmitting || isLoading || !taskDetail || !summary.trim()}>
                     {isSubmitting ? 'Đang lưu...' : 'Xác nhận'}
                 </button>
             </footer>

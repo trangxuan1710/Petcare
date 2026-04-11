@@ -10,44 +10,83 @@ const toArray = (raw) => {
     return [];
 };
 
+const formatNotificationTime = (value) => {
+    if (!value) return '';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+
+    const diffMs = Date.now() - date.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+
+    if (diffMinutes < 1) return 'Vừa xong';
+    if (diffMinutes < 60) return `${diffMinutes} phút`;
+
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${diffHours} giờ`;
+    if (diffHours < 48) return 'Hôm qua';
+
+    return date.toLocaleString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+    }).replace(',', ' -');
+};
+
+const extractReceptionIdFromLink = (link) => {
+    if (!link || typeof link !== 'string') return null;
+    const match = link.match(/\/(?:tickets|reception-slips|payment)\/(\d+)/i);
+    return match ? Number(match[1]) : null;
+};
+
+const mapNotification = (item) => ({
+    id: item?.id,
+    title: item?.title || 'Thông báo',
+    message: item?.message || '',
+    type: item?.type || '',
+    link: item?.link || '',
+    createdAt: item?.createdAt,
+    time: formatNotificationTime(item?.createdAt),
+    isRead: Boolean(item?.read ?? item?.isRead),
+    receptionId: extractReceptionIdFromLink(item?.link),
+});
+
 const notificationService = {
+    async listMyNotifications() {
+        const response = await authApi.get('/notifications/my');
+        const records = toArray(getApiData(response));
+        return { data: records.map(mapNotification) };
+    },
+
     async listDoctorNotifications() {
-        const response = await authApi.get('/doctors/waiting-cases');
-        const records = toArray(getApiData(response));
-        const mapped = records.map((record, index) => ({
-            id: record?.doctorId || record?.id || index + 1,
-            title: 'Có phiếu khám mới cần thực hiện!',
-            petName: record?.petName || 'Thú cưng',
-            customerName: record?.clientName || record?.doctorName || 'Khách hàng',
-            message: 'đang chờ bác sĩ xử lý.',
-            time: record?.updatedAt || '',
-            receptionId: record?.receptionSlipId || record?.receptionId || record?.id,
-        }));
-
-        return { data: mapped };
+        return this.listMyNotifications();
     },
+
     async listReceptionistNotifications(params = {}) {
-        const response = await authApi.get('/reception-slips/by-state', {
-            params: {
-                states: ['chờ thanh toán'],
-                ...params,
-            },
-        });
-
-        const records = toArray(getApiData(response));
-        const mapped = records.map((record) => ({
-            id: record?.id,
-            title: 'Thực hiện thanh toán!',
-            time: record?.receptionTime || '',
-            orderCode: `REC${record?.id || ''}`,
-            customerName: record?.client?.fullName || 'Khách hàng',
-            receptionId: record?.id,
-        }));
-
-        return { data: mapped };
+        void params;
+        return this.listMyNotifications();
     },
+
+    async listTechNotifications() {
+        return this.listMyNotifications();
+    },
+
+    async getUnreadCount() {
+        const response = await authApi.get('/notifications/unread-count');
+        const payload = getApiData(response) || {};
+        return { data: { unreadCount: Number(payload?.unreadCount || 0) } };
+    },
+
     async markAsRead(notificationId) {
-        return Promise.resolve({ data: { id: notificationId, read: true } });
+        const response = await authApi.patch(`/notifications/${notificationId}/read`);
+        return { data: getApiData(response) };
+    },
+
+    async markAllAsRead() {
+        const response = await authApi.patch('/notifications/read-all');
+        return { data: getApiData(response) };
     },
 };
 

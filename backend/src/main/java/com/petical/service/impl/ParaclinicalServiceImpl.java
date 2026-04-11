@@ -6,6 +6,7 @@ import com.petical.dto.response.ParaclinicalSelectedServiceResponse;
 import com.petical.dto.response.ParaclinicalServiceOptionResponse;
 import com.petical.dto.response.SaveParaclinicalServicesResponse;
 import com.petical.dto.response.TechnicianOptionResponse;
+import com.petical.dto.response.NotificationMessage;
 import com.petical.entity.Doctor;
 import com.petical.entity.ExamStatus;
 import com.petical.entity.MedicalRecord;
@@ -24,6 +25,7 @@ import com.petical.repository.ServiceOrderRepository;
 import com.petical.repository.ServiceRepository;
 import com.petical.repository.TechnicianRepository;
 import com.petical.service.ParaclinicalService;
+import com.petical.service.SseNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +48,7 @@ public class ParaclinicalServiceImpl implements ParaclinicalService {
     private final ExamStatusRepository examStatusRepository;
     private final ServiceOrderRepository serviceOrderRepository;
     private final ReceptionServiceRepository receptionServiceRepository;
+        private final SseNotificationService sseNotificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -110,12 +113,14 @@ public class ParaclinicalServiceImpl implements ParaclinicalService {
             Technician technician = technicianRepository.findById(item.getTechnicianId())
                     .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
 
-            if (!serviceOrderRepository.existsByMedicalRecordIdAndServiceIdAndTechnicianId(medicalRecord.getId(), service.getId(), technician.getId())) {
-                serviceOrderRepository.save(ServiceOrder.builder()
+                        if (!serviceOrderRepository.existsByMedicalRecordIdAndServiceIdAndTechnicianId(medicalRecord.getId(), service.getId(), technician.getId())) {
+                                ServiceOrder createdOrder = serviceOrderRepository.save(ServiceOrder.builder()
                         .medicalRecord(medicalRecord)
                         .service(service)
                         .technician(technician)
                         .build());
+
+                                notifyAssignedTechnician(receptionRecord, service, technician, createdOrder.getId());
             }
 
             if (!receptionServiceRepository.existsByReceptionRecordIdAndServiceId(receptionRecord.getId(), service.getId())) {
@@ -135,6 +140,35 @@ public class ParaclinicalServiceImpl implements ParaclinicalService {
                 .totalSelected(selected.size())
                 .selectedServices(selected)
                 .build();
+    }
+
+    private void notifyAssignedTechnician(
+            ReceptionRecord receptionRecord,
+            com.petical.entity.Service service,
+            Technician technician,
+            Long serviceOrderId
+    ) {
+                if (technician == null || technician.getId() <= 0 || serviceOrderId == null) {
+            return;
+        }
+
+        String petName = receptionRecord != null && receptionRecord.getPet() != null
+                ? receptionRecord.getPet().getName()
+                : "thú cưng";
+        String serviceName = service != null && service.getName() != null
+                ? service.getName()
+                : "dịch vụ cận lâm sàng";
+
+        sseNotificationService.sendNotificationToUser(
+                technician.getId(),
+                NotificationMessage.builder()
+                        .title("Phân công dịch vụ mới")
+                        .message("Bạn được chỉ định thực hiện dịch vụ " + serviceName + " cho " + petName)
+                        .link("/techs/record-result/" + serviceOrderId)
+                        .timestamp(LocalDateTime.now())
+                        .type("TECH_ASSIGNMENT")
+                        .build()
+        );
     }
 
     @Override

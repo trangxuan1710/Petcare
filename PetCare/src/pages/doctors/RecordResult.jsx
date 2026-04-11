@@ -488,10 +488,10 @@ export const RecordResult = () => {
 
     return (
         <div className="record-result-page">
-            <header className="rr-header">
+            <div className="rr-header">
                 <button className="rr-btn-icon" onClick={() => navigate(-1)}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="rr-title">Ghi nhận kết quả</h1>
-            </header>
+            </div>
 
             <div className="rr-content">
                 <div className="rr-customer-card">
@@ -581,7 +581,7 @@ export const RecordResult = () => {
 
                 <div className="rr-upload-panel">
                     <div className="rr-upload-header">
-                        <h4>FILE VÀ ẢNH TẢI LÊN</h4>
+                        <h4>File và ảnh tải lên</h4>
                         <ChevronUp size={16} color="#7f878d" />
                     </div>
                     
@@ -639,7 +639,7 @@ export const RecordResult = () => {
 
                 <div className="rr-accordion">
                     <div className="rr-accordion-header" onClick={() => setIsMedsExpanded(!isMedsExpanded)}>
-                        <h3>THUỐC & VẬT TƯ ĐI KÈM</h3>
+                        <h3>Thuốc & vật tư đi kèm</h3>
                         {isMedsExpanded ? <ChevronUp size={20} color="#666" /> : <ChevronDown size={20} color="#666" />}
                     </div>
                     {isMedsExpanded && (
@@ -748,7 +748,9 @@ export const RecordResult = () => {
 
             <div className="rr-bottom-actions">
                 <button className="rr-btn-cancel" onClick={() => navigate(-1)} disabled={isReadonlyMode}>Hủy bỏ</button>
-                <button className="rr-btn-confirm" onClick={handleConfirm} disabled={isReadonlyMode || isSaving}>{isSaving ? 'Đang lưu...' : 'Xác nhận'}</button>
+                <button className="rr-btn-confirm" onClick={handleConfirm} disabled={isReadonlyMode || isSaving || !conclusionText.trim() || !selectedConclusion}>
+                    {isSaving ? 'Đang lưu...' : (selectedConclusion === 4 ? 'Kết thúc' : 'Xác nhận')}
+                </button>
             </div>
 
             {showDosageModal && (

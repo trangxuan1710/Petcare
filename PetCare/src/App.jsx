@@ -17,10 +17,13 @@ import ReceptionistPayment from './pages/receptionists/Payment';
 import TechHome from './pages/techStaffs/Home';
 import TechRecordResult from './pages/techStaffs/RecordResult';
 import TechMedicineSelector from './pages/techStaffs/MedicineSelector';
+import TechNotifications from './pages/techStaffs/Notifications';
 import {RequireAuth, RequireRole} from './routes/routeGuard';
 import { RECEPTIONIST_PATHS } from './routes/receptionistPaths';
 import { TECH_PATHS } from './routes/techPaths';
 import NotFound from './pages/NotFound';
+import { Toaster } from 'react-hot-toast';
+import { useNotificationSSE } from './hooks/useNotificationSSE';
 
 const getDefaultPathByRole = (role) => {
   if (role === 'DOCTOR') return '/doctors/home';
@@ -40,11 +43,19 @@ const RootRedirect = () => {
   return <Navigate to={getDefaultPathByRole(role)} replace />;
 };
 
+const NotificationSSEBridge = () => {
+  useNotificationSSE();
+  return null;
+};
+
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<RootRedirect />} />
-      <Route path="/login" element={<Login />} />
+    <>
+      <Toaster position="top-right" />
+      <NotificationSSEBridge />
+      <Routes>
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="/login" element={<Login />} />
       <Route path="/404" element={<NotFound />} />
 
       <Route element={<RequireAuth />}>
@@ -69,11 +80,13 @@ function App() {
           <Route path={TECH_PATHS.HOME} element={<TechHome />} />
           <Route path={`${TECH_PATHS.RECORD_RESULT}/:id`} element={<TechRecordResult />} />
           <Route path={TECH_PATHS.MEDICINE_SELECTOR} element={<TechMedicineSelector />} />
+          <Route path={TECH_PATHS.NOTIFICATIONS} element={<TechNotifications />} />
         </Route>
       </Route>
 
       <Route path="*" element={<NotFound />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }
 

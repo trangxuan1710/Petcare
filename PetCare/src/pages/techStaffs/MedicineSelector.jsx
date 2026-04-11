@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Search, Minus, Plus } from 'lucide-react';
+import { ChevronLeft, Search, Minus, Plus, Bell } from 'lucide-react';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import { TECH_PATHS } from '../../routes/techPaths';
 import medicineService from '../../api/medicineService';
 import './MedicineSelector.css';
 
@@ -65,6 +67,7 @@ const TechMedicineSelector = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [medicineList, setMedicineList] = useState([]);
+    const { unreadCount, clearUnread } = useNotificationSSE();
 
     useEffect(() => {
         let isMounted = true;
@@ -183,11 +186,35 @@ const TechMedicineSelector = () => {
 
     return (
         <div className="tms-page">
-            <header className="tms-header">
-                <button type="button" className="tms-icon-btn" onClick={() => navigateBack(false)} aria-label="Quay lại">
-                    <ChevronLeft size={22} />
+            <header className="tms-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: '#fff', borderBottom: '1px solid #e0e7e4' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <button type="button" className="icon-btn-back" onClick={() => navigateBack(false)} aria-label="Quay lại" style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px', margin: '-4px' }}>
+                        <ChevronLeft size={24} color="#1a1a1a" />
+                    </button>
+                    <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a1a1a', margin: 0 }}>Chọn thuốc & vật tư</h1>
+                </div>
+                <button type="button" className="tech-top-bell" onClick={() => { clearUnread(); navigate(TECH_PATHS.NOTIFICATIONS); }} aria-label="Thong bao" style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a' }}>
+                    <Bell size={24} strokeWidth={2} />
+                    {unreadCount > 0 && (
+                        <span style={{
+                            position: 'absolute',
+                            top: -4,
+                            right: -4,
+                            backgroundColor: 'red',
+                            color: 'white',
+                            borderRadius: '50%',
+                            width: 18,
+                            height: 18,
+                            fontSize: 12,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: 'bold'
+                        }}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                    )}
                 </button>
-                <h1>Chọn thuốc & vật tư</h1>
             </header>
 
             <div className="tms-search-box">

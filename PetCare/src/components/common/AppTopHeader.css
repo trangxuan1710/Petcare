@@ -1,0 +1,129 @@
+.app-top-header-area {
+    background-color: #ffffff;
+    width: auto;
+    position: relative;
+    margin: -16px -16px 16px -16px;
+    padding: 20px 16px 16px 16px;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 4px 0 rgba(28, 155, 132, 0.06), 0 2px 12px 0 rgba(28, 155, 132, 0.1);
+    z-index: 10;
+}
+
+.app-top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #ffffff;
+    border: 1px solid #e6eeeb;
+    border-radius: 16px;
+    padding: 14px 16px;
+}
+
+.app-top-header-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.app-top-header-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: #e6f2ef;
+}
+
+.app-top-header-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.app-top-header-texts {
+    min-width: 0;
+}
+
+.app-top-header-greeting {
+    font-size: 12px;
+    line-height: 1.2;
+    font-weight: 500;
+    color: #1f2937;
+    margin: 0;
+}
+
+.app-top-header-name {
+    font-size: clamp(15px, 4vw, 18px);
+    line-height: 1.2;
+    font-weight: 700;
+    color: #111827;
+    margin: 2px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 58vw;
+}
+
+.app-top-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.app-top-header-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid #dce7e4;
+    border-radius: 12px;
+    background: #f8fefd;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+}
+
+.app-top-header-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.app-top-header-btn-logout {
+    border-color: #f3d1cd;
+    background: #fff7f5;
+}
+
+.app-top-header-bell-wrap {
+    display: inline-flex;
+    position: relative;
+}
+
+.app-top-header-bell-dot {
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    background: #ef4444;
+}
+
+.app-top-header-bell-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    background: #ef4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}

@@ -1,28 +1,31 @@
 import React from 'react';
-import { Bell } from 'lucide-react';
-import './TechTopHeader.css';
+import { useNavigate } from 'react-router-dom';
+import useHeaderProfile from '../../hooks/useHeaderProfile';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import AppTopHeader from '../common/AppTopHeader';
 
-const TechTopHeader = ({
-    title = 'Danh sach cong viec',
-    name = 'Ky thuat vien Quoc Dat',
-    avatarUrl = 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80',
-    onBellClick
-}) => {
+import { TECH_PATHS } from '../../routes/techPaths';
+
+const TechTopHeader = ({ title = 'Danh sách công việc' }) => {
+    const navigate = useNavigate();
+    const { profile } = useHeaderProfile({
+        fallbackName: 'Kỹ thuật viên',
+        fallbackRoleLabel: 'KTV',
+    });
+    const { unreadCount, clearUnread } = useNotificationSSE();
+
+    const handleBellClick = () => {
+        clearUnread();
+        navigate(TECH_PATHS.NOTIFICATIONS);
+    };
+
     return (
-        <header className="tech-top-header">
-            <div className="tech-top-user">
-                <div className="tech-top-avatar" aria-label="Ky thuat vien">
-                    <img src={avatarUrl} alt={name} />
-                </div>
-                <div className="tech-top-texts">
-                    <p>{title}</p>
-                    <h1>{name}</h1>
-                </div>
-            </div>
-            <button type="button" className="tech-top-bell" onClick={onBellClick} aria-label="Thong bao">
-                <Bell size={24} strokeWidth={2} />
-            </button>
-        </header>
+        <AppTopHeader
+            profile={profile}
+            greeting={title}
+            notificationCount={unreadCount}
+            onNotificationClick={handleBellClick}
+        />
     );
 };
 

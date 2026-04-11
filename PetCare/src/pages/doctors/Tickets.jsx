@@ -6,14 +6,14 @@ import TabStatus from '../../components/doctor/TabStatus';
 import './Tickets.css';
 import "@fontsource/roboto/500.css";
 
-import { Search, Bell, ChevronLeft } from 'lucide-react';
+import { Search } from 'lucide-react';
 import receptionService from '../../api/receptionService';
 import useHeaderProfile from '../../hooks/useHeaderProfile';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import AppTopHeader from '../../components/common/AppTopHeader';
 import { toTitleCase } from '../../utils/textFormat';
 
 const SearchIcon = () => <Search size={20} color="#209D80" />;
-const BellIcon = () => <Bell size={24} color="#111827" />;
-const BackIcon = () => <ChevronLeft size={22} color="#111827" />;
 const SEVEN_DAYS_IN_MS = 7 * 24 * 60 * 60 * 1000;
 
 const parseBackendDate = (rawValue) => {
@@ -180,6 +180,7 @@ const Tickets = () => {
         fallbackName: 'Bác sĩ',
         fallbackRoleLabel: 'Bác sĩ',
     });
+    const { unreadCount, clearUnread } = useNotificationSSE();
     const [activeTab, setActiveTab] = useState(() => normalizeTabId(location.state?.initialTab));
     const [emergencyOnlyFilter, setEmergencyOnlyFilter] = useState(() => normalizeEmergencyOnly(location.state?.emergencyOnly));
     const [searchTerm, setSearchTerm] = useState('');
@@ -321,24 +322,19 @@ const Tickets = () => {
     return (
         <DoctorLayout>
             <div className="tickets-page">
+                <AppTopHeader
+                    profile={profile}
+                    notificationCount={unreadCount}
+                    onNotificationClick={() => {
+                        clearUnread();
+                        navigate('/doctors/notifications');
+                    }}
+                />
+
                 <div className="tickets-header-area">
-                    <div className="tickets-top-bar">
-                        <div className="tickets-title-wrap">
-                            <button className="tickets-back-btn" type="button" onClick={() => navigate('/doctors/home')} aria-label="Ve trang truoc">
-                                <BackIcon />
-                            </button>
-                            <div className="tickets-page-title-group">
-                                <h1 className="tickets-title">Phiếu khám</h1>
-                                <span className="tickets-subtitle">{profile.roleLabel} {profile.displayName}</span>
-                            </div>
-                        </div>
-                        <button
-                            className="notification-btn"
-                            aria-label="Thông báo"
-                            onClick={() => navigate('/doctors/notifications')}
-                        >
-                            <BellIcon />
-                        </button>
+                    <div className="tickets-page-title-group">
+                        <h1 className="tickets-title">Phiếu khám</h1>
+                        <span className="tickets-subtitle">{profile.roleLabel} {profile.displayName}</span>
                     </div>
 
                     <div className="search-box">

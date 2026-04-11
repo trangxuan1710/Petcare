@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell } from 'lucide-react';
+import { Bell, ChevronLeft } from 'lucide-react';
 import ReceptionistLayout from '../../layouts/ReceptionistLayout';
 import { RECEPTIONIST_PATHS } from '../../routes/receptionistPaths';
 import notificationService from '../../api/notificationService';
-import { toTitleCase } from '../../utils/textFormat';
 import './Notifications.css';
 
 const Notifications = () => {
@@ -55,10 +54,24 @@ const Notifications = () => {
     };
 
     const handleOpenPayment = (item) => {
+        if (!item?.isRead) {
+            notificationService.markAsRead(item.id).catch(() => null);
+            setNotifications((prev) => prev.map((current) => (
+                current.id === item.id
+                    ? { ...current, isRead: true }
+                    : current
+            )));
+        }
+
+        if (item?.link) {
+            navigate(item.link);
+            return;
+        }
+
         navigate(RECEPTIONIST_PATHS.PAYMENT, {
             state: {
                 receptionId: item?.receptionId,
-                customerName: item?.customerName,
+                customerName: '',
             },
         });
     };
@@ -66,9 +79,12 @@ const Notifications = () => {
     return (
         <ReceptionistLayout>
         <div className="rnotif-page">
-            <header className="rnotif-header">
+            <div className="rnotif-toolbar">
+                <button className="rnotif-back-btn" type="button" onClick={() => navigate(-1)} aria-label="Quay lại">
+                    <ChevronLeft size={22} color="#1f2937" />
+                </button>
                 <h1 className="rnotif-title">Thông báo</h1>
-            </header>
+            </div>
 
             <div className="rnotif-list">
                 {isLoading && (
@@ -93,7 +109,7 @@ const Notifications = () => {
                     <button
                         key={item.id}
                         type="button"
-                        className="rnotif-card"
+                        className={`rnotif-card ${!item.isRead ? 'rnotif-card-unread' : ''}`}
                         onClick={() => handleOpenPayment(item)}
                     >
                         <div className="rnotif-icon-wrap">
@@ -102,10 +118,10 @@ const Notifications = () => {
                         <div className="rnotif-body">
                             <div className="rnotif-head-row">
                                 <h3 className="rnotif-card-title">{item.title}</h3>
-                                <span className="rnotif-time">{item.time}</span>
+                                <span className="rnotif-time">{item.time || 'Vừa xong'}</span>
                             </div>
                             <p className="rnotif-desc">
-                                Phiếu tiếp đón <strong>{item.orderCode}</strong> của khách hàng <strong>{toTitleCase(item.customerName) || item.customerName}</strong> đã hoàn thành. Hãy tiến hành thanh toán ngay!
+                                {item.message || 'Bạn có thông báo mới.'}
                             </p>
                         </div>
                     </button>

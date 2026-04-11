@@ -12,6 +12,8 @@ import com.petical.enums.ReceptionStatus;
 import com.petical.errors.AppException;
 import com.petical.repository.*;
 import com.petical.service.ReceptionService;
+import com.petical.service.SseNotificationService;
+import com.petical.dto.response.NotificationMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -48,6 +50,7 @@ public class ReceptionServiceImpl implements ReceptionService {
         private final ServiceResultRepository serviceResultRepository;
         private final PrescriptionRepository prescriptionRepository;
         private final PrescriptionDetailRepository prescriptionDetailRepository;
+        private final SseNotificationService sseNotificationService;
 
     @Override
     @Transactional
@@ -100,6 +103,15 @@ public class ReceptionServiceImpl implements ReceptionService {
 
         ReceptionRecord savedRecord = receptionRecordRepository.save(receptionRecord);
         ensureDefaultClinicalServicePending(savedRecord);
+
+        sseNotificationService.sendNotificationToUser(doctor.getId(),
+                NotificationMessage.builder()
+                        .title("Phiếu tiếp nhận mới")
+                        .message("Bạn được phân công một phiếu tiếp nhận mới cho thú cưng " + pet.getName())
+                        .timestamp(LocalDateTime.now())
+                        .type("NEW_RECEPTION")
+                        .build());
+
         return savedRecord;
     }
 

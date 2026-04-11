@@ -30,6 +30,8 @@ import com.petical.repository.ReceptionServiceRepository;
 import com.petical.repository.ServiceRepository;
 import com.petical.repository.TreatmentDirectionRepository;
 import com.petical.service.ExamResultService;
+import com.petical.service.SseNotificationService;
+import com.petical.dto.response.NotificationMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +68,7 @@ public class ExamResultServiceImpl implements ExamResultService {
     private final PrescriptionRepository prescriptionRepository;
     private final PrescriptionDetailRepository prescriptionDetailRepository;
     private final MedicineRepository medicineRepository;
+    private final SseNotificationService sseNotificationService;
 
     @Override
     @Transactional
@@ -130,6 +133,13 @@ public class ExamResultServiceImpl implements ExamResultService {
 
         if (discharge) {
             receptionRecord.setStatus(ReceptionStatus.WAITING_PAYMENT);
+            sseNotificationService.sendNotificationToRole("RECEPTIONIST",
+                    NotificationMessage.builder()
+                            .title("Chỉ định thanh toán")
+                            .message("Bác sĩ đã hoàn tất khám cho thú cưng " + receptionRecord.getPet().getName() + " và chờ thanh toán.")
+                            .timestamp(LocalDateTime.now())
+                            .type("WAITING_PAYMENT")
+                            .build());
         } else if (receptionRecord.getStatus() == null || receptionRecord.getStatus() == ReceptionStatus.WAITING_EXECUTION) {
             receptionRecord.setStatus(ReceptionStatus.IN_PROGRESS);
         }

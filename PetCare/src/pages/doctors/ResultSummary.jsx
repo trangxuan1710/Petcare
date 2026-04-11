@@ -325,12 +325,12 @@ const ResultSummary = () => {
 
     return (
         <div className="rs-page">
-            <header className="rs-header">
+            <div className="rs-header">
                 <button className="rs-icon-btn" type="button" onClick={() => navigate(-1)} aria-label="Quay lại">
                     <ChevronLeft size={24} />
                 </button>
                 <h1>Tổng hợp kết quả</h1>
-            </header>
+            </div>
 
             <main className="rs-content">
                 {isLoading && <article className="rs-card"><p>Đang tải dữ liệu tổng hợp...</p></article>}

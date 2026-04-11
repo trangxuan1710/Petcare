@@ -388,11 +388,11 @@ export default function ServiceOrder() {
     return (
         <div className="service-order-page">
             {/* Header */}
-            <header className="so-header">
+            <div className="so-header">
                 <button className="so-btn-icon" onClick={() => navigate(-1)}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="so-title">Đơn dịch vụ</h1>
                 {/* <button className="so-btn-icon"><MoreVertical size={24} color="#1a1a1a" /></button> */}
-            </header>
+            </div>
 
             <div className="so-content">
                 {/* Customer Info */}
@@ -468,7 +468,7 @@ export default function ServiceOrder() {
                         <>
 
                             {paraclinicalServices.length > 0 && (
-                                <ServiceAccordion title="DỊCH VỤ" defaultExpanded>
+                                <ServiceAccordion title="Dịch vụ" defaultExpanded>
                                     {paraclinicalServices.map((service, index) => (
                                         <div
                                             className="so-service-item"
@@ -590,7 +590,9 @@ export default function ServiceOrder() {
             {/* Bottom Actions */}
             {!isReadonlyMode && (activeTab === 'Kết luận phiếu khám' ? (
                 <div className="so-bottom-actions so-bottom-actions-single">
-                    <button className="so-btn-finish" onClick={handleFinish} disabled={isReadonlyMode}>Kết thúc</button>
+                    <button className="so-btn-finish" onClick={handleFinish} disabled={isReadonlyMode || !conclusionText.trim() || !selectedConclusion}>
+                        Kết thúc
+                    </button>
                 </div>
             ) : (
                 <div className="so-bottom-actions">

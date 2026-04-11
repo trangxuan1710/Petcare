@@ -6,7 +6,7 @@ const TechAttachmentPanel = ({ images, files }) => {
     return (
         <section className="tech-attach-panel">
             <div className="tech-attach-header">
-                <h3>FILE VA ANH TAI LEN</h3>
+                <h3>File và ảnh tải lên</h3>
             </div>
 
             <div className="tech-image-grid">

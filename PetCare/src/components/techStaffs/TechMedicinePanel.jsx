@@ -6,7 +6,7 @@ const TechMedicinePanel = ({ items }) => {
     return (
         <section className="tech-med-panel">
             <div className="tech-med-header">
-                <h3>THUOC VA VAT TU DI KEM</h3>
+                <h3>Thuốc & vật tư đi kèm</h3>
             </div>
 
             <div className="tech-med-list">

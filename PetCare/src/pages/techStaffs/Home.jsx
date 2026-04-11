@@ -106,13 +106,7 @@ const TechHome = () => {
     return (
         <div className="tech-home-page">
             <div className="tech-home-shell">
-                <div className="tech-home-header-area">
-                    <TechTopHeader
-                        title="Xin chào"
-                        name="Kỹ thuật viên Quốc Đạt"
-                        onBellClick={() => navigate(TECH_PATHS.HOME)}
-                    />
-                </div>
+                <TechTopHeader title="Xin chào" />
 
                 <div className="tech-search-box">
                     <Search size={18} color="#14a085" />

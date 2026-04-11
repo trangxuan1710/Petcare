@@ -1,0 +1,141 @@
+.invoice-print-container {
+    display: none;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    
+    #root, body, html {
+        background: white;
+        margin: 0;
+        padding: 0;
+    }
+
+    .invoice-print-container {
+        display: block;
+        visibility: visible;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+        font-family: "Roboto", Arial, sans-serif;
+        color: #000;
+        line-height: 1.4;
+    }
+    
+    .invoice-print-container * {
+        visibility: visible;
+    }
+
+    .invoice-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .invoice-header h2 {
+        font-size: 20px;
+        margin: 0 0 5px 0;
+        font-weight: bold;
+    }
+
+    .invoice-header p {
+        margin: 2px 0;
+        font-size: 13px;
+    }
+
+    .invoice-title {
+        margin-top: 16px;
+        border-top: 1px dashed #ccc;
+        padding-top: 16px;
+    }
+
+    .invoice-title h3 {
+        font-size: 18px;
+        margin: 0 0 10px 0;
+        text-align: center;
+        text-transform: uppercase;
+    }
+
+    .invoice-customer-info {
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .invoice-customer-info .info-row {
+        display: flex;
+        margin-bottom: 5px;
+    }
+
+    .invoice-customer-info .info-row span {
+        width: 100px;
+        color: #555;
+    }
+
+    .invoice-customer-info .info-row strong {
+        font-weight: 600;
+    }
+
+    .invoice-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .invoice-table th, .invoice-table td {
+        border-bottom: 1px dashed #ccc;
+        padding: 8px 4px;
+        text-align: left;
+    }
+
+    .invoice-table th {
+        font-weight: 600;
+        border-bottom: 1px solid #333;
+        border-top: 1px solid #333;
+    }
+
+    .col-qty {
+        text-align: center !important;
+        width: 40px;
+    }
+
+    .col-price {
+        text-align: right !important;
+    }
+
+    .col-total {
+        text-align: right !important;
+        font-weight: 600;
+    }
+
+    .invoice-summary {
+        margin-left: auto;
+        width: 100%;
+        max-width: 300px;
+        font-size: 14px;
+    }
+
+    .invoice-summary .summary-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 5px;
+    }
+
+    .invoice-summary .grand-total {
+        font-size: 16px;
+        font-weight: bold;
+        border-top: 1px solid #333;
+        padding-top: 5px;
+        margin-top: 5px;
+    }
+
+    .invoice-footer {
+        text-align: center;
+        margin-top: 30px;
+        font-size: 13px;
+        font-style: italic;
+    }
+}
