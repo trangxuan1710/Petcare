@@ -935,7 +935,8 @@
     width: 100px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    /* justify-content: space-between; */
+    justify-content: center;
     padding: 10px 12px;
     border: 1px solid #e5e7eb;
     border-radius: 8px;

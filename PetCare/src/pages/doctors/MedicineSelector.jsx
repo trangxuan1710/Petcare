@@ -465,7 +465,7 @@ const MedicineSelector = () => {
                                         <strong>{med.price}</strong>
                                     </div>
 
-                                    {/* {med.desc ? <p className="ms-lite-desc">{med.desc}</p> : null} */}
+                                    {med.desc ? <p className="ms-lite-desc">{med.desc}</p> : null}
 
                                     <div className="ms-lite-meta">
                                         {/* <span>Dự kiến: {med.qty} {med.selectedUnit}</span> */}

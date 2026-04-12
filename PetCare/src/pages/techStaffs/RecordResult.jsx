@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useNotificationSSE } from '../../hooks/useNotificationSSE';
-import { ChevronLeft, ChevronUp, Plus, Minus, Camera, Bell } from 'lucide-react';
+import { ChevronLeft, ChevronUp, ChevronDown, Plus, Minus, Camera, Bell, PencilLine } from 'lucide-react';
 import { TECH_PATHS, buildTechRecordResultPath } from '../../routes/techPaths';
 import techService from '../../api/techService';
 import './RecordResult.css';
@@ -38,10 +38,10 @@ const toUploadDraftItems = (items) => (Array.isArray(items) ? items : [])
     .map((item, index) => {
         const file = item?.file || item;
         if (!file) return null;
-        
+
         let previewUrl = item?.previewUrl;
         const isImage = file?.type?.startsWith('image/') || previewUrl;
-        
+
         try {
             // Only recreate ObjectURL if we don't have a valid base64 previewUrl and it's a valid File/Blob
             if (file && (file instanceof File || file instanceof Blob) && isImage && (!previewUrl || !previewUrl.startsWith('data:'))) {
@@ -90,6 +90,11 @@ const normalizeSelectedMedicine = (item) => {
         image: item?.image || 'https://placehold.co/84x84/f4f4f5/a1a1aa?text=Med',
         desc: item?.description || item?.desc || '',
         stock: item?.stock ?? '--',
+        type: item?.type || item?.productType,
+        morning: toNumber(item?.morning, 0),
+        noon: toNumber(item?.noon, 0),
+        afternoon: toNumber(item?.afternoon, 0),
+        evening: toNumber(item?.evening, 0),
     };
 };
 
@@ -117,6 +122,7 @@ const TechRecordResult = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [isMedsExpanded, setIsMedsExpanded] = useState(true);
     const { unreadCount, clearUnread } = useNotificationSSE();
 
     useEffect(() => {
@@ -155,6 +161,11 @@ const TechRecordResult = () => {
                             quantity: Number(medicine.quantity || 1),
                             instruction: medicine.instruction || '',
                             dosageUnit: medicine.dosageUnit || '',
+                            type: medicine.type || medicine.productType,
+                            morning: medicine.morning,
+                            noon: medicine.noon,
+                            afternoon: medicine.afternoon,
+                            evening: medicine.evening,
                         })));
                     } else {
                         setSelectedMedicines([]);
@@ -391,7 +402,7 @@ const TechRecordResult = () => {
                                     <h4>File và ảnh tải lên</h4>
                                     <ChevronUp size={16} color="#7f878d" />
                                 </div>
-                                
+
                                 {(existingImageEvidence.length > 0 || selectedImageFiles.length > 0) && (
                                     <div className="trs-images-grid">
                                         {existingImageEvidence.map((image, index) => (
@@ -472,58 +483,80 @@ const TechRecordResult = () => {
                             </div>
                         </div>
 
-                        <div className="trs-block">
-                            <div className="trs-meds-panel">
-                                <div className="trs-meds-header">
-                                    <h4>Thuốc & vật tư tiêu hao</h4>
-                                    <ChevronUp size={16} color="#7f878d" />
-                                </div>
-
-                                {selectedMedicines.length > 0 ? (
-                                    <div className="trs-meds-selected-wrap">
-                                        {selectedMedicines.map((medicine, index) => (
-                                            <div className="trs-meds-selected-item" key={`${medicine.medicineId || index}-${index}`}>
-                                                <div className="trs-meds-item-top">
-                                                    {/* <img src={medicine.image} alt={medicine.medicineName || 'medicine'} /> */}
-                                                    <div className="trs-meds-item-main">
-                                                        <strong>{medicine.medicineName || 'Thuốc/Vật tư'}</strong>
-                                                        {medicine.desc ? <p>{medicine.desc}</p> : null}
-                                                        
-                                                        {medicine.type === 'THUOC' ? (
-                                                            <div className="trs-med-dosage-micro">
-                                                                Sáng {medicine.morning || 0}, Trưa {medicine.noon || 0}, Chiều {medicine.afternoon || 0}, Tối {medicine.evening || 0}
-                                                                {medicine.instruction ? ` (${medicine.instruction})` : ''}
+                        <div className="rr-accordion">
+                            <div className="rr-accordion-header" onClick={() => setIsMedsExpanded(!isMedsExpanded)}>
+                                <h3>Thuốc & vật tư đi kèm</h3>
+                                {isMedsExpanded ? <ChevronUp size={20} color="#666" /> : <ChevronDown size={20} color="#666" />}
+                            </div>
+                            {isMedsExpanded && (
+                                <div className={`rr-accordion-content ${selectedMedicines.length === 0 ? 'rr-meds-empty' : 'rr-meds-list-container'}`}>
+                                    {selectedMedicines.length > 0 ? (
+                                        <div className="rr-meds-list-minimal">
+                                            {selectedMedicines.map((med, index) => {
+                                                const quantity = Number(med?.quantity ?? 1) || 1;
+                                                const isThuoc = med?.type === 'THUOC' || med?.type === 'MEDICINE';
+                                                const originalUnit = med?.selectedUnit || med?.dosageUnit || 'Đơn vị';
+                                                const quantityUnit = isThuoc ? 'hộp' : originalUnit;
+                                                return (
+                                                    <div key={`${med?.medicineId || 'medicine'}-${index}`} className="rr-med-item-minimal">
+                                                        <div className="rr-med-row-header">
+                                                            <h4 className="rr-med-name-min">{med.medicineName || 'Thuốc/Vật tư'}</h4>
+                                                            <button
+                                                                type="button"
+                                                                className="rr-med-edit-btn"
+                                                                onClick={handleOpenMedicineSelector}
+                                                                aria-label={`Chỉnh sửa cho ${med.medicineName}`}
+                                                            >
+                                                                <PencilLine size={16} color="#209D80" className="rr-med-edit-icon" />
+                                                            </button>
+                                                        </div>
+                                                        {med.desc && (
+                                                            <div className="rr-med-row-price">
+                                                                <div>
+                                                                    <span className="rr-med-price-min">{med.desc}</span>
+                                                                </div>
                                                             </div>
-                                                        ) : null}
+                                                        )}
 
-                                                        <div className="trs-meds-item-meta">
-                                                            <span>Số lượng: <strong>{medicine.quantity} {medicine.type === 'THUOC' ? 'hộp' : (medicine.selectedUnit || medicine.dosageUnit || '')}</strong></span>
+                                                        <div className="rr-med-row-note">
+                                                            <span className="rr-note-lbl">Số lượng</span>
+                                                            <span className="rr-note-val">{quantity} {quantityUnit}</span>
+                                                        </div>
+
+                                                        {[
+                                                            { label: 'Sáng', value: med?.morning || 0 },
+                                                            { label: 'Trưa', value: med?.noon || 0 },
+                                                            { label: 'Chiều', value: med?.afternoon || 0 },
+                                                            { label: 'Tối', value: med?.evening || 0 },
+                                                        ].filter((dosage) => dosage.value > 0).map((dosage) => (
+                                                            <div key={`${med.medicineId}-${dosage.label}`} className="rr-med-row-dosage">
+                                                                <span className="rr-dosage-lbl">{dosage.label}</span>
+                                                                <span className="rr-dosage-val">{dosage.value} {originalUnit}</span>
+                                                            </div>
+                                                        ))}
+
+                                                        <div className="rr-med-row-note">
+                                                            <span className="rr-note-lbl">Chỉ định khác</span>
+                                                            <span className="rr-note-val">{med?.instruction || '---'}</span>
                                                         </div>
                                                     </div>
-                                                </div>
-                                                
-                                                <button
-                                                    type="button"
-                                                    className="trs-med-edit-btn"
-                                                    onClick={handleOpenMedicineSelector}
-                                                    aria-label={`Sửa ${medicine.medicineName}`}
-                                                    style={{ background: 'none', border: 'none', color: '#209d80', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', alignSelf: 'flex-start', marginTop: '12px' }}
-                                                >
-                                                    Chỉnh sửa
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : null}
-
-                                <div className={`trs-meds-add-wrap ${selectedMedicines.length === 0 ? 'is-empty' : ''}`}>
-                                    <button type="button" className="trs-meds-empty-action" onClick={handleOpenMedicineSelector} aria-label="Thêm thuốc vật tư">
-                                        <div className="trs-meds-empty-plus">
-                                            <Plus size={38} strokeWidth={1.5} />
+                                                )
+                                            })}
                                         </div>
-                                    </button>
+                                    ) : null}
+
+                                    <div className={`rr-add-btn-wrapper ${selectedMedicines.length > 0 ? 'rr-add-btn-wrapper-has-list' : 'rr-add-btn-wrapper-empty'}`}>
+                                        <button
+                                            className="rr-add-btn"
+                                            type="button"
+                                            aria-label="Thêm thuốc và vật tư"
+                                            onClick={handleOpenMedicineSelector}
+                                        >
+                                            <Plus size={34} strokeWidth={1.6} />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </article>
                 )}

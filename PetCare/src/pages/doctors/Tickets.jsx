@@ -296,7 +296,7 @@ const Tickets = () => {
     const handleOpenTicket = (ticket) => {
         console.log('Opening ticket', ticket);
         const status = ticket?.status || 'pending';
-        if (status === 'in_progress'||status === 'completed') {
+        if (status === 'in_progress' || status === 'completed') {
             navigate(`/doctors/service-order/${ticket.id}`);
             return;
         }
@@ -332,10 +332,6 @@ const Tickets = () => {
                 />
 
                 <div className="tickets-header-area">
-                    <div className="tickets-page-title-group">
-                        <h1 className="tickets-title">Phiếu khám</h1>
-                        <span className="tickets-subtitle">{profile.roleLabel} {profile.displayName}</span>
-                    </div>
 
                     <div className="search-box">
                         <span className="search-icon"><SearchIcon /></span>
@@ -347,7 +343,7 @@ const Tickets = () => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-                    
+
                     <div style={{ marginTop: '16px' }}>
                         <TabStatus activeTab={activeTab} onTabChange={handleTabChange} tabs={tabItems} />
                     </div>

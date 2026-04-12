@@ -119,6 +119,7 @@ const mapMedicineToUi = (item) => ({
     selected: true,
     qty: item?.qty || item?.quantity || 1,
     selectedUnit: item?.dosageUnit || item?.selectedUnit || item?.unit || 'Đơn vị',
+    type: item?.type || item?.productType,
     expanded: false,
     dosage: {
         morning: normalizeDoseValue(item?.dosage?.morning ?? item?.morning),
@@ -245,7 +246,7 @@ export const RecordResult = () => {
                         ? ensureMedicineService(medicinesFromState)
                         : medicinesFromDraft.length > 0
                             ? ensureMedicineService(medicinesFromDraft)
-                        : ensureMedicineService(medicinesFromApi)
+                            : ensureMedicineService(medicinesFromApi)
                 );
                 setClinicalStartedAt(defaultClinicalService?.startedAt || null);
 
@@ -452,6 +453,7 @@ export const RecordResult = () => {
             afternoon: normalizeDoseValue(medicine?.dosage?.afternoon),
             evening: normalizeDoseValue(medicine?.dosage?.evening),
             note: medicine?.dosage?.note || medicine?.note || '',
+            unit: medicine?.selectedUnit || medicine?.unit?.replace('/', '') || 'Đơn vị',
         });
         setShowDosageModal(true);
     };
@@ -504,7 +506,7 @@ export const RecordResult = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="rr-ticket-type-row">
                         <span className="rr-ticket-type">{receptionDetail?.examForm?.examType || 'Phiếu khám lâm sàng'}</span>
                     </div>
@@ -584,7 +586,7 @@ export const RecordResult = () => {
                         <h4>File và ảnh tải lên</h4>
                         <ChevronUp size={16} color="#7f878d" />
                     </div>
-                    
+
                     {uploadedImageFiles.length > 0 && (
                         <div className="rr-images-grid">
                             {uploadedImageFiles.map((image, index) => (
@@ -648,51 +650,61 @@ export const RecordResult = () => {
                                 <div className="rr-meds-list-minimal">
                                     {medsList.map((med, index) => {
                                         const quantity = Number(med?.qty ?? med?.quantity ?? 1) || 1;
-                                        const quantityUnit = med?.selectedUnit || med?.unit?.replace('/', '') || 'Đơn vị';
+                                        const isThuoc = med?.type === 'THUOC';
+                                        const originalUnit = med?.selectedUnit || med?.unit?.replace('/', '') || 'Đơn vị';
+                                        const quantityUnit = isThuoc ? 'hộp' : originalUnit;
                                         return (
-                                        <div key={`${med?.id || med?.medicineId || med?.name || 'medicine'}-${index}`} className="rr-med-item-minimal">
-                                            <div className="rr-med-row-header">
-                                                <h4 className="rr-med-name-min">{med.name}</h4>
-                                                <button
-                                                    type="button"
-                                                    className="rr-med-edit-btn"
-                                                    onClick={() => openDosageModal(med)}
-                                                    aria-label={`Chỉnh liều dùng cho ${med.name}`}
-                                                    disabled={isReadonlyMode}
-                                                >
-                                                    <PencilLine size={16} color="#209D80" className="rr-med-edit-icon" />
-                                                </button>
-                                            </div>
-                                            <div className="rr-med-row-price">
-                                                <div>
-                                                    <span className="rr-med-price-min">{med.price}</span>
-                                                    <span className="rr-med-unit-min"> {med.unit}</span>
+                                            <div key={`${med?.id || med?.medicineId || med?.name || 'medicine'}-${index}`} className="rr-med-item-minimal">
+                                                <div className="rr-med-row-header">
+                                                    <h4 className="rr-med-name-min">{med.name}</h4>
+                                                    <button
+                                                        type="button"
+                                                        className="rr-med-edit-btn"
+                                                        onClick={() => openDosageModal(med)}
+                                                        aria-label={`Chỉnh liều dùng cho ${med.name}`}
+                                                        disabled={isReadonlyMode}
+                                                    >
+                                                        <PencilLine size={16} color="#209D80" className="rr-med-edit-icon" />
+                                                    </button>
+                                                </div>
+                                                <div className="rr-med-row-price">
+                                                    <div>
+                                                        <span className="rr-med-price-min">{med.price}</span>
+                                                        <span className="rr-med-unit-min"> {med.unit}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div className="rr-med-row-note">
+                                                    <span className="rr-note-lbl">Số lượng</span>
+                                                    <span className="rr-note-val">{quantity} {quantityUnit}</span>
+                                                </div>
+
+                                                {[
+                                                    { label: 'Sáng', value: med?.dosage?.morning || 0 },
+                                                    { label: 'Trưa', value: med?.dosage?.noon || 0 },
+                                                    { label: 'Chiều', value: med?.dosage?.afternoon || 0 },
+                                                    { label: 'Tối', value: med?.dosage?.evening || 0 },
+                                                ].filter((dosage) => dosage.value > 0).map((dosage) => (
+                                                    <div key={`${med.id}-${dosage.label}`} className="rr-med-row-dosage">
+                                                        <span className="rr-dosage-lbl">{dosage.label}</span>
+                                                        <span className="rr-dosage-val">{dosage.value} {originalUnit}</span>
+                                                    </div>
+                                                ))}
+                                                {/* 
+                                                {isThuoc && (
+                                                    <div className="rr-med-row-note">
+                                                        <span className="rr-note-lbl">Đơn vị</span>
+                                                        <span className="rr-note-val">{originalUnit}</span>
+                                                    </div>
+                                                )} */}
+
+                                                <div className="rr-med-row-note">
+                                                    <span className="rr-note-lbl">Chỉ định khác</span>
+                                                    <span className="rr-note-val">{med?.dosage?.note || med?.note || '---'}</span>
                                                 </div>
                                             </div>
-
-                                            <div className="rr-med-row-note">
-                                                <span className="rr-note-lbl">Số lượng</span>
-                                                <span className="rr-note-val">{quantity} {quantityUnit}</span>
-                                            </div>
-
-                                            {[
-                                                { label: 'Sáng', value: med?.dosage?.morning || 0 },
-                                                { label: 'Trưa', value: med?.dosage?.noon || 0 },
-                                                { label: 'Chiều', value: med?.dosage?.afternoon || 0 },
-                                                { label: 'Tối', value: med?.dosage?.evening || 0 },
-                                            ].filter((dosage) => dosage.value > 0).map((dosage) => (
-                                                <div key={`${med.id}-${dosage.label}`} className="rr-med-row-dosage">
-                                                    <span className="rr-dosage-lbl">{dosage.label}</span>
-                                                    <span className="rr-dosage-val">{dosage.value}</span>
-                                                </div>
-                                            ))}
-
-                                            <div className="rr-med-row-note">
-                                                <span className="rr-note-lbl">Chỉ định khác</span>
-                                                <span className="rr-note-val">{med?.dosage?.note || med?.note || '---'}</span>
-                                            </div>
-                                        </div>
-                                    )})}
+                                        )
+                                    })}
                                 </div>
                             ) : null}
 
@@ -784,7 +796,7 @@ export const RecordResult = () => {
                                                         ? dosageDraft.noon
                                                         : idx === 2
                                                             ? dosageDraft.afternoon
-                                                            : dosageDraft.evening}
+                                                            : dosageDraft.evening} { }
                                             </span>
                                             <button
                                                 className="rr-dosage-step-btn"
@@ -799,8 +811,7 @@ export const RecordResult = () => {
                                             </button>
                                         </div>
                                         <div className="rr-dosage-unit">
-                                            <span>Viên</span>
-                                            <ChevronDown size={16} color="#888" />
+                                            <span>{dosageDraft.unit}</span>
                                         </div>
                                     </div>
                                 </div>
