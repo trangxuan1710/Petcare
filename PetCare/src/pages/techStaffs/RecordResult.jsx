@@ -25,13 +25,6 @@ const normalizeUnit = (value, fallback = 'đơn vị') => {
     return unit || fallback;
 };
 
-const formatStock = (value) => {
-    if (value == null || value === '') return '--';
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return String(value);
-    return parsed.toLocaleString('vi-VN');
-};
-
 const isImageFilePath = (path) => /\.(png|jpe?g|gif|webp|bmp|svg)$/i.test(String(path || ''));
 
 const toUploadDraftItems = (items) => (Array.isArray(items) ? items : [])
@@ -47,7 +40,7 @@ const toUploadDraftItems = (items) => (Array.isArray(items) ? items : [])
             if (file && (file instanceof File || file instanceof Blob) && isImage && (!previewUrl || !previewUrl.startsWith('data:'))) {
                 previewUrl = URL.createObjectURL(file);
             }
-        } catch (e) {
+        } catch {
             // Ignore preview generation issues
         }
 
@@ -223,6 +216,16 @@ const TechRecordResult = () => {
     );
 
     const statusLabel = STATUS_LABEL[taskDetail?.status] || '--';
+    const hasRequiredEvidence = existingEvidence.length > 0 || selectedImages.length > 0;
+    const hasRequiredMedicine = selectedMedicines.some((medicine) => (
+        Number(medicine?.medicineId || 0) > 0 && Number(medicine?.quantity || 0) > 0
+    ));
+    const isFormComplete = Boolean(
+        taskDetail?.serviceOrderId
+        && summary.trim()
+        && hasRequiredEvidence
+        && hasRequiredMedicine
+    );
 
     const handleAddImages = async (event) => {
         const files = Array.from(event.target.files || []);
@@ -232,7 +235,7 @@ const TechRecordResult = () => {
             let previewUrl = null;
             if (file.type.startsWith('image/')) {
                 try {
-                    previewUrl = await new Promise((resolve, reject) => {
+                    previewUrl = await new Promise((resolve) => {
                         const reader = new FileReader();
                         reader.onload = (e) => resolve(e.target.result);
                         reader.onerror = () => resolve(URL.createObjectURL(file));
@@ -277,25 +280,23 @@ const TechRecordResult = () => {
         });
     };
 
-    const handleMedicineQuantityChange = (medicineId, delta) => {
-        setSelectedMedicines((prev) => prev.map((medicine) => {
-            if (medicine.medicineId !== medicineId) return medicine;
-            const nextQty = Math.max(1, Number(medicine.quantity || 1) + delta);
-            return { ...medicine, quantity: nextQty };
-        }));
-    };
-
-    const handleMedicineUnitChange = (medicineId, unit) => {
-        const normalizedUnit = normalizeUnit(unit);
-        setSelectedMedicines((prev) => prev.map((medicine) => (
-            medicine.medicineId === medicineId
-                ? { ...medicine, selectedUnit: normalizedUnit, dosageUnit: normalizedUnit }
-                : medicine
-        )));
-    };
-
     const handleSubmit = async () => {
         if (!taskDetail?.serviceOrderId || isSubmitting) {
+            return;
+        }
+
+        if (!summary.trim()) {
+            setErrorMessage('Vui lòng nhập kết quả chung.');
+            return;
+        }
+
+        if (!hasRequiredEvidence) {
+            setErrorMessage('Vui lòng tải lên file hoặc ảnh kết quả.');
+            return;
+        }
+
+        if (!hasRequiredMedicine) {
+            setErrorMessage('Vui lòng chọn thuốc hoặc vật tư đi kèm.');
             return;
         }
 
@@ -333,10 +334,10 @@ const TechRecordResult = () => {
         <div className="trs-page">
             <header className="tech-record-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: '#fff', borderBottom: '1px solid #e0e7e4' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <button className="icon-btn-back" type="button" onClick={() => navigate(-1)} aria-label="Quay lại" style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px', margin: '-4px' }}>
+                    <button className="icon-btn-back" type="button" onClick={() => navigate(TECH_PATHS.HOME)} aria-label="Quay lại" style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px', margin: '-4px' }}>
                         <ChevronLeft size={24} color="#1a1a1a" />
                     </button>
-                    <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#1a1a1a', margin: 0 }}>Ghi nhận kết quả</h1>
+                    <h1 style={{ fontSize: '18px', fontWeight: '600', color: '#1a1a1a', margin: 0, lineHeight: 1.25 }}>Ghi nhận kết quả</h1>
                 </div>
                 <button type="button" className="tech-top-bell" onClick={() => { clearUnread(); navigate(TECH_PATHS.NOTIFICATIONS); }} aria-label="Thong bao" style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a' }}>
                     <Bell size={24} strokeWidth={2} />
@@ -386,20 +387,22 @@ const TechRecordResult = () => {
                         <div className="trs-divider" />
 
                         <div className="trs-block">
-                            <h4>Kết quả chung</h4>
+                            <h4>Kết quả chung <span className="trs-required">*</span></h4>
                             <textarea
                                 className="trs-textarea"
                                 value={summary}
                                 onChange={(event) => setSummary(event.target.value)}
                                 placeholder="Nhập kết quả thực hiện..."
                                 rows={4}
+                                required
+                                aria-required="true"
                             />
                         </div>
 
                         <div className="trs-block">
                             <div className="trs-upload-panel">
                                 <div className="trs-upload-header">
-                                    <h4>File và ảnh tải lên</h4>
+                                    <h4>File và ảnh tải lên <span className="trs-required">*</span></h4>
                                     <ChevronUp size={16} color="#7f878d" />
                                 </div>
 
@@ -478,14 +481,14 @@ const TechRecordResult = () => {
                                 <label className="trs-file-upload-btn">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect><path d="M12 16v-8"></path><path d="M8 12l4-4 4 4"></path></svg>
                                     <span>Tải lên file kết quả khám bệnh</span>
-                                    <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple onChange={handleAddImages} hidden />
+                                    <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple onChange={handleAddImages} required={!hasRequiredEvidence} aria-required="true" hidden />
                                 </label>
                             </div>
                         </div>
 
                         <div className="rr-accordion">
                             <div className="rr-accordion-header" onClick={() => setIsMedsExpanded(!isMedsExpanded)}>
-                                <h3>Thuốc & vật tư đi kèm</h3>
+                                <h3>Thuốc & vật tư đi kèm <span className="trs-required">*</span></h3>
                                 {isMedsExpanded ? <ChevronUp size={20} color="#666" /> : <ChevronDown size={20} color="#666" />}
                             </div>
                             {isMedsExpanded && (
@@ -510,20 +513,20 @@ const TechRecordResult = () => {
                                                                 <PencilLine size={16} color="#209D80" className="rr-med-edit-icon" />
                                                             </button>
                                                         </div>
-                                                        {med.desc && (
+                                                        {/* {med.desc && (
                                                             <div className="rr-med-row-price">
                                                                 <div>
                                                                     <span className="rr-med-price-min">{med.desc}</span>
                                                                 </div>
                                                             </div>
-                                                        )}
+                                                        )} */}
 
                                                         <div className="rr-med-row-note">
                                                             <span className="rr-note-lbl">Số lượng</span>
                                                             <span className="rr-note-val">{quantity} {quantityUnit}</span>
                                                         </div>
 
-                                                        {[
+                                                        {/* {[
                                                             { label: 'Sáng', value: med?.morning || 0 },
                                                             { label: 'Trưa', value: med?.noon || 0 },
                                                             { label: 'Chiều', value: med?.afternoon || 0 },
@@ -538,7 +541,7 @@ const TechRecordResult = () => {
                                                         <div className="rr-med-row-note">
                                                             <span className="rr-note-lbl">Chỉ định khác</span>
                                                             <span className="rr-note-val">{med?.instruction || '---'}</span>
-                                                        </div>
+                                                        </div> */}
                                                     </div>
                                                 )
                                             })}
@@ -563,10 +566,10 @@ const TechRecordResult = () => {
             </main>
 
             <footer className="trs-footer">
-                <button type="button" className="trs-btn-outline" onClick={() => navigate(-1)}>
+                <button type="button" className="trs-btn-outline" onClick={() => navigate(TECH_PATHS.HOME)}>
                     Hủy bỏ
                 </button>
-                <button type="button" className="trs-btn-primary" onClick={handleSubmit} disabled={isSubmitting || isLoading || !taskDetail || !summary.trim()}>
+                <button type="button" className="trs-btn-primary" onClick={handleSubmit} disabled={isSubmitting || isLoading || !taskDetail || !isFormComplete}>
                     {isSubmitting ? 'Đang lưu...' : 'Xác nhận'}
                 </button>
             </footer>

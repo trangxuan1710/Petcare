@@ -26,10 +26,11 @@ public class ExamPrescriptionController {
     @Operation(summary = "Tìm thuốc/vật tư", description = "Tìm danh sách thuốc/vật tư theo từ khóa để hiển thị màn chọn thuốc")
     public ApiResponse<List<MedicineSearchItemResponse>> searchMedicines(
             @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "type", required = false) String type,
             @RequestParam(value = "limit", required = false) Integer limit
     ) {
         return ApiResponse.<List<MedicineSearchItemResponse>>builder()
-                .data(examPrescriptionService.searchMedicines(keyword, limit))
+                .data(examPrescriptionService.searchMedicines(keyword, type, limit))
                 .build();
     }
 

@@ -669,7 +669,7 @@ const NewReception = () => {
                                         type="text"
                                         className="nr-pet-modal-input"
                                         value={newPetName}
-                                        onChange={(e) => setNewPetName(e.target.value.replace(/[^a-zA-Z\s\u00C0-\u024F\u1E00-\u1EFF]/g, ''))}
+                                        onChange={(e) => setNewPetName(e.target.value)}
                                     />
                                 </div>
 

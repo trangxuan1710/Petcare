@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -253,6 +254,9 @@ public class PaymentServiceImpl implements PaymentService {
                 if (medicine == null) {
                     continue;
                 }
+                if (!isBillableMedicine(medicine)) {
+                    continue;
+                }
 
                 String dosageUnit = detail.getDosageUnit() == null || detail.getDosageUnit().isBlank()
                         ? medicine.getUnit()
@@ -279,6 +283,15 @@ public class PaymentServiceImpl implements PaymentService {
         return chargeItems;
     }
 
+    private boolean isBillableMedicine(Medicine medicine) {
+        String type = medicine == null || medicine.getType() == null
+                ? ""
+                : medicine.getType().trim().toUpperCase(Locale.ROOT);
+        return type.isBlank()
+                || "THUOC".equals(type)
+                || "MEDICINE".equals(type);
+    }
+
     private BigDecimal resolveMedicinePrice(Medicine medicine, String dosageUnit) {
         if (medicine == null) {
             return BigDecimal.ZERO;
@@ -293,12 +306,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         if (medicine.getUnitPrice() != null && medicine.getUnitPrice().signum() > 0) {
             return medicine.getUnitPrice();
-        }
-        if (medicine.getPrice() != null && medicine.getPrice().signum() > 0) {
-            return medicine.getPrice();
-        }
-        if (medicine.getBoxPrice() != null && medicine.getBoxPrice().signum() > 0) {
-            return medicine.getBoxPrice();
         }
         return BigDecimal.ZERO;
     }

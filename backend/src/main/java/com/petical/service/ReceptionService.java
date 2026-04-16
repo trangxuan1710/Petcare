@@ -13,8 +13,8 @@ import java.util.List;
 @Service
 public interface ReceptionService {
     ReceptionRecord createReceptionSlip(CreateReceptionSlipRequest request);
-    List<ReceptionRecord> listReceptionSlips(ReceptionStatus status, LocalDate date, Long branchId);
-    List<ReceptionRecord> listReceptionSlipsByStates(List<ReceptionStatus> states, LocalDate date);
+    List<ReceptionRecord> listReceptionSlips(ReceptionStatus status, LocalDate date, LocalDate fromDate, LocalDate toDate, Long branchId);
+    List<ReceptionRecord> listReceptionSlipsByStates(List<ReceptionStatus> states, LocalDate date, LocalDate fromDate, LocalDate toDate);
     ReceptionRecord getReceptionSlip(long id);
     List<ReceptionAssignedServiceResponse> getAssignedServices(long receptionId);
     void ensureDefaultClinicalServicePending(long receptionId);

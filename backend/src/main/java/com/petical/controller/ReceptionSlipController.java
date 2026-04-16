@@ -38,10 +38,12 @@ public class ReceptionSlipController {
     public ApiResponse<List<ReceptionRecord>> list(
             @RequestParam(value = "status", required = false) ReceptionStatus status,
             @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(value = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(value = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(value = "branchId", required = false) Long branchId
     ) {
         return ApiResponse.<List<ReceptionRecord>>builder()
-                .data(receptionService.listReceptionSlips(status, date, branchId))
+                .data(receptionService.listReceptionSlips(status, date, fromDate, toDate, branchId))
                 .build();
     }
 
@@ -49,10 +51,12 @@ public class ReceptionSlipController {
     @Operation(summary = "Lấy danh sách phiếu theo state", description = "Lọc phiếu theo một hoặc nhiều state: chờ thực hiện, chờ kết luận, đang thực hiện, chờ thanh toán, đã thanh toán")
     public ApiResponse<List<ReceptionRecord>> listByStates(
             @RequestParam("states") List<ReceptionStatus> states,
-            @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+            @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(value = "fromDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(value = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate
     ) {
         return ApiResponse.<List<ReceptionRecord>>builder() 
-                .data(receptionService.listReceptionSlipsByStates(states, date))
+                .data(receptionService.listReceptionSlipsByStates(states, date, fromDate, toDate))
                 .build();
     }
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Search, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, UserRound, PlusCircle } from 'lucide-react';
+import { Search, ChevronDown, UserRound, PlusCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ReceptionistLayout from '../../layouts/ReceptionistLayout';
 import ReceptionCard from '../../components/receptionist/ReceptionCard';
@@ -20,8 +20,6 @@ const MONTH_NAMES = [
     'January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'
 ];
-const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
-
 const SPECIES_LABELS = {
     cho: 'Chó',
     meo: 'Mèo',
@@ -178,6 +176,13 @@ const normalizeClient = (client = {}) => ({
 
 const formatCurrency = (amount) => `${Number(amount || 0).toLocaleString('vi-VN')}đ`;
 
+const toIsoDate = (date) => {
+    const year = date.getFullYear();
+    const month = `${date.getMonth() + 1}`.padStart(2, '0');
+    const day = `${date.getDate()}`.padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 const TodayOrders = () => {
     const navigate = useNavigate();
     const { profile } = useHeaderProfile({
@@ -186,7 +191,6 @@ const TodayOrders = () => {
     });
     const { unreadCount, clearUnread } = useNotificationSSE();
     const [activeStatus, setActiveStatus] = useState(ORDER_STATUS.RECEIVED);
-    const [calendarExpanded, setCalendarExpanded] = useState(false);
     const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [orders, setOrders] = useState(initialOrders);
@@ -210,16 +214,12 @@ const TodayOrders = () => {
         name: '', phone: ''
     });
 
-    const today = new Date();
-    const todayDate = today.getDate();
-    const fallbackDate = initialOrders[0]?.date || todayDate;
-    const defaultSelectedDate = initialOrders.some((order) => order.date === todayDate)
-        ? todayDate
-        : fallbackDate;
-
-    const [viewYear, setViewYear] = useState(today.getFullYear());
-    const [viewMonth, setViewMonth] = useState(today.getMonth()); // 0-indexed
-    const [selectedDate, setSelectedDate] = useState(defaultSelectedDate);
+    const today = useMemo(() => {
+        const now = new Date();
+        return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    }, []);
+    const viewMonth = today.getMonth(); // 0-indexed
+    const [receivedBadgeCounts, setReceivedBadgeCounts] = useState({});
 
     const showToast = (type, message) => {
         setToast({ type, message });
@@ -243,13 +243,40 @@ const TodayOrders = () => {
         return next;
     };
 
-    const selectedDateIso = useMemo(() => {
-        const date = new Date(viewYear, viewMonth, selectedDate || 1);
-        const year = date.getFullYear();
-        const month = `${date.getMonth() + 1}`.padStart(2, '0');
-        const day = `${date.getDate()}`.padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    }, [viewYear, viewMonth, selectedDate]);
+    const buildReceivedBadgeCounts = (mappedOrders = []) => {
+        return mappedOrders.reduce((counts, order) => {
+            if (order.status !== ORDER_STATUS.RECEIVED || !order.dateKey) {
+                return counts;
+            }
+            counts[order.dateKey] = (counts[order.dateKey] || 0) + 1;
+            return counts;
+        }, {});
+    };
+
+    const lastSevenDaysRange = useMemo(() => {
+        const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const startDate = new Date(endDate);
+        startDate.setDate(endDate.getDate() - 6);
+
+        return {
+            fromDate: toIsoDate(startDate),
+            toDate: toIsoDate(endDate),
+        };
+    }, [today]);
+
+    const calendarDays = useMemo(() => {
+        const endDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        return Array.from({ length: 7 }, (_, index) => {
+            const date = new Date(endDate);
+            date.setDate(endDate.getDate() - (6 - index));
+
+            return {
+                dayNumber: date.getDate(),
+                dateKey: toIsoDate(date),
+                dayLabel: date.toLocaleDateString('en-US', { weekday: 'short' }).charAt(0),
+            };
+        });
+    }, [today]);
 
     useEffect(() => {
         let isMounted = true;
@@ -310,6 +337,7 @@ const TodayOrders = () => {
                     year: 'numeric',
                 }).replace(',', ' -'),
                 date: dateObj.getDate(),
+                dateKey: toIsoDate(dateObj),
                 species: record?.pet?.species || '',
                 hasAdvance: false,
                 pets: [
@@ -383,13 +411,17 @@ const TodayOrders = () => {
             setIsLoadingOrders(true);
             setOrdersError('');
             try {
+                const rangeParams = {
+                    fromDate: lastSevenDaysRange.fromDate,
+                    toDate: lastSevenDaysRange.toDate,
+                };
                 const activeRequest = activeStatus === ORDER_STATUS.ALL
-                    ? receptionService.getReceptions({ date: selectedDateIso })
-                    : receptionService.getReceptionsByStates(TAB_STATES[activeStatus] || [], { date: selectedDateIso });
+                    ? receptionService.getReceptions(rangeParams)
+                    : receptionService.getReceptionsByStates(TAB_STATES[activeStatus] || [], rangeParams);
 
                 const summaryRequest = activeStatus === ORDER_STATUS.ALL
                     ? activeRequest
-                    : receptionService.getReceptions({ date: selectedDateIso });
+                    : receptionService.getReceptions(rangeParams);
 
                 const [activeResult, summaryResult] = await Promise.allSettled([activeRequest, summaryRequest]);
                 if (activeResult.status !== 'fulfilled') {
@@ -399,7 +431,9 @@ const TodayOrders = () => {
                 const records = activeResult.value?.normalizedData || [];
                 if (!isMounted) return;
 
-                const mappedOrders = records.map(mapOrder);
+                const mappedOrders = records
+                    .map(mapOrder)
+                    .sort((a, b) => new Date(b?.receptionRecord?.receptionTime || 0) - new Date(a?.receptionRecord?.receptionTime || 0));
                 const ordersWithTotals = await enrichOrderTotals(mappedOrders);
                 if (!isMounted) return;
                 setOrders(ordersWithTotals);
@@ -407,11 +441,13 @@ const TodayOrders = () => {
                 if (summaryResult.status === 'fulfilled') {
                     const summaryMappedOrders = (summaryResult.value?.normalizedData || []).map(mapOrder);
                     setTabCounts(buildTabCounts(summaryMappedOrders));
+                    setReceivedBadgeCounts(buildReceivedBadgeCounts(summaryMappedOrders));
                 } else {
                     setTabCounts((prev) => ({
                         ...prev,
                         [activeStatus]: mappedOrders.length,
                     }));
+                    setReceivedBadgeCounts(buildReceivedBadgeCounts(mappedOrders));
                 }
             } catch {
                 if (!isMounted) return;
@@ -430,60 +466,11 @@ const TodayOrders = () => {
         return () => {
             isMounted = false;
         };
-    }, [selectedDateIso, reloadKey, activeStatus]);
-
-    // Build the full month grid
-    const monthGrid = useMemo(() => {
-        const firstDay = new Date(viewYear, viewMonth, 1);
-        const lastDay = new Date(viewYear, viewMonth + 1, 0);
-        const daysInMonth = lastDay.getDate();
-        // getDay() returns 0=Sun, we need Mon=0
-        let startWeekday = firstDay.getDay() - 1;
-        if (startWeekday < 0) startWeekday = 6;
-
-        const cells = [];
-        // Empty leading cells
-        for (let i = 0; i < startWeekday; i++) {
-            cells.push(null);
-        }
-        for (let d = 1; d <= daysInMonth; d++) {
-            cells.push(d);
-        }
-        return cells;
-    }, [viewYear, viewMonth]);
-
-    // Get week row that contains the selected date
-    const currentWeek = useMemo(() => {
-        const firstDay = new Date(viewYear, viewMonth, 1);
-        let startWeekday = firstDay.getDay() - 1;
-        if (startWeekday < 0) startWeekday = 6;
-        const offset = startWeekday + selectedDate - 1; // index in monthGrid
-        const weekStart = Math.floor(offset / 7) * 7;
-        const week = [];
-        for (let i = 0; i < 7; i++) {
-            const cell = monthGrid[weekStart + i];
-            week.push(cell ?? null);
-        }
-        return week;
-    }, [viewYear, viewMonth, selectedDate, monthGrid]);
-
-    const goMonth = (delta) => {
-        let newMonth = viewMonth + delta;
-        let newYear = viewYear;
-        if (newMonth < 0) { newMonth = 11; newYear--; }
-        if (newMonth > 11) { newMonth = 0; newYear++; }
-        setViewMonth(newMonth);
-        setViewYear(newYear);
-        setSelectedDate(1);
-    };
+    }, [lastSevenDaysRange, reloadKey, activeStatus]);
 
     const badgeData = useMemo(() => {
-        const map = {};
-        orders.forEach((order) => {
-            map[order.date] = (map[order.date] || 0) + 1;
-        });
-        return map;
-    }, [orders]);
+        return receivedBadgeCounts;
+    }, [receivedBadgeCounts]);
 
     const filteredBySearchAndFilters = useMemo(() => {
         const keyword = searchTerm.trim().toLowerCase();
@@ -685,77 +672,36 @@ const TodayOrders = () => {
                 {/* Calendar Strip */}
                 <div className="to-calendar-section">
                     <div className="to-month-header">
-                        {calendarExpanded && (
-                            <button className="to-month-nav-btn" onClick={() => goMonth(-1)}>
-                                <ChevronLeft size={18} color="#209D80" />
-                            </button>
-                        )}
                         <div className="to-month-label">
                             <span className="to-month-text">{MONTH_NAMES[viewMonth]}</span>
-                            <ChevronDown size={16} color="#209D80" />
                         </div>
-                        {calendarExpanded && (
-                            <button className="to-month-nav-btn" onClick={() => goMonth(1)}>
-                                <ChevronRight size={18} color="#209D80" />
-                            </button>
-                        )}
                     </div>
 
                     {/* Day-of-week header row (always visible) */}
                     <div className="to-week-strip to-day-header-row">
-                        {DAY_LABELS.map((lbl, idx) => (
-                            <div key={idx} className="to-day-col">
-                                <span className="to-day-label">{lbl}</span>
+                        {calendarDays.map((day) => (
+                            <div key={day.dateKey} className="to-day-col">
+                                <span className="to-day-label">{day.dayLabel}</span>
                             </div>
                         ))}
                     </div>
 
-                    {!calendarExpanded ? (
-                        /* Collapsed: show only current week */
-                        <div className="to-week-strip">
-                            {currentWeek.map((date, idx) => (
-                                <div key={idx} className="to-day-col">
-                                    {date ? (
-                                        <div
-                                            className={`to-day-circle ${date === selectedDate ? 'active' : ''}`}
-                                            onClick={() => setSelectedDate(date)}
-                                        >
-                                            {badgeData[date] && (
-                                                <span className="to-day-badge">{badgeData[date]}</span>
-                                            )}
-                                            <span className="to-day-number">{date}</span>
-                                        </div>
-                                    ) : (
-                                        <div className="to-day-circle empty"></div>
+                    <div className="to-week-strip">
+                        {calendarDays.map((day) => (
+                            <div key={day.dateKey} className="to-day-col">
+                                <div className={`to-day-circle ${day.dateKey === lastSevenDaysRange.toDate ? 'active' : ''}`}>
+                                    {badgeData[day.dateKey] && (
+                                        <span className="to-day-badge">{badgeData[day.dateKey]}</span>
                                     )}
+                                    <span className="to-day-number">{day.dayNumber}</span>
                                 </div>
-                            ))}
-                        </div>
-                    ) : (
-                        /* Expanded: show full month grid */
-                        <div className="to-month-grid">
-                            {monthGrid.map((date, idx) => (
-                                <div key={idx} className="to-day-col">
-                                    {date ? (
-                                        <div
-                                            className={`to-day-circle ${date === selectedDate ? 'active' : ''}`}
-                                            onClick={() => setSelectedDate(date)}
-                                        >
-                                            {badgeData[date] && (
-                                                <span className="to-day-badge">{badgeData[date]}</span>
-                                            )}
-                                            <span className="to-day-number">{date}</span>
-                                        </div>
-                                    ) : (
-                                        <div className="to-day-circle empty"></div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                            </div>
+                        ))}
+                    </div>
 
-                    <div className="to-collapse-indicator" onClick={() => setCalendarExpanded(!calendarExpanded)}>
-                        {calendarExpanded ? <ChevronUp size={20} color="#209D80" /> : <ChevronDown size={20} color="#209D80" />}
+                    {/* Day selection is intentionally disabled; the reception list always shows the latest 7 days. */}
+                    <div className="to-collapse-indicator to-collapse-indicator-static">
+                        <ChevronDown size={20} color="#209D80" />
                     </div>
                 </div>
 
@@ -962,7 +908,7 @@ const TodayOrders = () => {
                                     className="to-modal-input"
                                     placeholder="Tên khách hàng"
                                     value={newCustomer.name}
-                                    onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value.replace(/[^a-zA-Z\s\u00C0-\u024F\u1E00-\u1EFF]/g, '')})}
+                                    onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
                                 />
                             </div>
 

@@ -26,14 +26,19 @@ public class Medicine {
     private int stockQuantity;
 
     private String unit;
-
+    private int quantityPerBox;
     @Column(name = "unit_price")
     private BigDecimal unitPrice;
-
-    @Column(name = "box_price")
-    private BigDecimal boxPrice;
-
-    private BigDecimal price;
+//
+//    @Column(name = "box_price")
+//    private BigDecimal boxPrice;
 
     private String type;
+
+    public BigDecimal getBoxPrice() {
+        if (unitPrice == null || unitPrice.signum() <= 0) {
+            return BigDecimal.ZERO;
+        }
+        return unitPrice.multiply(BigDecimal.valueOf(quantityPerBox));
+    }
 }

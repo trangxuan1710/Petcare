@@ -117,18 +117,27 @@ public class ReceptionServiceImpl implements ReceptionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReceptionRecord> listReceptionSlips(ReceptionStatus receptionStatus, LocalDate date, Long branchId) {
+    public List<ReceptionRecord> listReceptionSlips(
+            ReceptionStatus receptionStatus,
+            LocalDate date,
+            LocalDate fromDate,
+            LocalDate toDate,
+            Long branchId
+    ) {
         List<ReceptionRecord> records;
 
-        if (receptionStatus != null && date != null) {
-            LocalDateTime start = date.atStartOfDay();
-            LocalDateTime end = date.plusDays(1).atStartOfDay();
+        LocalDate startDate = date != null ? date : fromDate;
+        LocalDate endDate = date != null ? date : toDate;
+
+        if (receptionStatus != null && startDate != null && endDate != null) {
+            LocalDateTime start = startDate.atStartOfDay();
+            LocalDateTime end = endDate.plusDays(1).atStartOfDay();
             records = receptionRecordRepository.findByStatusAndReceptionTimeBetween(receptionStatus, start, end);
         } else if (receptionStatus != null) {
             records = receptionRecordRepository.findByStatus(receptionStatus);
-        } else if (date != null) {
-            LocalDateTime start = date.atStartOfDay();
-            LocalDateTime end = date.plusDays(1).atStartOfDay();
+        } else if (startDate != null && endDate != null) {
+            LocalDateTime start = startDate.atStartOfDay();
+            LocalDateTime end = endDate.plusDays(1).atStartOfDay();
             records = receptionRecordRepository.findByReceptionTimeBetween(start, end);
         } else {
             records = receptionRecordRepository.findAll();
@@ -138,16 +147,24 @@ public class ReceptionServiceImpl implements ReceptionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ReceptionRecord> listReceptionSlipsByStates(List<ReceptionStatus> states, LocalDate date) {
+    public List<ReceptionRecord> listReceptionSlipsByStates(
+            List<ReceptionStatus> states,
+            LocalDate date,
+            LocalDate fromDate,
+            LocalDate toDate
+    ) {
         if (states == null || states.isEmpty()) {
             throw new AppException(ErrorCode.ERROR_INPUT);
         }
 
         List<ReceptionStatus> parsedStates = states.stream().distinct().toList();
 
-        if (date != null) {
-            LocalDateTime start = date.atStartOfDay();
-            LocalDateTime end = date.plusDays(1).atStartOfDay();
+        LocalDate startDate = date != null ? date : fromDate;
+        LocalDate endDate = date != null ? date : toDate;
+
+        if (startDate != null && endDate != null) {
+            LocalDateTime start = startDate.atStartOfDay();
+            LocalDateTime end = endDate.plusDays(1).atStartOfDay();
             return receptionRecordRepository.findByStatusInAndReceptionTimeBetween(parsedStates, start, end);
         }
 

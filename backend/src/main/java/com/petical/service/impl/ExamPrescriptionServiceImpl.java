@@ -32,11 +32,12 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<MedicineSearchItemResponse> searchMedicines(String keyword, Integer limit) {
+    public List<MedicineSearchItemResponse> searchMedicines(String keyword, String type, Integer limit) {
         int safeLimit = limit == null || limit <= 0 ? 20 : Math.min(limit, 100);
         String normalizedKeyword = keyword == null || keyword.isBlank() ? null : keyword.trim();
+        String normalizedType = normalizeType(type);
 
-        return medicineRepository.search(normalizedKeyword)
+        return medicineRepository.search(normalizedKeyword, normalizedType)
                 .stream()
                 .limit(safeLimit)
                 .map(medicine -> MedicineSearchItemResponse.builder()
@@ -46,6 +47,7 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
                         .unit(medicine.getUnit())
                         .price(resolveDisplayPrice(medicine))
                         .unitPrice(resolveUnitPrice(medicine))
+                        .quantityPerBox(Math.max(1, medicine.getQuantityPerBox()))
                         .boxPrice(resolveBoxPrice(medicine))
                         .stockQuantity(medicine.getStockQuantity())
                         .type(medicine.getType())
@@ -53,12 +55,15 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
                 .toList();
     }
 
-    private java.math.BigDecimal resolveDisplayPrice(com.petical.entity.Medicine medicine) {
-        java.math.BigDecimal boxPrice = resolveBoxPrice(medicine);
-        if (boxPrice != null && boxPrice.signum() > 0) {
-            return boxPrice;
+    private String normalizeType(String type) {
+        if (type == null || type.isBlank()) {
+            return null;
         }
-        return resolveUnitPrice(medicine);
+        return type.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private java.math.BigDecimal resolveDisplayPrice(com.petical.entity.Medicine medicine) {
+        return resolveBoxPrice(medicine);
     }
 
     private java.math.BigDecimal resolveUnitPrice(com.petical.entity.Medicine medicine) {
@@ -67,9 +72,6 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
         }
         if (medicine.getUnitPrice() != null && medicine.getUnitPrice().signum() > 0) {
             return medicine.getUnitPrice();
-        }
-        if (medicine.getPrice() != null && medicine.getPrice().signum() > 0) {
-            return medicine.getPrice();
         }
         return java.math.BigDecimal.ZERO;
     }
@@ -80,9 +82,6 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
         }
         if (medicine.getBoxPrice() != null && medicine.getBoxPrice().signum() > 0) {
             return medicine.getBoxPrice();
-        }
-        if (medicine.getPrice() != null && medicine.getPrice().signum() > 0) {
-            return medicine.getPrice();
         }
         return java.math.BigDecimal.ZERO;
     }

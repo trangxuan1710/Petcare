@@ -19,6 +19,11 @@ const TREATMENT_DECISION_MAP = {
     'Kết thúc cho về': 'DISCHARGE',
 };
 
+const isDevelopingTreatmentOption = (label) => (
+    label === 'Điều trị nội trú'
+    || label === 'Điều trị ngoại trú'
+);
+
 const toArray = (raw) => {
     if (Array.isArray(raw)) return raw;
     if (Array.isArray(raw?.items)) return raw.items;
@@ -337,6 +342,11 @@ export const RecordResult = () => {
         try {
             const selectedConclusionLabel = RADIO_OPTIONS.find((option) => option.id === selectedConclusion)?.label || 'Điều trị ngoại trú';
             const isDischargeConclusion = selectedConclusionLabel === 'Kết thúc cho về';
+            if (isDevelopingTreatmentOption(selectedConclusionLabel)) {
+                showToast('success', 'Tính năng đang phát triển.');
+                return;
+            }
+
             const payload = {
                 conclusionType: selectedConclusionLabel,
                 summary: conclusionText,
@@ -454,6 +464,7 @@ export const RecordResult = () => {
             evening: normalizeDoseValue(medicine?.dosage?.evening),
             note: medicine?.dosage?.note || medicine?.note || '',
             unit: medicine?.selectedUnit || medicine?.unit?.replace('/', '') || 'Đơn vị',
+            isThuoc: medicine?.type === 'THUOC' || medicine?.type === 'MEDICINE',
         });
         setShowDosageModal(true);
     };
@@ -491,7 +502,7 @@ export const RecordResult = () => {
     return (
         <div className="record-result-page">
             <div className="rr-header">
-                <button className="rr-btn-icon" onClick={() => navigate(-1)}><ChevronLeft size={24} color="#1a1a1a" /></button>
+                <button className="rr-btn-icon" onClick={() => navigate('/doctors/tickets')}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="rr-title">Ghi nhận kết quả</h1>
             </div>
 
@@ -583,7 +594,7 @@ export const RecordResult = () => {
 
                 <div className="rr-upload-panel">
                     <div className="rr-upload-header">
-                        <h4>File và ảnh tải lên</h4>
+                        <h4>Tải lên hình ảnh thú trước và sau điều trị</h4>
                         <ChevronUp size={16} color="#7f878d" />
                     </div>
 
@@ -634,7 +645,7 @@ export const RecordResult = () => {
 
                     <label className="rr-file-upload-btn" style={isReadonlyMode ? { opacity: 0.55, pointerEvents: 'none' } : {}}>
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect><path d="M12 16v-8"></path><path d="M8 12l4-4 4 4"></path></svg>
-                        <span>Tải lên file kết quả khám bệnh</span>
+                        <span style={{ fontSize: '13px' }}>Tải lên hình ảnh thú trước và sau điều trị</span>
                         <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple onChange={handleSelectFiles} hidden disabled={isReadonlyMode} />
                     </label>
                 </div>
@@ -650,7 +661,7 @@ export const RecordResult = () => {
                                 <div className="rr-meds-list-minimal">
                                     {medsList.map((med, index) => {
                                         const quantity = Number(med?.qty ?? med?.quantity ?? 1) || 1;
-                                        const isThuoc = med?.type === 'THUOC';
+                                        const isThuoc = med?.type === 'THUOC' || med?.type === 'MEDICINE';
                                         const originalUnit = med?.selectedUnit || med?.unit?.replace('/', '') || 'Đơn vị';
                                         const quantityUnit = isThuoc ? 'hộp' : originalUnit;
                                         return (
@@ -679,7 +690,7 @@ export const RecordResult = () => {
                                                     <span className="rr-note-val">{quantity} {quantityUnit}</span>
                                                 </div>
 
-                                                {[
+                                                {isThuoc && [
                                                     { label: 'Sáng', value: med?.dosage?.morning || 0 },
                                                     { label: 'Trưa', value: med?.dosage?.noon || 0 },
                                                     { label: 'Chiều', value: med?.dosage?.afternoon || 0 },
@@ -697,11 +708,12 @@ export const RecordResult = () => {
                                                         <span className="rr-note-val">{originalUnit}</span>
                                                     </div>
                                                 )} */}
-
-                                                <div className="rr-med-row-note">
-                                                    <span className="rr-note-lbl">Chỉ định khác</span>
-                                                    <span className="rr-note-val">{med?.dosage?.note || med?.note || '---'}</span>
-                                                </div>
+                                                {isThuoc && (
+                                                    <div className="rr-med-row-note">
+                                                        <span className="rr-note-lbl">Chỉ định khác</span>
+                                                        <span className="rr-note-val">{med?.dosage?.note || med?.note || '---'}</span>
+                                                    </div>
+                                                )}
                                             </div>
                                         )
                                     })}
@@ -747,7 +759,12 @@ export const RecordResult = () => {
                                     name="conclusion"
                                     value={option.id}
                                     checked={selectedConclusion === option.id}
-                                    onChange={() => setSelectedConclusion(option.id)}
+                                    onChange={() => {
+                                        setSelectedConclusion(option.id);
+                                        if (isDevelopingTreatmentOption(option.label)) {
+                                            showToast('success', 'Tính năng đang phát triển.');
+                                        }
+                                    }}
                                     disabled={isReadonlyMode}
                                 />
                                 <span className="rr-radio-custom"></span>
@@ -759,7 +776,7 @@ export const RecordResult = () => {
             </div>
 
             <div className="rr-bottom-actions">
-                <button className="rr-btn-cancel" onClick={() => navigate(-1)} disabled={isReadonlyMode}>Hủy bỏ</button>
+                <button className="rr-btn-cancel" onClick={() => navigate('/doctors/tickets')} disabled={isReadonlyMode}>Hủy bỏ</button>
                 <button className="rr-btn-confirm" onClick={handleConfirm} disabled={isReadonlyMode || isSaving || !conclusionText.trim() || !selectedConclusion}>
                     {isSaving ? 'Đang lưu...' : (selectedConclusion === 4 ? 'Kết thúc' : 'Xác nhận')}
                 </button>
@@ -770,10 +787,10 @@ export const RecordResult = () => {
                     <div className="rr-dosage-modal-overlay" onClick={() => setShowDosageModal(false)}></div>
                     <div className="rr-dosage-modal-content">
                         <div className="rr-dosage-modal-handle"></div>
-                        <h2 className="rr-dosage-modal-title">Liều dùng</h2>
+                        <h2 className="rr-dosage-modal-title">{dosageDraft.isThuoc ? 'Liều dùng' : 'Ghi chú vật tư'}</h2>
 
                         <div className="rr-dosage-main-area">
-                            {['Sáng', 'Trưa', 'Chiều', 'Tối'].map((time, idx) => (
+                            {dosageDraft.isThuoc && ['Sáng', 'Trưa', 'Chiều', 'Tối'].map((time, idx) => (
                                 <div key={time} className="rr-dosage-row">
                                     <span className="rr-dosage-label">{time}</span>
                                     <div className="rr-dosage-controls">

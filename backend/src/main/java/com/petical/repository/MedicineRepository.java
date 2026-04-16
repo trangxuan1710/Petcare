@@ -17,7 +17,8 @@ public interface MedicineRepository extends JpaRepository<Medicine, Long> {
                 or lower(m.name) like lower(concat('%', :keyword, '%'))
                 or lower(coalesce(m.description, '')) like lower(concat('%', :keyword, '%'))
                 or lower(coalesce(m.type, '')) like lower(concat('%', :keyword, '%')))
+              and (:type is null or upper(coalesce(m.type, '')) = upper(:type))
             order by m.name asc
             """)
-    List<Medicine> search(@Param("keyword") String keyword);
+    List<Medicine> search(@Param("keyword") String keyword, @Param("type") String type);
 }

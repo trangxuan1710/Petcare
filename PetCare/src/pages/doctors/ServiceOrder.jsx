@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, MoreVertical, Phone, Eye, Mars, Weight, Plus, TriangleAlert } from 'lucide-react';
+import { ChevronLeft, MoreVertical, Phone, Eye, Mars, Weight, Plus, TriangleAlert, ChevronUp, ChevronDown, PencilLine } from 'lucide-react';
 import ServiceAccordion from '../../components/doctor/ServiceAccordion';
 import TreatmentHistoryTimeline from '../../components/doctor/TreatmentHistoryTimeline';
 import FeatureDevelopingModal from '../../components/common/FeatureDevelopingModal';
@@ -68,15 +68,6 @@ const isEmergencyCase = (record) => Boolean(
     ?? record?.examForm?.emergency
 );
 
-const isParaclinicalConclusion = (rawType) => {
-    const type = String(rawType || '').trim().toLowerCase();
-    return (
-        type === 'cận lâm sàng'
-        || type === 'paraclinical_exam'
-        || type === 'paraclinical exam'
-    );
-};
-
 const toArray = (raw) => {
     if (Array.isArray(raw)) return raw;
     if (Array.isArray(raw?.items)) return raw.items;
@@ -92,6 +83,45 @@ const toNumber = (rawValue) => {
     const parsed = Number(normalized);
     return Number.isFinite(parsed) ? parsed : 0;
 };
+
+const getPriceNumber = (item) => Number(
+    item?.sellingPrice
+    ?? item?.unitPrice
+    ?? item?.price
+    ?? item?.boxPrice
+    ?? item?.retailPrice
+    ?? 0
+) || 0;
+
+const formatVnd = (value) => `${getPriceNumber({ price: value }).toLocaleString('vi-VN')}đ`;
+
+const normalizeDoseValue = (value) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+};
+
+const mapMedicineToUi = (item) => ({
+    id: item?.id || item?.medicineId,
+    serviceId: item?.serviceId || item?.receptionServiceId || 1,
+    name: item?.name || item?.medicineName || 'Thuốc/Vật tư',
+    desc: item?.description || item?.desc || '',
+    price: item?.price && String(item.price).includes('đ') ? item.price : formatVnd(getPriceNumber(item)),
+    unit: item?.unit ? (String(item.unit).startsWith('/') ? item.unit : `/${item.unit}`) : '/đơn vị',
+    stock: item?.stock ?? item?.stockQuantity ?? '--',
+    image: item?.imageUrl || item?.image || 'https://placehold.co/80x80/f4f4f5/a1a1aa?text=Med',
+    selected: true,
+    qty: item?.qty || item?.quantity || 1,
+    selectedUnit: item?.dosageUnit || item?.selectedUnit || item?.unit || 'Đơn vị',
+    type: item?.type || item?.productType,
+    expanded: false,
+    dosage: {
+        morning: normalizeDoseValue(item?.dosage?.morning ?? item?.morning),
+        noon: normalizeDoseValue(item?.dosage?.noon ?? item?.noon),
+        afternoon: normalizeDoseValue(item?.dosage?.afternoon ?? item?.afternoon),
+        evening: normalizeDoseValue(item?.dosage?.evening ?? item?.evening),
+        note: item?.dosage?.note || item?.note || item?.instruction || '',
+    },
+});
 
 const toServiceKey = (service) => {
     const raw = service?.serviceId ?? service?.id ?? service?.name;
@@ -159,14 +189,25 @@ export default function ServiceOrder() {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams();
-    const [activeTab, setActiveTab] = useState('Dịch vụ');
-    const [selectedConclusion, setSelectedConclusion] = useState('');
+    const serviceOrderDraft = location.state?.recordResultDraft || null;
+    const selectedMedicinesFromState = useMemo(
+        () => toArray(location.state?.selectedMedicines).map(mapMedicineToUi),
+        [location.state?.selectedMedicines]
+    );
+    const [activeTab, setActiveTab] = useState(serviceOrderDraft?.activeTab || 'Dịch vụ');
+    const [selectedConclusion, setSelectedConclusion] = useState(serviceOrderDraft?.selectedConclusion || '');
     const [showFinishModal, setShowFinishModal] = useState(false);
     const MAX_CONCLUSION_LENGTH = 2000;
-    const [conclusionText, setConclusionText] = useState('');
+    const [conclusionText, setConclusionText] = useState(serviceOrderDraft?.conclusionText || '');
     const [receptionDetail, setReceptionDetail] = useState(null);
     const [treatmentDetail, setTreatmentDetail] = useState(null);
     const [paraclinicalServices, setParaclinicalServices] = useState([]);
+    const [medsList, setMedsList] = useState(
+        selectedMedicinesFromState.length > 0
+            ? selectedMedicinesFromState
+            : toArray(serviceOrderDraft?.medsList).map(mapMedicineToUi)
+    );
+    const [isMedsExpanded, setIsMedsExpanded] = useState(serviceOrderDraft?.isMedsExpanded ?? true);
     const [isStartingService, setIsStartingService] = useState(false);
 
     const mapParaclinicalItem = (item) => ({
@@ -189,6 +230,28 @@ export default function ServiceOrder() {
         quantity: item?.quantity || 1,
         price: toNumber(item?.unitPrice ?? item?.price),
     });
+
+    useEffect(() => {
+        if (serviceOrderDraft?.activeTab) {
+            setActiveTab(serviceOrderDraft.activeTab);
+        }
+        if (Object.prototype.hasOwnProperty.call(serviceOrderDraft || {}, 'conclusionText')) {
+            setConclusionText(String(serviceOrderDraft?.conclusionText || ''));
+        }
+        if (Object.prototype.hasOwnProperty.call(serviceOrderDraft || {}, 'selectedConclusion')) {
+            setSelectedConclusion(serviceOrderDraft?.selectedConclusion || '');
+        }
+        if (Object.prototype.hasOwnProperty.call(serviceOrderDraft || {}, 'isMedsExpanded')) {
+            setIsMedsExpanded(Boolean(serviceOrderDraft?.isMedsExpanded));
+        }
+        if (selectedMedicinesFromState.length > 0) {
+            setMedsList(selectedMedicinesFromState);
+            return;
+        }
+        if (Array.isArray(serviceOrderDraft?.medsList)) {
+            setMedsList(serviceOrderDraft.medsList.map(mapMedicineToUi));
+        }
+    }, [serviceOrderDraft, selectedMedicinesFromState]);
 
     useEffect(() => {
         let isMounted = true;
@@ -224,11 +287,20 @@ export default function ServiceOrder() {
                 setTreatmentDetail(treatmentData || null);
                 setParaclinicalServices(mergedServices);
 
-                if (typeof treatmentData?.plan === 'string' && treatmentData.plan.trim()) {
+                const medicinesFromApi = toArray(
+                    treatmentData?.medicines
+                    || treatmentData?.medicineItems
+                    || treatmentData?.prescriptions
+                ).map(mapMedicineToUi);
+
+                if (!Object.prototype.hasOwnProperty.call(serviceOrderDraft || {}, 'conclusionText') && typeof treatmentData?.plan === 'string' && treatmentData.plan.trim()) {
                     setConclusionText(treatmentData.plan);
                 }
-                if (typeof treatmentData?.type === 'string' && treatmentData.type.trim()) {
+                if (!Object.prototype.hasOwnProperty.call(serviceOrderDraft || {}, 'selectedConclusion') && typeof treatmentData?.type === 'string' && treatmentData.type.trim()) {
                     setSelectedConclusion(treatmentData.type);
+                }
+                if (selectedMedicinesFromState.length === 0 && !Array.isArray(serviceOrderDraft?.medsList)) {
+                    setMedsList(medicinesFromApi);
                 }
             } catch {
                 if (!isMounted) return;
@@ -244,7 +316,7 @@ export default function ServiceOrder() {
         return () => {
             isMounted = false;
         };
-    }, [id, location.state?.refreshParaclinical]);
+    }, [id, location.state?.refreshParaclinical, selectedMedicinesFromState.length, serviceOrderDraft]);
 
     const petInfo = useMemo(() => {
         const pet = receptionDetail?.pet;
@@ -256,24 +328,6 @@ export default function ServiceOrder() {
             hasAlert: isEmergencyCase(receptionDetail)
         };
     }, [receptionDetail]);
-
-    const primaryService = useMemo(() => {
-        const examForm = receptionDetail?.examForm || {};
-        const statusMeta = isParaclinicalConclusion(treatmentDetail?.type)
-            ? { key: 'completed', label: 'hoàn thành' }
-            : normalizeReceptionStatus(receptionDetail?.status);
-        const price = Number(examForm?.price ?? receptionDetail?.examPrice ?? 0);
-        const quantity = Number(examForm?.quantity ?? 1);
-
-        return {
-            name: examForm?.examType || 'Khám lâm sàng',
-            status: statusMeta.label,
-            statusClass: statusMeta.key,
-            price,
-            quantity,
-            executor: treatmentDetail?.createdBy?.fullName || receptionDetail?.doctor?.fullName || 'Người thực hiện',
-        };
-    }, [receptionDetail, treatmentDetail]);
 
     const defaultClinicalService = useMemo(
         () => paraclinicalServices.find((service) => Number(service?.serviceId || service?.id) === 1) || null,
@@ -349,6 +403,25 @@ export default function ServiceOrder() {
         });
     };
 
+    const openMedicineSelector = () => {
+        if (isReadonlyMode) return;
+        navigate('/doctors/medicine-selector', {
+            state: {
+                receptionId: id,
+                treatmentSlipId: treatmentDetail?.id || null,
+                selectedMedicines: medsList,
+                recordResultDraft: {
+                    activeTab: 'Kết luận phiếu khám',
+                    conclusionText,
+                    selectedConclusion,
+                    isMedsExpanded,
+                    medsList,
+                },
+                returnPath: `/doctors/service-order/${id ?? 1}`,
+            },
+        });
+    };
+
     const saveTreatmentConclusion = async () => {
         const conclusionLabel = selectedConclusion || 'Điều trị ngoại trú';
         const payload = {
@@ -360,6 +433,19 @@ export default function ServiceOrder() {
             serviceIds: paraclinicalServices
                 .map((item) => item?.serviceId || item?.id)
                 .filter(Boolean),
+            medicines: medsList
+                .filter((item) => Number(item?.id || item?.medicineId || 0) > 0)
+                .map((item) => ({
+                    medicineId: Number(item.id || item.medicineId),
+                    serviceId: Number(item.serviceId || defaultClinicalService?.serviceId || defaultClinicalService?.id || 1),
+                    quantity: Number(item.qty || item.quantity || 1),
+                    dosageUnit: String(item.selectedUnit || item.unit || '').replace(/^\//, '').trim() || undefined,
+                    morning: normalizeDoseValue(item?.dosage?.morning),
+                    noon: normalizeDoseValue(item?.dosage?.noon),
+                    afternoon: normalizeDoseValue(item?.dosage?.afternoon),
+                    evening: normalizeDoseValue(item?.dosage?.evening),
+                    instruction: item?.dosage?.note || item?.note || undefined,
+                })),
         };
 
         return treatmentService.recordExamResult(id, payload, []);
@@ -543,6 +629,84 @@ export default function ServiceOrder() {
                                     <span>Xem dịch vụ</span>
                                     <Eye size={18} />
                                 </button>
+                            </div>
+
+                            <div className="so-medicine-panel">
+                                <button
+                                    className="so-medicine-header"
+                                    type="button"
+                                    onClick={() => setIsMedsExpanded((prev) => !prev)}
+                                    aria-expanded={isMedsExpanded}
+                                >
+                                    <span>Thuốc & vật tư đi kèm</span>
+                                    {isMedsExpanded ? <ChevronUp size={18} color="#666" /> : <ChevronDown size={18} color="#666" />}
+                                </button>
+
+                                {isMedsExpanded && (
+                                    <div className={`so-medicine-content ${medsList.length === 0 ? 'is-empty' : ''}`}>
+                                        {medsList.length > 0 && (
+                                            <div className="so-medicine-list">
+                                                {medsList.map((med, index) => {
+                                                    const quantity = Number(med?.qty ?? med?.quantity ?? 1) || 1;
+                                                    const isThuoc = med?.type === 'THUOC' || med?.type === 'MEDICINE';
+                                                    const originalUnit = String(med?.selectedUnit || med?.unit || 'Đơn vị').replace(/^\//, '');
+                                                    const quantityUnit = isThuoc ? 'hộp' : originalUnit;
+                                                    const dosageRows = [
+                                                        { label: 'Sáng', value: med?.dosage?.morning || 0 },
+                                                        { label: 'Trưa', value: med?.dosage?.noon || 0 },
+                                                        { label: 'Chiều', value: med?.dosage?.afternoon || 0 },
+                                                        { label: 'Tối', value: med?.dosage?.evening || 0 },
+                                                    ].filter((dosage) => dosage.value > 0);
+
+                                                    return (
+                                                        <div key={`${med?.id || med?.medicineId || med?.name || 'medicine'}-${index}`} className="so-medicine-item">
+                                                            <div className="so-medicine-item-head">
+                                                                <h4>{med.name}</h4>
+                                                                <button
+                                                                    type="button"
+                                                                    className="so-medicine-edit"
+                                                                    onClick={openMedicineSelector}
+                                                                    disabled={isReadonlyMode}
+                                                                    aria-label={`Chỉnh thuốc và vật tư cho ${med.name}`}
+                                                                >
+                                                                    <PencilLine size={15} color="#209D80" />
+                                                                </button>
+                                                            </div>
+                                                            <div className="so-medicine-row">
+                                                                <span>Số lượng</span>
+                                                                <strong>{quantity} {quantityUnit}</strong>
+                                                            </div>
+                                                            {isThuoc && dosageRows.map((dosage) => (
+                                                                <div key={`${med?.id || med?.medicineId}-${dosage.label}`} className="so-medicine-row">
+                                                                    <span>{dosage.label}</span>
+                                                                    <strong>{dosage.value} {originalUnit}</strong>
+                                                                </div>
+                                                            ))}
+                                                            {isThuoc && (
+                                                                <div className="so-medicine-row">
+                                                                    <span>Chỉ định khác</span>
+                                                                    <strong>{med?.dosage?.note || med?.note || '---'}</strong>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+
+                                        <div className={`so-medicine-add-wrap ${medsList.length > 0 ? 'has-list' : 'is-empty'}`}>
+                                            <button
+                                                type="button"
+                                                className="so-medicine-add"
+                                                onClick={openMedicineSelector}
+                                                disabled={isReadonlyMode}
+                                                aria-label="Thêm thuốc và vật tư"
+                                            >
+                                                <Plus size={32} strokeWidth={1.6} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="so-conclusion-block">

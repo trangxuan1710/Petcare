@@ -8,7 +8,7 @@ import java.util.List;
 
 @Service
 public interface ExamPrescriptionService {
-    List<MedicineSearchItemResponse> searchMedicines(String keyword, Integer limit);
+    List<MedicineSearchItemResponse> searchMedicines(String keyword, String type, Integer limit);
 
     PrescriptionAutofillResponse getPrescriptionAutofill(long receptionRecordId);
 }

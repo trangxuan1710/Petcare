@@ -86,12 +86,6 @@ const UNIT_LABEL_MAP = {
     unit: 'đơn vị',
 };
 
-const TABLET_UNIT_OPTIONS = ['hộp', 'vỉ'];
-const BOX_ONLY_UNIT_OPTIONS = ['hộp'];
-
-const TABLET_UNIT_KEYS = new Set(['tablet', 'tablets', 'pill', 'pills', 'capsule', 'capsules', 'cap', 'vien', 'viên', 'vien nang', 'viên nang']);
-const LIQUID_UNIT_KEYS = new Set(['ml', 'bottle', 'vial', 'ampoule', 'ampule', 'drop', 'liquid', 'syrup', 'lọ', 'chai']);
-
 const toVietnameseUnit = (rawUnit) => {
     const normalizedRaw = String(rawUnit || '')
         .trim()
@@ -102,17 +96,9 @@ const toVietnameseUnit = (rawUnit) => {
     return UNIT_LABEL_MAP[normalizedRaw] || normalizedRaw;
 };
 
-const normalizeUnitKey = (rawUnit) => String(rawUnit || '').trim().toLowerCase().replace(/^\//, '');
-
-const resolveUnitOptions = (rawUnit) => {
-    const normalized = normalizeUnitKey(rawUnit);
-    if (TABLET_UNIT_KEYS.has(normalized)) {
-        return TABLET_UNIT_OPTIONS;
-    }
-    if (LIQUID_UNIT_KEYS.has(normalized)) {
-        return BOX_ONLY_UNIT_OPTIONS;
-    }
-    return BOX_ONLY_UNIT_OPTIONS;
+const isMedicineType = (type) => {
+    const normalized = String(type || '').trim().toUpperCase();
+    return normalized === 'THUOC' || normalized === 'MEDICINE';
 };
 
 const normalizeDoseValue = (rawValue) => {
@@ -137,15 +123,19 @@ const normalizeMedicine = (item) => {
     const baseUnit = item?.unit || item?.selectedUnit || '';
     const normalizedSelectedUnit = toVietnameseUnit(baseUnit);
     const selectedUnit = normalizedSelectedUnit || 'đơn vị';
+    const rawUnitPrice = Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item));
+    const quantityPerBox = Math.max(1, Number(item?.quantityPerBox ?? item?.boxQuantity ?? 1) || 1);
+    const rawBoxPrice = Number(item?.boxPrice ?? item?.rawBoxPrice ?? 0) || rawUnitPrice * quantityPerBox;
 
     const type = String(item?.type || 'THUOC').toUpperCase().trim();
     return {
         ...item,
         type,
         desc: item?.desc || item?.description || type || '',
-        rawUnitPrice: Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item)),
-        rawBoxPrice: Number(item?.boxPrice ?? item?.rawBoxPrice ?? getPriceNumber(item)),
-        price: formatVnd(resolvePriceBySelectedUnit(item, selectedUnit)),
+        rawUnitPrice,
+        rawBoxPrice,
+        quantityPerBox,
+        price: formatVnd(rawBoxPrice),
         unit: `/${selectedUnit}`,
         stock: item?.stock ?? item?.stockQuantity ?? item?.availableStock ?? '--',
         qty: Math.max(1, Number(item?.qty ?? item?.quantity ?? 1)),
@@ -213,7 +203,8 @@ const MedicineSelector = () => {
         noon: 1,
         afternoon: 1,
         evening: 1,
-        note: ''
+        note: '',
+        unit: 'đơn vị',
     });
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -245,7 +236,7 @@ const MedicineSelector = () => {
 
         return {
             ...mergedMedicine,
-            price: formatVnd(resolvePriceBySelectedUnit(mergedMedicine, selectedUnit)),
+            price: formatVnd(mergedMedicine.rawBoxPrice || resolvePriceBySelectedUnit(mergedMedicine, 'hộp')),
             unit: `/${selectedUnit}`,
         };
     };
@@ -335,21 +326,6 @@ const MedicineSelector = () => {
         );
     };
 
-    const updateSelectedUnit = (id, newUnit) => {
-        setMedsList((prevList) =>
-            prevList.map((med) => {
-                if (med.id !== id) return med;
-                return {
-                    ...med,
-                    selectedUnit: newUnit,
-                    price: formatVnd(resolvePriceBySelectedUnit(med, newUnit)),
-                    unit: `/${newUnit}`,
-                    selected: true,
-                };
-            })
-        );
-    };
-
     const openDosageModal = (id) => {
         const target = medsList.find((med) => med.id === id);
         if (!target) return;
@@ -360,6 +336,7 @@ const MedicineSelector = () => {
             afternoon: normalizeDoseValue(target?.dosage?.afternoon),
             evening: normalizeDoseValue(target?.dosage?.evening),
             note: target?.dosage?.note || '',
+            unit: target?.selectedUnit || String(target?.unit || '').replace(/^\//, '') || 'đơn vị',
         });
         setShowDosageModal(true);
     };
@@ -488,17 +465,17 @@ const MedicineSelector = () => {
                                         </div>
 
                                         <div className="ms-lite-unit-text">
-                                            {med.type === 'THUOC' ? 'hộp' : med.selectedUnit}
+                                            {med.selectedUnit}
                                         </div>
 
-                                        {med.type === 'THUOC' && (
+                                        {isMedicineType(med.type) && (
                                             <button className="ms-lite-dosage" type="button" onClick={() => openDosageModal(med.id)}>
                                                 <PencilLine size={14} /> Chỉnh liều
                                             </button>
                                         )}
                                     </div>
 
-                                    {med.type === 'THUOC' && (
+                                    {isMedicineType(med.type) && (
                                         <div className="ms-lite-dosage-summary">
                                             <div className="ms-lite-dosage-row">
                                                 <span>Sáng</span>
@@ -580,7 +557,7 @@ const MedicineSelector = () => {
                                             </button>
                                         </div>
                                         <div className="dosage-unit">
-                                            <span>Viên</span>
+                                            <span>{dosageDraft.unit}</span>
                                             <ChevronDown size={16} color="#888" />
                                         </div>
                                     </div>

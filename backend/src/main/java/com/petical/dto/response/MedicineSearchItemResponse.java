@@ -30,6 +30,9 @@ public class MedicineSearchItemResponse {
     @Schema(description = "Giá theo đơn vị", example = "12000")
     private BigDecimal unitPrice;
 
+    @Schema(description = "Số lượng đơn vị trong một hộp", example = "8")
+    private int quantityPerBox;
+
     @Schema(description = "Giá theo hộp", example = "96000")
     private BigDecimal boxPrice;
 

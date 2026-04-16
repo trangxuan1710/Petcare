@@ -176,7 +176,7 @@
     background-color: #fff;
     border: 1px solid #e5e7eb;
     position: relative;
-    cursor: pointer;
+    cursor: default;
     transition: all 0.15s;
 }
 
@@ -222,6 +222,10 @@
 .to-collapse-indicator {
     padding: 4px;
     cursor: pointer;
+}
+
+.to-collapse-indicator-static {
+    cursor: default;
 }
 
 /* Stats Row */

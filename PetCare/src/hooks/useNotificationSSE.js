@@ -19,7 +19,7 @@ let sharedEventSource = null;
 let subscriberCount = 0;
 
 const toSafeNumber = (value) => {
-    const parsed = Number(value);
+    const parsed = Number(value);   
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 };
 

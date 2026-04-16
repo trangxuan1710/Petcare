@@ -375,6 +375,136 @@
     cursor: not-allowed;
 }
 
+.so-medicine-panel {
+    border: 1px solid #e5e9eb;
+    border-radius: 14px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.so-medicine-header {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #eef2f3;
+    background: transparent;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #2c3136;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.so-medicine-content {
+    padding: 0 16px 16px;
+}
+
+.so-medicine-content.is-empty {
+    min-height: 170px;
+}
+
+.so-medicine-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.so-medicine-item {
+    padding: 14px 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.so-medicine-item:last-child {
+    border-bottom: none;
+}
+
+.so-medicine-item-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.so-medicine-item-head h4 {
+    margin: 0;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.so-medicine-edit {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.so-medicine-edit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.so-medicine-row {
+    margin-top: 8px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 400;
+}
+
+.so-medicine-row strong {
+    max-width: 68%;
+    color: #4b5563;
+    font-size: 12px;
+    font-weight: 400;
+    text-align: right;
+    word-break: break-word;
+}
+
+.so-medicine-add-wrap {
+    display: flex;
+    justify-content: center;
+}
+
+.so-medicine-add-wrap.is-empty {
+    min-height: 156px;
+    align-items: center;
+}
+
+.so-medicine-add-wrap.has-list {
+    margin-top: 12px;
+    align-items: center;
+}
+
+.so-medicine-add {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: none;
+    background: #dfdfe0;
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.so-medicine-add:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
 .so-conclusion-block {
     display: flex;
     flex-direction: column;

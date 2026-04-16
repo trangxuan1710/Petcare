@@ -26,12 +26,13 @@
 .tech-task-head h3 {
     margin: 0;
     color: #1f2937;
-    font-size: 19px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.25;
 }
 
 .tech-task-status {
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
     white-space: nowrap;
 }
@@ -45,13 +46,14 @@
 
 .tech-task-body-grid span {
     color: #6b7280;
-    font-size: 15px;
+    font-size: 13px;
+    font-weight: 400;
 }
 
 .tech-task-body-grid strong {
     color: #4b5563;
-    font-size: 15px;
-    font-weight: 500;
+    font-size: 13px;
+    font-weight: 600;
 }
 
 .tech-pet-info {
@@ -74,7 +76,7 @@
     border: 1.5px solid #1c9b84;
     background: #ffffff;
     color: #1c9b84;
-    font-size: 16px;
+    font-size: 13px;
     font-weight: 600;
     line-height: 1;
     cursor: pointer;

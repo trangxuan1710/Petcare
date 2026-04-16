@@ -54,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -360,6 +361,7 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
 
         List<PrescriptionDetail> details = prescriptionDetailRepository.findByPrescriptionIdIn(List.of(prescription.getId()));
         return details.stream()
+                .filter(detail -> isMaterial(detail.getMedicine()))
                 .map(detail -> TechnicianUsedMedicineItemResponse.builder()
                         .medicineId(detail.getMedicine() == null ? null : detail.getMedicine().getId())
                         .medicineName(detail.getMedicine() == null ? null : detail.getMedicine().getName())
@@ -408,6 +410,9 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
 
             Medicine medicine = medicineRepository.findById(item.getMedicineId())
                     .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+            if (!isMaterial(medicine)) {
+                continue;
+            }
 
             prescriptionDetailRepository.save(PrescriptionDetail.builder()
                     .prescription(prescription)
@@ -421,6 +426,15 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
                     .dosageUnit(resolveDosageUnit(item.getDosageUnit(), medicine.getUnit()))
                     .build());
         }
+    }
+
+    private boolean isMaterial(Medicine medicine) {
+        String type = medicine == null || medicine.getType() == null
+                ? ""
+                : medicine.getType().trim().toUpperCase(Locale.ROOT);
+        return "VAT_TU".equals(type)
+                || "MATERIAL".equals(type)
+                || "SUPPLY".equals(type);
     }
 
     private ExamResult resolveOrCreateExamResult(ServiceOrder order) {

@@ -53,14 +53,12 @@ import java.util.Set;
 public class DataSeeder implements CommandLineRunner {
 
     private static final int CLIENT_COUNT = 24;
-    private static final int DOCTOR_COUNT = 8;
-    private static final int RECEPTIONIST_COUNT = 6;
-    private static final int TECHNICIAN_COUNT = 10;
+    private static final int DOCTOR_COUNT = 5;
+    private static final int RECEPTIONIST_COUNT = 5;
+    private static final int TECHNICIAN_COUNT = 5;
     private static final long FAKER_SEED = 20260411L;
     private static final String DEFAULT_AVATAR_PATH = "./storage/Untitled.jpg";
-
     private final EntityManager entityManager;
-
     @Value("${app.seed.mock.enabled:true}")
     private boolean seedEnabled;
 
@@ -70,60 +68,52 @@ public class DataSeeder implements CommandLineRunner {
         if (!seedEnabled) {
             return;
         }
-
         if (countOf(Client.class) > 0 || countOf(ReceptionRecord.class) > 0) {
             log.info("Mock data exists already. Skipping seeding.");
             return;
         }
-
         Faker faker = new Faker(new Random(FAKER_SEED));
         String encodedPassword = new BCryptPasswordEncoder(12).encode("123456");
 
-        List<Client> clients = seedClients(faker);
         List<Doctor> doctors = seedDoctors(faker, encodedPassword);
         List<Receptionist> receptionists = seedReceptionists(faker, encodedPassword);
         List<Technician> technicians = seedTechnicians(faker, encodedPassword);
         List<ExamStatus> examStatuses = seedExamStatuses();
         List<TreatmentDirection> directions = seedTreatmentDirections();
         List<PaymentMethod> paymentMethods = seedPaymentMethods();
-        List<ExamForm> examForms = seedExamForms();
-        List<Pet> pets = seedPets(faker, clients);
-        List<Medicine> medicines = seedMedicines();
-        List<Service> services = seedServices();
+//        List<ExamForm> examForms = seedExamForms();
+//        List<Pet> pets = seedPets(faker, clients);
+//        List<Medicine> medicines = seedMedicines();
+//        List<Service> services = seedServices();
 
-        List<ReceptionRecord> receptionRecords = seedReceptionRecords(clients, pets, receptionists, doctors, examForms);
-        List<ReceptionService> receptionServices = seedReceptionServices(receptionRecords, services);
-        List<MedicalRecord> medicalRecords = seedMedicalRecords(receptionRecords, doctors, examStatuses);
-        List<ExamResult> examResults = seedExamResults(medicalRecords, directions);
-        List<Prescription> prescriptions = seedPrescriptions(examResults, receptionServices, services.getFirst().getId());
-        seedPrescriptionDetails(prescriptions, medicines);
-
-        List<ServiceOrder> serviceOrders = seedServiceOrders(medicalRecords, receptionServices, technicians, services.getFirst().getId());
-        seedServiceResults(serviceOrders);
-        seedInvoices(medicalRecords, receptionRecords, paymentMethods);
+//        List<ReceptionRecord> receptionRecords = seedReceptionRecords(clients, pets, receptionists, doctors, examForms);
+//        List<ReceptionService> receptionServices = seedReceptionServices(receptionRecords, services);
+//        List<MedicalRecord> medicalRecords = seedMedicalRecords(receptionRecords, doctors, examStatuses);
+//        List<ExamResult> examResults = seedExamResults(medicalRecords, directions);
+//        List<Prescription> prescriptions = seedPrescriptions(examResults, receptionServices, services.getFirst().getId());
+//        seedPrescriptionDetails(prescriptions, medicines);
+//
+//        List<ServiceOrder> serviceOrders = seedServiceOrders(medicalRecords, receptionServices, technicians, services.getFirst().getId());
+//        seedServiceResults(serviceOrders);
+//        seedInvoices(medicalRecords, receptionRecords, paymentMethods);
 
         log.info("Seeded deterministic mock data (seed={})", FAKER_SEED);
         log.info("Quick login refs: doctor 0901000000 / 123456, receptionist 0902000000 / 123456, technician 0903000000 / 123456");
     }
 
-    private List<Client> seedClients(Faker faker) {
-        List<Client> result = new ArrayList<>();
-        for (int i = 0; i < CLIENT_COUNT; i++) {
-            Client client = Client.builder()
-                    .fullName(faker.name().fullName())
-                    .phoneNumber(String.format("0914000%03d", i))
-                    .build();
-            entityManager.persist(client);
-            result.add(client);
-        }
-        return result;
-    }
 
     private List<Doctor> seedDoctors(Faker faker, String encodedPassword) {
         List<Doctor> result = new ArrayList<>();
+        List<String> name = List.of(
+                "Nguyễn Minh Anh",
+                "Trần Quốc Bảo",
+                "Lê Thanh Huyền",
+                "Phạm Gia Hưng",
+                "Hoàng Ngọc Linh"
+        );
         for (int i = 0; i < DOCTOR_COUNT; i++) {
             Doctor doctor = new Doctor();
-            doctor.setFullName("BS. " + faker.name().fullName());
+            doctor.setFullName(name.get(i));
             doctor.setPhoneNumber(String.format("0901000%03d", i));
             doctor.setPassword(encodedPassword);
             doctor.setAvatarPath(DEFAULT_AVATAR_PATH);
@@ -135,9 +125,16 @@ public class DataSeeder implements CommandLineRunner {
 
     private List<Receptionist> seedReceptionists(Faker faker, String encodedPassword) {
         List<Receptionist> result = new ArrayList<>();
+        List<String> name = List.of(
+                "Vũ Đức Anh",
+                "Đặng Quỳnh Chi",
+                "Bùi Tuấn Kiệt",
+                "Phan Thị Mai",
+                "Đỗ Nhật Nam"
+        );
         for (int i = 0; i < RECEPTIONIST_COUNT; i++) {
             Receptionist receptionist = new Receptionist();
-            receptionist.setFullName(faker.name().fullName());
+            receptionist.setFullName(name.get(i));
             receptionist.setPhoneNumber(String.format("0902000%03d", i));
             receptionist.setPassword(encodedPassword);
             receptionist.setAvatarPath(DEFAULT_AVATAR_PATH);
@@ -149,9 +146,16 @@ public class DataSeeder implements CommandLineRunner {
 
     private List<Technician> seedTechnicians(Faker faker, String encodedPassword) {
         List<Technician> result = new ArrayList<>();
+        List<String> name = List.of(
+                "Hồ Khánh Vy",
+                "Trịnh Công Sơn",
+                "Nguyễn Hoài An",
+                "Lý Hải Đăng",
+                "Cao Minh Trí"
+        );
         for (int i = 0; i < TECHNICIAN_COUNT; i++) {
             Technician technician = new Technician();
-            technician.setFullName(faker.name().fullName());
+            technician.setFullName(name.get(i));
             technician.setPhoneNumber(String.format("0903000%03d", i));
             technician.setPassword(encodedPassword);
             technician.setAvatarPath(DEFAULT_AVATAR_PATH);
@@ -190,7 +194,7 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private List<PaymentMethod> seedPaymentMethods() {
-        List<String> names = List.of("Tiền mặt", "Chuyển khoản", "Thẻ");
+        List<String> names = List.of("Tiền mặt", "Chuyển khoản");
 
         List<PaymentMethod> result = new ArrayList<>();
         for (String name : names) {
@@ -237,93 +241,93 @@ public class DataSeeder implements CommandLineRunner {
         return result;
     }
 
-    private List<Medicine> seedMedicines() {
-        Object[][] rawMeds = {
-            {"Amentyl (cao cấp)", "Hộp 4 vỉ * 10 viên (1 viên Amoxicillin 125mg)", 30000, "Viên", "THUOC"},
-            {"Amox - Clav (thông dụng)", "Chai 20ml", 80000, "Lọ", "THUOC"},
-            {"Clamoxcin (cao cấp)", "Hộp 6 lọ * 5ml", 170000, "Lọ", "THUOC"},
-            {"Cefquino DC", "Hộp 5 cặp", 100000, "Lọ", "THUOC"},
-            {"Thuốc nhỏ mắt Bio-Gentadrop", "Lọ 10ml", 15000, "Lọ", "THUOC"},
-            {"Tiaflox 200mg (>2,5kg - 5kg)", "Hộp 4 vỉ * 10 viên", 50000, "Viên", "THUOC"},
-            {"Enrofloxacin 10%", "Lọ 20ml", 70000, "Lọ", "THUOC"},
-            {"Enroko 50mg", "Vỉ 10 viên", 8000, "Viên", "THUOC"},
-            {"Fluroquin 5ml", "Hộp 6 lọ * 5ml", 140000, "Lọ", "THUOC"},
-            {"Marbo 250mg (>5kg - 10kg) (cao cấp)", "Hộp 4 vỉ * 10 viên", 22000, "Viên", "THUOC"},
-            {"Marbo 5 (cao cấp)", "Hộp 6 lọ * 5ml", 160000, "Lọ", "THUOC"},
+//    private List<Medicine> seedMedicines() {
+//        Object[][] rawMeds = {
+//            {"Amentyl (cao cấp)", "Hộp 4 vỉ * 10 viên (1 viên Amoxicillin 125mg)", 30000, "Viên", "THUOC"},
+//            {"Amox - Clav (thông dụng)", "Chai 20ml", 80000, "Lọ", "THUOC"},
+//            {"Clamoxcin (cao cấp)", "Hộp 6 lọ * 5ml", 170000, "Lọ", "THUOC"},
+//            {"Cefquino DC", "Hộp 5 cặp", 100000, "Lọ", "THUOC"},
+//            {"Thuốc nhỏ mắt Bio-Gentadrop", "Lọ 10ml", 15000, "Lọ", "THUOC"},
+//            {"Tiaflox 200mg (>2,5kg - 5kg)", "Hộp 4 vỉ * 10 viên", 50000, "Viên", "THUOC"},
+//            {"Enrofloxacin 10%", "Lọ 20ml", 70000, "Lọ", "THUOC"},
+//            {"Enroko 50mg", "Vỉ 10 viên", 8000, "Viên", "THUOC"},
+//            {"Fluroquin 5ml", "Hộp 6 lọ * 5ml", 140000, "Lọ", "THUOC"},
+//            {"Marbo 250mg (>5kg - 10kg) (cao cấp)", "Hộp 4 vỉ * 10 viên", 22000, "Viên", "THUOC"},
+//            {"Marbo 5 (cao cấp)", "Hộp 6 lọ * 5ml", 160000, "Lọ", "THUOC"},
+//
+//            {"Áo mổ giấy", "", 35000, "Chiếc", "VAT_TU"},
+//            {"Băng chun 2.5cm", "", 15000, "Cuộn", "VAT_TU"},
+//            {"Băng chun 3 móc", "", 30000, "Cuộn", "VAT_TU"},
+//            {"Băng chun 5cm", "", 20000, "Cuộn", "VAT_TU"},
+//            {"Băng chun 7.5cm", "", 25000, "Cuộn", "VAT_TU"},
+//            {"Băng keo Urgo 5cm", "", 35000, "Cuộn", "VAT_TU"},
+//            {"Băng keo y tế 3M 2.5cm - Hộp 12 cuộn", "", 40000, "Cuộn", "VAT_TU"},
+//            {"Băng keo y tế 3M 5cm - Hộp 6 cuộn", "", 65000, "Cuộn", "VAT_TU"},
+//            {"Bộ dây chằng giả", "", 1100000, "Chiếc", "VAT_TU"},
+//            {"Bộ dây truyền dịch", "", 10000, "Chiếc", "VAT_TU"},
+//            {"Bộ kim cánh bướm G22", "", 5000, "Chiếc", "VAT_TU"},
+//            {"Bơm tiêm 1ml", "", 5000, "Chiếc", "VAT_TU"},
+//            {"Bơm tiêm 3ml", "", 5000, "Chiếc", "VAT_TU"},
+//            {"Bơm tiêm 5ml", "", 5000, "Chiếc", "VAT_TU"},
+//            {"Bơm tiêm 10ml", "", 15000, "Chiếc", "VAT_TU"}
+//        };
+//
+//        List<Medicine> result = new ArrayList<>();
+//        for (int i = 0; i < rawMeds.length; i++) {
+//            Object[] data = rawMeds[i];
+//            BigDecimal unitPrice = BigDecimal.valueOf(((Number) data[2]).longValue());
+//            Medicine medicine = Medicine.builder()
+//                    .name((String) data[0])
+//                    .description((String) data[1])
+//                    .stockQuantity(100 + i * 5)
+//                    .unit((String) data[3])
+//                    .unitPrice(unitPrice)
+//                    .boxPrice(unitPrice)
+//                    .price(unitPrice)
+//                    .type((String) data[4])
+//                    .build();
+//            entityManager.persist(medicine);
+//            result.add(medicine);
+//        }
+//
+//        return result;
+//    }
 
-            {"Áo mổ giấy", "", 35000, "Chiếc", "VAT_TU"},
-            {"Băng chun 2.5cm", "", 15000, "Cuộn", "VAT_TU"},
-            {"Băng chun 3 móc", "", 30000, "Cuộn", "VAT_TU"},
-            {"Băng chun 5cm", "", 20000, "Cuộn", "VAT_TU"},
-            {"Băng chun 7.5cm", "", 25000, "Cuộn", "VAT_TU"},
-            {"Băng keo Urgo 5cm", "", 35000, "Cuộn", "VAT_TU"},
-            {"Băng keo y tế 3M 2.5cm - Hộp 12 cuộn", "", 40000, "Cuộn", "VAT_TU"},
-            {"Băng keo y tế 3M 5cm - Hộp 6 cuộn", "", 65000, "Cuộn", "VAT_TU"},
-            {"Bộ dây chằng giả", "", 1100000, "Chiếc", "VAT_TU"},
-            {"Bộ dây truyền dịch", "", 10000, "Chiếc", "VAT_TU"},
-            {"Bộ kim cánh bướm G22", "", 5000, "Chiếc", "VAT_TU"},
-            {"Bơm tiêm 1ml", "", 5000, "Chiếc", "VAT_TU"},
-            {"Bơm tiêm 3ml", "", 5000, "Chiếc", "VAT_TU"},
-            {"Bơm tiêm 5ml", "", 5000, "Chiếc", "VAT_TU"},
-            {"Bơm tiêm 10ml", "", 15000, "Chiếc", "VAT_TU"}
-        };
-
-        List<Medicine> result = new ArrayList<>();
-        for (int i = 0; i < rawMeds.length; i++) {
-            Object[] data = rawMeds[i];
-            BigDecimal unitPrice = BigDecimal.valueOf(((Number) data[2]).longValue());
-            Medicine medicine = Medicine.builder()
-                    .name((String) data[0])
-                    .description((String) data[1])
-                    .stockQuantity(100 + i * 5)
-                    .unit((String) data[3])
-                    .unitPrice(unitPrice)
-                    .boxPrice(unitPrice)
-                    .price(unitPrice)
-                    .type((String) data[4])
-                    .build();
-            entityManager.persist(medicine);
-            result.add(medicine);
-        }
-
-        return result;
-    }
-
-    private List<Service> seedServices() {
-        List<String> names = List.of(
-                "Khám lâm sàng",
-                "Xét nghiệm máu",
-                "Xét nghiệm nước tiểu",
-                "Siêu âm ổ bụng",
-                "X-Quang",
-                "Truyền dịch",
-                "Theo dõi nội trú",
-                "Test nhanh ký sinh trùng"
-        );
-
-        List<BigDecimal> prices = List.of(
-                BigDecimal.valueOf(120_000),
-                BigDecimal.valueOf(180_000),
-                BigDecimal.valueOf(160_000),
-                BigDecimal.valueOf(220_000),
-                BigDecimal.valueOf(250_000),
-                BigDecimal.valueOf(150_000),
-                BigDecimal.valueOf(300_000),
-                BigDecimal.valueOf(140_000)
-        );
-
-        List<Service> result = new ArrayList<>();
-        for (int i = 0; i < names.size(); i++) {
-            Service service = Service.builder()
-                    .name(names.get(i))
-                    .unitPrice(prices.get(i))
-                    .build();
-            entityManager.persist(service);
-            result.add(service);
-        }
-
-        return result;
-    }
+//    private List<Service> seedServices() {
+//        List<String> names = List.of(
+//                "Khám lâm sàng",
+//                "Xét nghiệm máu",
+//                "Xét nghiệm nước tiểu",
+//                "Siêu âm ổ bụng",
+//                "X-Quang",
+//                "Truyền dịch",
+//                "Theo dõi nội trú",
+//                "Test nhanh ký sinh trùng"
+//        );
+//
+//        List<BigDecimal> prices = List.of(
+//                BigDecimal.valueOf(120_000),
+//                BigDecimal.valueOf(180_000),
+//                BigDecimal.valueOf(160_000),
+//                BigDecimal.valueOf(220_000),
+//                BigDecimal.valueOf(250_000),
+//                BigDecimal.valueOf(150_000),
+//                BigDecimal.valueOf(300_000),
+//                BigDecimal.valueOf(140_000)
+//        );
+//
+//        List<Service> result = new ArrayList<>();
+//        for (int i = 0; i < names.size(); i++) {
+//            Service service = Service.builder()
+//                    .name(names.get(i))
+//                    .unitPrice(prices.get(i))
+//                    .build();
+//            entityManager.persist(service);
+//            result.add(service);
+//        }
+//
+//        return result;
+//    }
 
     private List<ReceptionRecord> seedReceptionRecords(
             List<Client> clients,
