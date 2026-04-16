@@ -361,6 +361,14 @@ const NewReception = () => {
             return;
         }
 
+        const selectedDate = new Date(newPetDateOfBirth);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        if (selectedDate > today) {
+            showToast('error', 'Ngày sinh không được lớn hơn ngày hiện tại.');
+            return;
+        }
+
         try {
             const response = await petService.createPet({
                 clientId: customerId,
@@ -534,7 +542,7 @@ const NewReception = () => {
                                     type="text"
                                     className="nr-input"
                                     value={weight}
-                                    onChange={(e) => setWeight(e.target.value)}
+                                    onChange={(e) => setWeight(e.target.value.replace(/[^0-9.]/g, ''))}
                                     disabled={!isPetSelected}
                                 />
                                 <span className="nr-input-suffix">kg</span>
@@ -618,7 +626,7 @@ const NewReception = () => {
 
                         <div className="nr-field">
                             <label className="nr-field-label">Lưu ý</label>
-                            <textarea className="nr-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} readOnly={!isPetSelected} />
+                            <textarea className="nr-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} rows={1} readOnly={!isPetSelected} />
                         </div>
 
                         <div className="nr-toggle-row">
@@ -661,7 +669,7 @@ const NewReception = () => {
                                         type="text"
                                         className="nr-pet-modal-input"
                                         value={newPetName}
-                                        onChange={(e) => setNewPetName(e.target.value)}
+                                        onChange={(e) => setNewPetName(e.target.value.replace(/[^a-zA-Z\s\u00C0-\u024F\u1E00-\u1EFF]/g, ''))}
                                     />
                                 </div>
 
@@ -729,6 +737,7 @@ const NewReception = () => {
                                     className="nr-pet-modal-input"
                                     value={newPetDateOfBirth}
                                     onChange={(e) => setNewPetDateOfBirth(e.target.value)}
+                                    max={new Date().toISOString().split('T')[0]}
                                 />
                             </div>
 

@@ -79,7 +79,7 @@ const Login = () => {
                         <div className="semantic-label-content">
                             <Flag name='vn' />
                             <div className="semantic-divider"></div>
-                            <span className="semantic-country-code">+84</span>
+                            {/* <span className="semantic-country-code">+84</span> */}
                         </div>
                     }
                     labelPosition='left'

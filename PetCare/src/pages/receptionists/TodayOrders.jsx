@@ -960,9 +960,9 @@ const TodayOrders = () => {
                                 <input
                                     type="text"
                                     className="to-modal-input"
+                                    placeholder="Tên khách hàng"
                                     value={newCustomer.name}
-                                    onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
-                                    placeholder="Nhập họ và tên"
+                                    onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value.replace(/[^a-zA-Z\s\u00C0-\u024F\u1E00-\u1EFF]/g, '')})}
                                 />
                             </div>
 
@@ -971,9 +971,9 @@ const TodayOrders = () => {
                                 <input
                                     type="text"
                                     className="to-modal-input"
+                                    placeholder="Số điện thoại"
                                     value={newCustomer.phone}
-                                    onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value})}
-                                    placeholder="Nhập số điện thoại"
+                                    onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value.replace(/[^\d]/g, '')})}
                                 />
                             </div>
 
