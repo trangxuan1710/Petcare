@@ -75,6 +75,8 @@ const Login = () => {
                     placeholder="(000) 000 00 00"
                     value={phoneNumber}
                     onChange={(event) => setPhoneNumber(event.target.value)}
+                    required
+                    aria-required="true"
                     label={
                         <div className="semantic-label-content">
                             <Flag name='vn' />
@@ -92,6 +94,8 @@ const Login = () => {
                         placeholder="Mật khẩu"
                         value={password}
                         onChange={(event) => setPassword(event.target.value)}
+                        required
+                        aria-required="true"
                         onKeyDown={(event) => {
                             if (event.key === 'Enter') {
                                 handleLogin();

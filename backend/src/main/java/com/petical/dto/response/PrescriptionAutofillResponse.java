@@ -46,10 +46,10 @@ public class PrescriptionAutofillResponse {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Dosage {
-        private Integer morning;
-        private Integer noon;
-        private Integer afternoon;
-        private Integer evening;
+        private BigDecimal morning;
+        private BigDecimal noon;
+        private BigDecimal afternoon;
+        private BigDecimal evening;
         private String note;
     }
 }

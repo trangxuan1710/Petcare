@@ -23,8 +23,8 @@ const StatCard = ({ title, count, unit, variant = 'success', icon, onClick }) =>
                 </div>
             </div>
             <div className="stat-card-content">
-                <span className="stat-card-number">{count}</span>
-                <span className="stat-card-unit">{unit}</span>
+                <span style={{fontSize:'30px !important'}} className="stat-card-number">{count}</span>
+                <span style={{fontSize:'30px !important'}} className="stat-card-unit">{unit}</span>
             </div>
         </div>
     );

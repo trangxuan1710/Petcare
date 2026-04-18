@@ -23,7 +23,7 @@ import { RECEPTIONIST_PATHS } from './routes/receptionistPaths';
 import { TECH_PATHS } from './routes/techPaths';
 import NotFound from './pages/NotFound';
 import { Toaster } from 'react-hot-toast';
-import { useNotificationSSE } from './hooks/useNotificationSSE';
+import { useNotificationSSE } from './hooks/useNotificationSSE.jsx';
 
 const getDefaultPathByRole = (role) => {
   if (role === 'DOCTOR') return '/doctors/home';

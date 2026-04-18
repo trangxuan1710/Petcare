@@ -36,4 +36,4 @@ storage: ./storage
 app:
   seed:
     mock:
-      enabled: false
+      enabled: true

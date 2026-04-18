@@ -35,9 +35,7 @@ const StaffCostSummaryCard = ({
         () => (Array.isArray(costGroups) ? costGroups : []).map((group, index) => ({
             id: group?.id || `group-${index}`,
             title: group?.title || `Dịch vụ #${index + 1}`,
-            subtitle: group?.subtitle || '',
             totalAmount: Number(group?.totalAmount || 0),
-            insuranceAmount: Number(group?.insuranceAmount || 0),
             feeRows: Array.isArray(group?.feeRows) ? group.feeRows : [],
         })),
         [costGroups]
@@ -87,16 +85,7 @@ const StaffCostSummaryCard = ({
             <div className="cost-header-row">
                 <span>SL/DVT</span>
                 <span>Đơn giá</span>
-                <span>Chiết khấu</span>
                 <span>Thành tiền</span>
-            </div>
-
-            <div className="cost-total-row">
-                <div className="left">
-                    <ChevronDown size={20} />
-                    <span>Tổng cộng</span>
-                </div>
-                <strong>{formatCurrency(paymentSummary?.subtotal)}</strong>
             </div>
 
             {normalizedGroups.length > 0 ? normalizedGroups.map((group) => {
@@ -114,11 +103,9 @@ const StaffCostSummaryCard = ({
                                     {isExpanded ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
                                     <span>{group.title}</span>
                                 </div>
-                                {group.subtitle ? <small className="group-sub">{group.subtitle}</small> : null}
                             </div>
                             <div className="group-amounts">
                                 <strong>{formatNumber(group.totalAmount)}</strong>
-                                <small>{formatNumber(group.insuranceAmount)}</small>
                             </div>
                         </button>
 
@@ -128,7 +115,6 @@ const StaffCostSummaryCard = ({
                                 <div className="fee-row">
                                     <span className="fee-unit">{row?.unit || '--'}</span>
                                     <span>{formatNumber(row?.price)}</span>
-                                    <span>{formatNumber(row?.discount)}</span>
                                     <span>{formatNumber(row?.amount)}</span>
                                 </div>
                             </div>
@@ -139,28 +125,23 @@ const StaffCostSummaryCard = ({
                 <div className="cost-group cost-group-empty">Chưa có dữ liệu chi tiết dịch vụ.</div>
             )}
 
-            <div className="payment-summary">
-                <h3>Thanh toán</h3>
-                <div className="payment-row"><span>Tổng thành tiền</span>{formatCurrency(paymentSummary?.subtotal)}</div>
-                <div className="payment-row"><span>Chiết khấu</span>{formatCurrency(paymentSummary?.discount)}</div>
-                <div className="payment-row"><span>Bảo hiểm bồi thường</span>{formatCurrency(paymentSummary?.insurance)}</div>
-                <div className="payment-total"><span>Tổng thanh toán</span>{formatCurrency(paymentSummary?.total)}</div>
+            <div className="payment-total-footer" style={{
+                display: 'flex', justifyContent: 'space-between', marginTop: '10px',
+            }}>
+                <span>Tổng thanh toán</span>
+                <strong>{formatCurrency(paymentSummary?.total)}</strong>
             </div>
 
-            {showPaymentHistory ? (
+            {showPaymentHistory && Number(paymentHistoryAmount || 0) > 0 ? (
                 <div className="payment-history">
                     <div className="history-head">
                         <span>Lịch sử thanh toán</span>
                         <strong>{formatCurrency(paymentHistoryAmount)}</strong>
                     </div>
-                    {Number(paymentHistoryAmount || 0) > 0 ? (
-                        <div className="history-row">
-                            <span>Đã thanh toán</span>
-                            <strong>{formatCurrency(paymentHistoryAmount)}</strong>
-                        </div>
-                    ) : (
-                        <div className="history-empty">Chưa có dữ liệu</div>
-                    )}
+                    <div className="history-row">
+                        <span>Đã thanh toán</span>
+                        <strong>{formatCurrency(paymentHistoryAmount)}</strong>
+                    </div>
                 </div>
             ) : null}
         </section>

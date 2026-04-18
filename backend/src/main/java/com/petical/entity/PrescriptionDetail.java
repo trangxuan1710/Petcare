@@ -3,6 +3,8 @@ package com.petical.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Getter
 @Setter
@@ -24,17 +26,17 @@ public class PrescriptionDetail {
 
     private int quantity;
 
-    @Column(name = "dose_morning")
-    private Integer morning;
+    @Column(name = "dose_morning", precision = 6, scale = 2)
+    private BigDecimal morning;
 
-    @Column(name = "dose_noon")
-    private Integer noon;
+    @Column(name = "dose_noon", precision = 6, scale = 2)
+    private BigDecimal noon;
 
-    @Column(name = "dose_afternoon")
-    private Integer afternoon;
+    @Column(name = "dose_afternoon", precision = 6, scale = 2)
+    private BigDecimal afternoon;
 
-    @Column(name = "dose_evening")
-    private Integer evening;
+    @Column(name = "dose_evening", precision = 6, scale = 2)
+    private BigDecimal evening;
 
     @Column(columnDefinition = "TEXT")
     private String instruction;

@@ -16,14 +16,13 @@
 }
 
 .customer-name {
-    font-size: 18px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 600;
     color: #1a1a1a;
-    margin: 0 0 14px 0;
 }
 
 .datetime {
-    font-size: 13px;
+    font-size: 11px !important;
     color: #888;
     margin-top: 10px;
 }
@@ -60,7 +59,12 @@
 
 .ticket-pet-info-box.has-alert {
     border-color: #fca5a5;
-    background-color: #fef2f2;
+    background-color: #fff1f0;
+    border: 1.5px solid #ffa39e;
+}
+
+.ticket-pet-info-box.has-alert .ticket-pet-name {
+    color: #f5222d;
 }
 
 .ticket-pet-details {

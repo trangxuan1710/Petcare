@@ -19,6 +19,7 @@ const ReceivedCard = ({
     showFooter = true,
     onCardClick,
     selectedPetId,
+    isEmergency,
 }) => {
     const normalizedStatus = String(status || '').trim().toLowerCase();
     const statusClassName = normalizedStatus.includes('đã thanh toán') || normalizedStatus.includes('paid')
@@ -31,7 +32,7 @@ const ReceivedCard = ({
         ? (String(createdAt || '').toLowerCase().includes('lúc') ? createdAt : `Tạo đơn lúc ${createdAt}`)
         : '--';
     const displayCustomerName = toTitleCase(customerName);
-    const displayStatus = toTitleCase(status);
+    const displayStatus = isEmergency ? 'Cấp cứu' : toTitleCase(status);
 
     const normalizedPets = Array.isArray(pets) ? pets : [];
     const displayPets = (() => {
@@ -46,7 +47,7 @@ const ReceivedCard = ({
 
     return (
         <div
-            className={`received-card ${onCardClick ? 'clickable' : ''}`.trim()}
+            className={`received-card ${onCardClick ? 'clickable' : ''} ${isEmergency ? 'emergency' : ''}`.trim()}
             onClick={onCardClick}
             role={onCardClick ? 'button' : undefined}
             tabIndex={onCardClick ? 0 : undefined}

@@ -14,6 +14,10 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
 
     List<Prescription> findByExamResultIdIn(Collection<Long> examResultIds);
 
+    Optional<Prescription> findByMedicalRecordId(long medicalRecordId);
+
+    List<Prescription> findByMedicalRecordIdIn(Collection<Long> medicalRecordIds);
+
     Optional<Prescription> findByReceptionServiceId(long receptionServiceId);
 
     List<Prescription> findByReceptionServiceIdIn(Collection<Long> receptionServiceIds);

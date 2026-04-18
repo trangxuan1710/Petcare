@@ -29,8 +29,8 @@
 
 .staff-payment-method-title {
     margin: 0 0 10px;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 20px;
+    font-weight: 600;
     color: #22313a;
 }
 
@@ -69,7 +69,7 @@
     font-weight: 600;
 }
 
-.staff-payment-method-option input:disabled + span {
+.staff-payment-method-option input:disabled+span {
     opacity: 0.6;
 }
 
@@ -154,6 +154,7 @@
     0% {
         background-position: 200% 0;
     }
+
     100% {
         background-position: -200% 0;
     }

@@ -16,6 +16,12 @@ export const toSentenceCase = (value) => {
     return lowered.charAt(0).toLocaleUpperCase('vi-VN') + lowered.slice(1);
 };
 
+export const capitalizeFirstText = (value) => {
+    const text = String(value || '').trim().replace(/\s+/g, ' ');
+    if (!text) return '';
+    return text.charAt(0).toLocaleUpperCase('vi-VN') + text.slice(1);
+};
+
 export const toDisplayName = (value, fallback = '--') => {
     const formatted = toTitleCase(value);
     return formatted || fallback;

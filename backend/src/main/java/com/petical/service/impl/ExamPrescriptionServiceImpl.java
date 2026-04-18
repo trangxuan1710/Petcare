@@ -2,12 +2,15 @@ package com.petical.service.impl;
 
 import com.petical.dto.response.MedicineSearchItemResponse;
 import com.petical.dto.response.PrescriptionAutofillResponse;
-import com.petical.entity.PrescriptionDetail;
+import com.petical.entity.MedicineSpecies;
+import com.petical.entity.PetSpecies;
+import com.petical.entity.PrescriptionRecommendation;
 import com.petical.entity.ReceptionRecord;
 import com.petical.enums.ErrorCode;
 import com.petical.errors.AppException;
 import com.petical.repository.MedicineRepository;
-import com.petical.repository.PrescriptionDetailRepository;
+import com.petical.repository.PetSpeciesRepository;
+import com.petical.repository.PrescriptionRecommendationRepository;
 import com.petical.repository.ReceptionRecordRepository;
 import com.petical.service.ExamPrescriptionService;
 import lombok.RequiredArgsConstructor;
@@ -15,35 +18,36 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.math.RoundingMode;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
     private final MedicineRepository medicineRepository;
     private final ReceptionRecordRepository receptionRecordRepository;
-    private final PrescriptionDetailRepository prescriptionDetailRepository;
+    private final PetSpeciesRepository petSpeciesRepository;
+    private final PrescriptionRecommendationRepository prescriptionRecommendationRepository;
 
     @Override
     @Transactional(readOnly = true)
-    public List<MedicineSearchItemResponse> searchMedicines(String keyword, String type, Integer limit) {
+    public List<MedicineSearchItemResponse> searchMedicines(String keyword, String type, String species, Integer limit) {
         int safeLimit = limit == null || limit <= 0 ? 20 : Math.min(limit, 100);
         String normalizedKeyword = keyword == null || keyword.isBlank() ? null : keyword.trim();
         String normalizedType = normalizeType(type);
+        String normalizedSpecies = normalizeSpeciesFilter(species);
 
-        return medicineRepository.search(normalizedKeyword, normalizedType)
+        return medicineRepository.search(normalizedKeyword, normalizedType, normalizedSpecies)
                 .stream()
                 .limit(safeLimit)
                 .map(medicine -> MedicineSearchItemResponse.builder()
                         .id(medicine.getId())
                         .name(medicine.getName())
-                    .description(medicine.getDescription())
+                        .description(medicine.getDescription())
                         .unit(medicine.getUnit())
                         .price(resolveDisplayPrice(medicine))
                         .unitPrice(resolveUnitPrice(medicine))
@@ -51,6 +55,8 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
                         .boxPrice(resolveBoxPrice(medicine))
                         .stockQuantity(medicine.getStockQuantity())
                         .type(medicine.getType())
+                        .speciesCodes(resolveSpeciesCodes(medicine))
+                        .speciesLabels(resolveSpeciesLabels(medicine))
                         .build())
                 .toList();
     }
@@ -60,6 +66,43 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
             return null;
         }
         return type.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeSpeciesFilter(String species) {
+        if (species == null || species.isBlank()) {
+            return null;
+        }
+        String normalized = species.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "dog", "cho" -> "cho";
+            case "cat", "meo" -> "meo";
+            case "dog_and_cat", "dogandcat", "cho_va_meo", "chovameo", "both", "all" -> null;
+            default -> normalized;
+        };
+    }
+
+    private List<String> resolveSpeciesCodes(com.petical.entity.Medicine medicine) {
+        if (medicine == null || medicine.getMedicineSpeciesLinks() == null) {
+            return List.of();
+        }
+        return medicine.getMedicineSpeciesLinks().stream()
+                .map(MedicineSpecies::getSpecies)
+                .filter(java.util.Objects::nonNull)
+                .sorted(Comparator.comparingInt(PetSpecies::getSortOrder).thenComparing(PetSpecies::getName))
+                .map(PetSpecies::getCode)
+                .toList();
+    }
+
+    private List<String> resolveSpeciesLabels(com.petical.entity.Medicine medicine) {
+        if (medicine == null || medicine.getMedicineSpeciesLinks() == null) {
+            return List.of();
+        }
+        return medicine.getMedicineSpeciesLinks().stream()
+                .map(MedicineSpecies::getSpecies)
+                .filter(java.util.Objects::nonNull)
+                .sorted(Comparator.comparingInt(PetSpecies::getSortOrder).thenComparing(PetSpecies::getName))
+                .map(PetSpecies::getName)
+                .toList();
     }
 
     private java.math.BigDecimal resolveDisplayPrice(com.petical.entity.Medicine medicine) {
@@ -92,119 +135,149 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
         ReceptionRecord currentReception = receptionRecordRepository.findById(receptionRecordId)
                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
 
-        Long petId = currentReception.getPet() == null ? null : currentReception.getPet().getId();
-        if (petId == null || petId <= 0) {
-            return emptyAutofill(false, null, currentReception.getWeight());
-        }
+        String normalizedSpecies = resolveSpeciesKey(currentReception);
+        BigDecimal currentWeight = normalizeWeight(currentReception.getWeight());
+        String breed = resolveBreedKey(currentReception);
 
-        boolean firstVisit = !prescriptionDetailRepository.existsByPetIdExcludingReception(petId, receptionRecordId);
-        List<PrescriptionDetail> latestSamePetDetails = prescriptionDetailRepository
-                .findLatestHistoricalByPetExcludingReception(petId, receptionRecordId);
-        if (!latestSamePetDetails.isEmpty()) {
-            return buildAutofillFromDetails(currentReception, firstVisit, latestSamePetDetails);
-        }
-
-        if (!firstVisit) {
-            return emptyAutofill(false, resolveBreedKey(currentReception), currentReception.getWeight());
-        }
-
-        BigDecimal currentWeight = currentReception.getWeight();
-
-        String normalizedBreed = resolveBreedKey(currentReception);
-        if (normalizedBreed == null || normalizedBreed.isBlank()) {
-            return emptyAutofill(true, normalizedBreed, currentWeight);
-        }
-
-        List<PrescriptionDetail> historicalDetails = prescriptionDetailRepository.findHistoricalByBreedExcludingPet(normalizedBreed, petId);
-        if (historicalDetails.isEmpty()) {
-            String normalizedSpecies = resolveSpeciesKey(currentReception);
-            if (normalizedSpecies != null && !normalizedSpecies.isBlank()) {
-                historicalDetails = prescriptionDetailRepository.findHistoricalBySpeciesExcludingPet(normalizedSpecies, petId);
-            }
-        }
-        if (historicalDetails.isEmpty()) {
-            return emptyAutofill(true, normalizedBreed, currentWeight);
-        }
-
-        Map<Long, CandidatePrescriptionCase> caseMap = new LinkedHashMap<>();
-        for (PrescriptionDetail detail : historicalDetails) {
-            ReceptionRecord sourceReception = extractSourceReception(detail);
-            if (sourceReception == null) {
-                continue;
-            }
-
-            caseMap.computeIfAbsent(sourceReception.getId(), ignored -> new CandidatePrescriptionCase(sourceReception))
-                    .details
-                    .add(detail);
-        }
-
-        if (caseMap.isEmpty()) {
-            return emptyAutofill(true, normalizedBreed, currentWeight);
-        }
-
-        Optional<CandidatePrescriptionCase> nearestCase = Optional.empty();
-        if (currentWeight != null && currentWeight.signum() > 0) {
-            double targetWeight = currentWeight.doubleValue();
-            nearestCase = caseMap.values()
-                .stream()
-                .filter(CandidatePrescriptionCase::hasWeight)
-                .min(Comparator
-                    .comparingDouble((CandidatePrescriptionCase candidate) -> candidate.weightDiff(targetWeight))
-                    .thenComparing(candidate -> candidate.sourceReception.getReceptionTime(), Comparator.nullsLast(Comparator.reverseOrder()))
-                );
-        }
-
-        if (nearestCase.isEmpty()) {
-            nearestCase = caseMap.values()
-                .stream()
-                .max(Comparator.comparing(
-                    candidate -> candidate.sourceReception.getReceptionTime(),
-                    Comparator.nullsLast(Comparator.naturalOrder())
-                ));
-        }
-
-        if (nearestCase.isEmpty()) {
-            return emptyAutofill(true, normalizedBreed, currentWeight);
-        }
-
-        CandidatePrescriptionCase selectedCase = nearestCase.get();
-        return buildAutofillFromDetails(currentReception, true, selectedCase.details);
+        return resolvePrescriptionAutofill(null, null, normalizedSpecies, currentWeight, breed);
     }
 
-    private PrescriptionAutofillResponse buildAutofillFromDetails(
-            ReceptionRecord currentReception,
-            boolean firstVisit,
-            List<PrescriptionDetail> details
+    @Override
+    @Transactional(readOnly = true)
+    public PrescriptionAutofillResponse getPrescriptionAutofillByContext(Long medicineId, Long speciesId, String species, BigDecimal weight) {
+        String normalizedSpecies = normalizeSpeciesText(species);
+        BigDecimal currentWeight = normalizeWeight(weight);
+        return resolvePrescriptionAutofill(medicineId, speciesId, normalizedSpecies, currentWeight, normalizedSpecies);
+    }
+
+    private PrescriptionAutofillResponse resolvePrescriptionAutofill(
+            Long medicineId,
+            Long speciesId,
+            String normalizedSpecies,
+            BigDecimal currentWeight,
+            String breed
     ) {
-        if (details == null || details.isEmpty()) {
-            return emptyAutofill(firstVisit, resolveBreedKey(currentReception), currentReception == null ? null : currentReception.getWeight());
+        Long resolvedSpeciesId = speciesId;
+        if (resolvedSpeciesId == null && normalizedSpecies != null) {
+            resolvedSpeciesId = resolveSpeciesId(normalizedSpecies);
+        }
+        if (normalizedSpecies != null && resolvedSpeciesId == null) {
+            return emptyAutofill(breed, currentWeight);
         }
 
-        List<PrescriptionAutofillResponse.MedicineItem> medicines = details.stream()
+        List<PrescriptionRecommendation> recommendationRows = prescriptionRecommendationRepository
+                .findCandidates(medicineId, resolvedSpeciesId, currentWeight);
+
+        if (recommendationRows.isEmpty()) {
+            return emptyAutofill(breed, currentWeight);
+        }
+
+        List<PrescriptionRecommendation> selectedRows = selectBestRowPerMedicine(
+                recommendationRows,
+                currentWeight
+        );
+        if (selectedRows.isEmpty()) {
+            return emptyAutofill(breed, currentWeight);
+        }
+
+        return buildAutofillFromRecommendations(breed, currentWeight, selectedRows);
+    }
+
+    private List<PrescriptionRecommendation> selectBestRowPerMedicine(
+            List<PrescriptionRecommendation> candidates,
+            BigDecimal currentWeight
+    ) {
+        Comparator<PrescriptionRecommendation> comparator = Comparator
+                .comparing((PrescriptionRecommendation row) -> !isWeightBounded(row, currentWeight))
+                .thenComparing(this::weightRangeWidth)
+                .thenComparing(row -> nullSafe(row.getMinWeight()), Comparator.reverseOrder())
+                .thenComparingLong(PrescriptionRecommendation::getId);
+
+        Map<Long, PrescriptionRecommendation> bestByMedicine = new HashMap<>();
+        for (PrescriptionRecommendation candidate : candidates) {
+            if (candidate == null || candidate.getMedicine() == null || candidate.getMedicine().getId() <= 0) {
+                continue;
+            }
+            long medicineId = candidate.getMedicine().getId();
+            PrescriptionRecommendation currentBest = bestByMedicine.get(medicineId);
+            if (currentBest == null || comparator.compare(candidate, currentBest) < 0) {
+                bestByMedicine.put(medicineId, candidate);
+            }
+        }
+
+        return bestByMedicine.values().stream()
+                .sorted(Comparator
+                        .comparing((PrescriptionRecommendation row) -> row.getMedicine().getName(), Comparator.nullsLast(String::compareToIgnoreCase))
+                        .thenComparingLong(row -> row.getMedicine().getId()))
+                .toList();
+    }
+
+    private boolean isWeightBounded(PrescriptionRecommendation row, BigDecimal currentWeight) {
+        if (row == null || currentWeight == null || currentWeight.signum() <= 0) {
+            return false;
+        }
+        return row.getMinWeight() != null || row.getMaxWeight() != null;
+    }
+
+    private BigDecimal weightRangeWidth(PrescriptionRecommendation row) {
+        if (row == null || row.getMinWeight() == null || row.getMaxWeight() == null) {
+            return BigDecimal.valueOf(Double.MAX_VALUE);
+        }
+        return row.getMaxWeight().subtract(row.getMinWeight()).abs();
+    }
+
+    private BigDecimal nullSafe(BigDecimal value) {
+        return value == null ? BigDecimal.ZERO : value;
+    }
+
+    private Long resolveSpeciesId(String normalizedSpecies) {
+        if (normalizedSpecies == null || normalizedSpecies.isBlank()) {
+            return null;
+        }
+        return petSpeciesRepository.findByCodeIgnoreCase(normalizedSpecies)
+                .map(PetSpecies::getId)
+                .orElse(null);
+    }
+
+    private PrescriptionAutofillResponse buildAutofillFromRecommendations(
+            String breed,
+            BigDecimal currentWeight,
+            List<PrescriptionRecommendation> recommendations
+    ) {
+        if (recommendations == null || recommendations.isEmpty()) {
+            return emptyAutofill(breed, currentWeight);
+        }
+
+        List<PrescriptionAutofillResponse.MedicineItem> medicines = recommendations.stream()
                 .map(this::toAutofillMedicine)
                 .filter(item -> item.getId() != null && item.getId() > 0)
                 .toList();
 
         if (medicines.isEmpty()) {
-            return emptyAutofill(firstVisit, resolveBreedKey(currentReception), currentReception == null ? null : currentReception.getWeight());
+            return emptyAutofill(breed, currentWeight);
         }
 
-        ReceptionRecord sourceReception = extractSourceReception(details.getFirst());
-
         return PrescriptionAutofillResponse.builder()
-                .firstVisit(firstVisit)
+                .firstVisit(false)
                 .hasRecommendation(true)
-                .breed(resolveBreedKey(currentReception))
-                .currentWeight(currentReception == null ? null : currentReception.getWeight())
-                .sourceReceptionId(sourceReception == null ? null : sourceReception.getId())
-                .sourceWeight(sourceReception == null ? null : sourceReception.getWeight())
+                .breed(breed)
+                .currentWeight(currentWeight)
+                .sourceReceptionId(null)
+                .sourceWeight(null)
                 .medicines(medicines)
                 .build();
     }
 
-    private PrescriptionAutofillResponse emptyAutofill(boolean firstVisit, String breed, BigDecimal currentWeight) {
+    private BigDecimal normalizeWeight(BigDecimal weight) {
+        if (weight == null || weight.signum() <= 0) {
+            return null;
+        }
+        return weight;
+    }
+
+    private PrescriptionAutofillResponse emptyAutofill(String breed, BigDecimal currentWeight) {
         return PrescriptionAutofillResponse.builder()
-                .firstVisit(firstVisit)
+                .firstVisit(false)
                 .hasRecommendation(false)
                 .breed(breed)
                 .currentWeight(currentWeight)
@@ -222,8 +295,7 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
             return breed.trim().toLowerCase(Locale.ROOT);
         }
 
-        String species = receptionRecord.getPet().getSpecies();
-        return species == null || species.isBlank() ? null : species.trim().toLowerCase(Locale.ROOT);
+        return resolveSpeciesKey(receptionRecord);
     }
 
     private String resolveSpeciesKey(ReceptionRecord receptionRecord) {
@@ -231,51 +303,43 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
             return null;
         }
 
-        String species = receptionRecord.getPet().getSpecies();
-        return species == null || species.isBlank() ? null : species.trim().toLowerCase(Locale.ROOT);
+        return normalizeSpeciesText(receptionRecord.getPet().getSpecies());
     }
 
-    private ReceptionRecord extractSourceReception(PrescriptionDetail detail) {
-        if (detail != null
-                && detail.getPrescription() != null
-                && detail.getPrescription().getReceptionService() != null
-                && detail.getPrescription().getReceptionService().getReceptionRecord() != null) {
-            return detail.getPrescription().getReceptionService().getReceptionRecord();
-        }
-
-        if (detail == null
-                || detail.getPrescription() == null
-                || detail.getPrescription().getExamResult() == null
-                || detail.getPrescription().getExamResult().getMedicalRecord() == null) {
+    private String normalizeSpeciesText(String rawSpecies) {
+        if (rawSpecies == null || rawSpecies.isBlank()) {
             return null;
         }
-
-        return detail.getPrescription().getExamResult().getMedicalRecord().getReceptionRecord();
+        String normalized = rawSpecies.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "dog", "cho", "chó" -> "cho";
+            case "cat", "meo", "mèo" -> "meo";
+            default -> normalized;
+        };
     }
 
-    private PrescriptionAutofillResponse.MedicineItem toAutofillMedicine(PrescriptionDetail detail) {
-        var medicine = detail.getMedicine();
+    private PrescriptionAutofillResponse.MedicineItem toAutofillMedicine(PrescriptionRecommendation recommendation) {
+        var medicine = recommendation.getMedicine();
         if (medicine == null) {
             return PrescriptionAutofillResponse.MedicineItem.builder().build();
         }
 
-        ParsedDosage parsedDosage = readStructuredDosage(detail)
-            .orElseGet(ParsedDosage::defaultValue);
+        ParsedDosage parsedDosage = ParsedDosage.fromRecommendation(recommendation);
         String dosageUnit = firstNonBlank(
-            detail.getDosageUnit(),
-            medicine.getUnit()
+                recommendation.getDosageUnit(),
+                medicine.getUnit()
         );
         BigDecimal medicinePrice = resolvePriceByUnit(medicine, dosageUnit);
 
         return PrescriptionAutofillResponse.MedicineItem.builder()
                 .id(medicine.getId())
                 .name(medicine.getName())
-            .description(medicine.getDescription())
+                .description(medicine.getDescription())
                 .type(medicine.getType())
                 .unit((dosageUnit == null || dosageUnit.isBlank()) ? medicine.getUnit() : dosageUnit.trim())
                 .price(medicinePrice)
                 .stockQuantity(medicine.getStockQuantity())
-                .quantity(Math.max(1, detail.getQuantity()))
+                .quantity(resolveRecommendedQuantity(recommendation.getQuantity()))
                 .dosage(PrescriptionAutofillResponse.Dosage.builder()
                         .morning(parsedDosage.morning)
                         .noon(parsedDosage.noon)
@@ -291,36 +355,20 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
             return BigDecimal.ZERO;
         }
 
-        String normalizedUnit = dosageUnit == null ? "" : dosageUnit.trim().toLowerCase(Locale.ROOT);
-        if ("hộp".equals(normalizedUnit) || "hop".equals(normalizedUnit) || "box".equals(normalizedUnit)) {
-            BigDecimal boxPrice = resolveBoxPrice(medicine);
-            if (boxPrice != null && boxPrice.signum() > 0) {
-                return boxPrice;
-            }
+        // Rule: Medicines are always sold by box.
+        // We prioritize the box price for all clinical records.
+        if (medicine.getQuantityPerBox() > 0) {
+            return resolveBoxPrice(medicine);
         }
+
         return resolveUnitPrice(medicine);
     }
 
-    private Optional<ParsedDosage> readStructuredDosage(PrescriptionDetail detail) {
-        if (detail == null) {
-            return Optional.empty();
+    private Integer resolveRecommendedQuantity(BigDecimal rawQuantity) {
+        if (rawQuantity == null || rawQuantity.signum() <= 0) {
+            return 1;
         }
-
-        Integer morning = detail.getMorning();
-        Integer noon = detail.getNoon();
-        Integer afternoon = detail.getAfternoon();
-        Integer evening = detail.getEvening();
-        if (morning == null && noon == null && afternoon == null && evening == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(new ParsedDosage(
-            Math.max(0, morning == null ? 1 : morning),
-            Math.max(0, noon == null ? 1 : noon),
-            Math.max(0, afternoon == null ? 1 : afternoon),
-            Math.max(0, evening == null ? 1 : evening),
-                detail.getInstruction() == null ? "" : detail.getInstruction().trim()
-        ));
+        return Math.max(1, rawQuantity.setScale(0, RoundingMode.CEILING).intValue());
     }
 
     private String firstNonBlank(String... values) {
@@ -332,29 +380,31 @@ public class ExamPrescriptionServiceImpl implements ExamPrescriptionService {
         return null;
     }
 
-    private static class CandidatePrescriptionCase {
-        private final ReceptionRecord sourceReception;
-        private final List<PrescriptionDetail> details = new ArrayList<>();
-
-        private CandidatePrescriptionCase(ReceptionRecord sourceReception) {
-            this.sourceReception = sourceReception;
-        }
-
-        private boolean hasWeight() {
-            return sourceReception.getWeight() != null && sourceReception.getWeight().signum() > 0;
-        }
-
-        private double weightDiff(double targetWeight) {
-            if (!hasWeight()) {
-                return Double.MAX_VALUE;
+    private record ParsedDosage(
+            BigDecimal morning,
+            BigDecimal noon,
+            BigDecimal afternoon,
+            BigDecimal evening,
+            String note
+    ) {
+        private static ParsedDosage fromRecommendation(PrescriptionRecommendation recommendation) {
+            if (recommendation == null) {
+                return new ParsedDosage(BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE, "");
             }
-            return Math.abs(sourceReception.getWeight().doubleValue() - targetWeight);
+            return new ParsedDosage(
+                    nonNegative(recommendation.getDoseMorning()),
+                    nonNegative(recommendation.getDoseNoon()),
+                    nonNegative(recommendation.getDoseAfternoon()),
+                    nonNegative(recommendation.getDoseEvening()),
+                    recommendation.getInstruction() == null ? "" : recommendation.getInstruction().trim()
+            );
         }
-    }
 
-    private record ParsedDosage(int morning, int noon, int afternoon, int evening, String note) {
-        private static ParsedDosage defaultValue() {
-            return new ParsedDosage(1, 1, 1, 1, "");
+        private static BigDecimal nonNegative(BigDecimal value) {
+            if (value == null) {
+                return BigDecimal.ZERO;
+            }
+            return value.max(BigDecimal.ZERO);
         }
     }
 }

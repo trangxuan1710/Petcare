@@ -11,14 +11,14 @@ import paymentService from '../../api/paymentService';
 import customerService from '../../api/customerService';
 import authService from '../../api/authService';
 import useHeaderProfile from '../../hooks/useHeaderProfile';
-import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE.jsx';
 import AppTopHeader from '../../components/common/AppTopHeader';
 import { toTitleCase } from '../../utils/textFormat';
 import './TodayOrders.css';
 
 const MONTH_NAMES = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
+    'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
 ];
 const SPECIES_LABELS = {
     cho: 'Chó',
@@ -42,118 +42,7 @@ const TAB_STATES = {
     [ORDER_STATUS.ALL]: [],
 };
 
-const initialOrders = [
-    // {
-    //     id: 1,
-    //     customerName: 'Nguyễn Anh Đức',
-    //     phone: '0912345678',
-    //     ticketId: '2141441',
-    //     status: ORDER_STATUS.RECEIVED,
-    //     statusLabel: 'Đã tiếp đón',
-    //     createdAt: 'Tiếp đón lúc 10:03 - 20/03/2026',
-    //     date: 20,
-    //     species: 'cho',
-    //     hasAdvance: true,
-    //     pets: [{ name: 'Kuro', breed: 'Chó Poodle', gender: 'male', weight: '4.5kg' }],
-    //     sourceOrder: '2141441',
-    //     paymentEnabled: true,
-    //     hideSource: false,
-    //     avatar: 'https://placehold.co/80x80/e0f2ef/209D80?text=NAD'
-    // },
-    // {
-    //     id: 2,
-    //     customerName: 'Lê Huyền Linh',
-    //     phone: '0816278274',
-    //     ticketId: '2141442',
-    //     status: ORDER_STATUS.RECEIVED,
-    //     statusLabel: 'Đã tiếp đón',
-    //     createdAt: 'Tiếp đón lúc 11:10 - 20/03/2026',
-    //     date: 20,
-    //     species: 'meo',
-    //     hasAdvance: false,
-    //     pets: [{ name: 'Mike', breed: 'Mèo Anh lông ngắn', gender: 'male', weight: '2.5kg' }],
-    //     sourceOrder: null,
-    //     paymentEnabled: true,
-    //     hideSource: false,
-    //     avatar: 'https://placehold.co/80x80/e0f2ef/209D80?text=LHL'
-    // },
-    // {
-    //     id: 3,
-    //     customerName: 'Nguyễn Duy Ngọc',
-    //     phone: '0908264671',
-    //     ticketId: '2141551',
-    //     status: ORDER_STATUS.WAITING_PAYMENT,
-    //     statusLabel: 'Chờ thanh toán',
-    //     createdAt: 'Lập phiếu lúc 09:03 - 20/03/2026',
-    //     date: 20,
-    //     species: 'cho',
-    //     hasAdvance: true,
-    //     pets: [{ name: 'Milo', breed: 'Chó Corgi', gender: 'male', weight: '7kg' }],
-    //     sourceOrder: null,
-    //     serviceSummary: '82 Hug × 16 Hug',
-    //     totalAmount: '251.000đ',
-    //     paymentEnabled: true,
-    //     hideSource: false,
-    //     avatar: 'https://placehold.co/80x80/e0f2ef/209D80?text=NDN'
-    // },
-    // {
-    //     id: 4,
-    //     customerName: 'Trần Minh Hạnh',
-    //     phone: '0902627274',
-    //     ticketId: '2141999',
-    //     status: ORDER_STATUS.WAITING_PAYMENT,
-    //     statusLabel: 'Chờ thanh toán',
-    //     createdAt: 'Lập phiếu lúc 08:50 - 20/03/2026',
-    //     date: 20,
-    //     species: 'khac',
-    //     hasAdvance: false,
-    //     pets: [{ name: 'Peach', breed: 'Thỏ Mini', gender: 'female', weight: '1.1kg' }],
-    //     sourceOrder: null,
-    //     serviceSummary: '12 Hug × 04 Hug',
-    //     totalAmount: '179.000đ',
-    //     paymentEnabled: true,
-    //     hideSource: false,
-    //     avatar: 'https://placehold.co/80x80/e0f2ef/209D80?text=TMH'
-    // },
-    // {
-    //     id: 5,
-    //     customerName: 'Hà An Huy',
-    //     phone: '0977771234',
-    //     ticketId: '2141777',
-    //     status: ORDER_STATUS.PAID,
-    //     statusLabel: 'Đã thanh toán',
-    //     createdAt: 'Thanh toán lúc 07:45 - 20/03/2026',
-    //     date: 20,
-    //     species: 'cho',
-    //     hasAdvance: true,
-    //     pets: [{ name: 'Pika', breed: 'Chó Phốc sóc', gender: 'female', weight: '2.3kg' }],
-    //     sourceOrder: '2141333',
-    //     serviceSummary: '64 Hug × 08 Hug',
-    //     totalAmount: '368.000đ',
-    //     paymentEnabled: false,
-    //     hideSource: false,
-    //     avatar: 'https://placehold.co/80x80/e0f2ef/209D80?text=HAH'
-    // },
-    // {
-    //     id: 6,
-    //     customerName: 'Phạm Ngọc Vy',
-    //     phone: '0933338899',
-    //     ticketId: '2141880',
-    //     status: ORDER_STATUS.PAID,
-    //     statusLabel: 'Đã thanh toán',
-    //     createdAt: 'Thanh toán lúc 13:25 - 20/03/2026',
-    //     date: 20,
-    //     species: 'meo',
-    //     hasAdvance: true,
-    //     pets: [{ name: 'Bông', breed: 'Mèo Ba Tư', gender: 'female', weight: '3.2kg' }],
-    //     sourceOrder: null,
-    //     serviceSummary: '31 Hug × 06 Hug',
-    //     totalAmount: '205.000đ',
-    //     paymentEnabled: false,
-    //     hideSource: false,
-    //     avatar: 'https://placehold.co/80x80/e0f2ef/209D80?text=PNV'
-    // }
-];
+const initialOrders = [];
 
 const buildCustomerAvatar = (name) => {
     const initials = String(name || 'KH')
@@ -182,6 +71,113 @@ const toIsoDate = (date) => {
     const day = `${date.getDate()}`.padStart(2, '0');
     return `${year}-${month}-${day}`;
 };
+
+const parseBackendDate = (rawValue) => {
+    if (!rawValue) return Number.NaN;
+    if (rawValue instanceof Date) return rawValue.getTime();
+
+    let value = String(rawValue).trim();
+    if (!value) return Number.NaN;
+
+    value = value.replace(' ', 'T');
+    value = value.replace(/\.(\d{3})\d+/, '.$1');
+
+    let parsed = new Date(value).getTime();
+    if (!Number.isNaN(parsed)) return parsed;
+
+    const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?/);
+    if (!match) return Number.NaN;
+
+    const [, year, month, day, hour, minute, second = '0'] = match;
+    const asLocalDate = new Date(
+        Number(year),
+        Number(month) - 1,
+        Number(day),
+        Number(hour),
+        Number(minute),
+        Number(second),
+    );
+    parsed = asLocalDate.getTime();
+    return Number.isNaN(parsed) ? Number.NaN : parsed;
+};
+
+const resolveRawStatus = (rawStatus) => {
+    if (rawStatus == null) return '';
+    if (typeof rawStatus === 'object') {
+        return rawStatus.value || rawStatus.name || rawStatus.label || '';
+    }
+    return String(rawStatus);
+};
+
+const repairMojibakeUtf8 = (value) => {
+    const input = String(value || '').trim();
+    if (!input) return input;
+    if (!/[ÃƒÃ„Ã‚Ã¡Â»]/.test(input)) {
+        return input;
+    }
+
+    try {
+        const bytes = Uint8Array.from([...input].map((char) => char.charCodeAt(0) & 0xff));
+        const decoded = new TextDecoder('utf-8', { fatal: false }).decode(bytes).trim();
+        return decoded || input;
+    } catch {
+        return input;
+    }
+};
+
+const stripDiacritics = (value) => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+const toSearchableStatus = (rawStatus) => {
+    const statusValue = resolveRawStatus(rawStatus);
+    const repairedStatus = repairMojibakeUtf8(statusValue);
+
+    return stripDiacritics(repairedStatus)
+        .toLowerCase()
+        .replace(/[^a-z0-9_\s]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+};
+
+const isEmergencyCase = (record) => Boolean(
+    record?.isEmergency
+    ?? record?.emergency
+    ?? record?.examForm?.isEmergency
+    ?? record?.examForm?.emergency
+);
+
+const CUSTOMER_NAME_ALLOWED_PATTERN = /^[\p{L}\p{M}\s]+$/u;
+const CUSTOMER_PHONE_PATTERN = /^0\d{9}$/;
+
+const normalizeCustomerName = (value = '') => String(value).replace(/\s+/g, ' ').trim();
+
+const validateCustomerName = (value = '') => {
+    const normalized = normalizeCustomerName(value);
+    if (!normalized) {
+        return 'Vui lòng nhập tên khách hàng.';
+    }
+    if (!CUSTOMER_NAME_ALLOWED_PATTERN.test(normalized)) {
+        return 'Tên chỉ được chứa chữ tiếng Việt và khoảng trắng.';
+    }
+    return '';
+};
+
+const validateCustomerPhone = (value = '') => {
+    const phone = String(value).trim();
+    if (!phone) {
+        return 'Vui lòng nhập số điện thoại.';
+    }
+    if (!CUSTOMER_PHONE_PATTERN.test(phone)) {
+        return 'Số điện thoại phải bắt đầu bằng 0 và gồm đúng 10 số.';
+    }
+    return '';
+};
+
+const buildNewCustomerErrors = (payload = {}) => ({
+    name: validateCustomerName(payload?.name || ''),
+    phone: validateCustomerPhone(payload?.phone || ''),
+});
 
 const TodayOrders = () => {
     const navigate = useNavigate();
@@ -213,6 +209,17 @@ const TodayOrders = () => {
     const [newCustomer, setNewCustomer] = useState({
         name: '', phone: ''
     });
+    const [newCustomerErrors, setNewCustomerErrors] = useState({
+        name: '',
+        phone: '',
+    });
+    const isNewCustomerFormInvalid = useMemo(() => {
+        const errors = buildNewCustomerErrors({
+            name: newCustomer.name,
+            phone: newCustomer.phone,
+        });
+        return Boolean(errors.name || errors.phone);
+    }, [newCustomer.name, newCustomer.phone]);
 
     const today = useMemo(() => {
         const now = new Date();
@@ -282,20 +289,26 @@ const TodayOrders = () => {
         let isMounted = true;
 
         const mapStatus = (rawStatus) => {
-            const status = String(rawStatus || '').trim().toLowerCase();
-            if (status === 'đã thanh toán' || status === 'paid') {
-                return ORDER_STATUS.PAID;
-            }
-            if (status === 'chờ thanh toán' || status === 'waiting_payment') {
+            const status = toSearchableStatus(rawStatus);
+            if (status.includes('waiting_payment') || status.includes('cho thanh toan')) {
                 return ORDER_STATUS.WAITING_PAYMENT;
             }
             if (
-                status === 'đang thực hiện'
-                || status === 'chờ kết luận'
-                || status === 'chờ thực hiện'
-                || status === 'in_progress'
-                || status === 'waiting_conclusion'
-                || status === 'waiting_execution'
+                status.includes('paid')
+                || status.includes('completed')
+                || (status.includes('thanh toan') && !status.includes('cho thanh toan'))
+            ) {
+                return ORDER_STATUS.PAID;
+            }
+            if (
+                status.includes('in_progress')
+                || status.includes('dang thuc hien')
+                || status.includes('waiting_conclusion')
+                || status.includes('ket luan')
+                || status.includes('waiting_execution')
+                || status.includes('cho thuc hien')
+                || status.includes('received')
+                || status.includes('pending')
             ) {
                 return ORDER_STATUS.RECEIVED;
             }
@@ -304,7 +317,8 @@ const TodayOrders = () => {
 
         const mapOrder = (record) => {
             const mappedStatus = mapStatus(record?.status);
-            const dateObj = record?.receptionTime ? new Date(record.receptionTime) : new Date();
+            const receptionTs = parseBackendDate(record?.receptionTime);
+            const dateObj = Number.isNaN(receptionTs) ? new Date() : new Date(receptionTs);
             const rawTotalAmount = record?.invoice?.totalAmount ?? record?.totalAmount ?? null;
             const totalAmount = rawTotalAmount == null ? null : formatCurrency(rawTotalAmount);
             const statusLabel =
@@ -359,6 +373,7 @@ const TodayOrders = () => {
                 hideSource: false,
                 avatar: `https://placehold.co/80x80/e0f2ef/209D80?text=${initials || 'KH'}`,
                 receptionRecord: record,
+                isEmergency: isEmergencyCase(record),
             };
         };
 
@@ -433,7 +448,17 @@ const TodayOrders = () => {
 
                 const mappedOrders = records
                     .map(mapOrder)
-                    .sort((a, b) => new Date(b?.receptionRecord?.receptionTime || 0) - new Date(a?.receptionRecord?.receptionTime || 0));
+                    .sort((a, b) => {
+                        if (a.isEmergency !== b.isEmergency) {
+                            return a.isEmergency ? -1 : 1;
+                        }
+                        const leftTime = parseBackendDate(a?.receptionRecord?.receptionTime);
+                        const rightTime = parseBackendDate(b?.receptionRecord?.receptionTime);
+                        if (Number.isNaN(leftTime) && Number.isNaN(rightTime)) return 0;
+                        if (Number.isNaN(leftTime)) return 1;
+                        if (Number.isNaN(rightTime)) return -1;
+                        return rightTime - leftTime;
+                    });
                 const ordersWithTotals = await enrichOrderTotals(mappedOrders);
                 if (!isMounted) return;
                 setOrders(ordersWithTotals);
@@ -469,8 +494,10 @@ const TodayOrders = () => {
     }, [lastSevenDaysRange, reloadKey, activeStatus]);
 
     const badgeData = useMemo(() => {
-        return receivedBadgeCounts;
-    }, [receivedBadgeCounts]);
+        const todayKey = lastSevenDaysRange.toDate;
+        const todayCount = receivedBadgeCounts[todayKey] || 0;
+        return todayCount > 0 ? { [todayKey]: todayCount } : {};
+    }, [lastSevenDaysRange.toDate, receivedBadgeCounts]);
 
     const filteredBySearchAndFilters = useMemo(() => {
         const keyword = searchTerm.trim().toLowerCase();
@@ -550,6 +577,7 @@ const TodayOrders = () => {
 
     const handleOpenCreateCustomerModal = () => {
         setNewCustomer({ name: '', phone: '' });
+        setNewCustomerErrors({ name: '', phone: '' });
         setShowNewCustomerModal(true);
     };
 
@@ -605,11 +633,14 @@ const TodayOrders = () => {
     const handleCreateCustomer = async () => {
         if (isCreatingCustomer) return;
 
-        const name = String(newCustomer.name || '').trim();
+        const name = normalizeCustomerName(newCustomer.name || '');
         const phone = String(newCustomer.phone || '').trim();
+        const errors = buildNewCustomerErrors({ name, phone });
 
-        if (!name || !phone) {
-            showToast('error', 'Vui lòng nhập tên khách hàng và số điện thoại.');
+        setNewCustomerErrors(errors);
+
+        if (errors.name || errors.phone) {
+            showToast('error', errors.name || errors.phone);
             return;
         }
 
@@ -621,6 +652,7 @@ const TodayOrders = () => {
 
             setShowNewCustomerModal(false);
             setNewCustomer({ name: '', phone: '' });
+            setNewCustomerErrors({ name: '', phone: '' });
             setActiveStatus(ORDER_STATUS.RECEIVED);
             setSearchTerm(normalizedClient.phone === '--' ? phone : normalizedClient.phone);
             setSearchedCustomers([normalizedClient]);
@@ -804,6 +836,7 @@ const TodayOrders = () => {
                                             selectedPetId={c?.receptionRecord?.pet?.id}
                                             showFooter={false}
                                             onCardClick={() => handleOpenReceivedDetail(c)}
+                                            isEmergency={c.isEmergency}
                                         />
                                     ) : (
                                         <ReceptionCard
@@ -833,9 +866,9 @@ const TodayOrders = () => {
                                 <p className="to-empty-text">Không tìm thấy khách hàng</p>
                                 <button className="to-empty-add-btn" onClick={handleOpenCreateCustomerModal}>
                                     <span className="to-empty-add-icon-wrap">
-                                        <PlusCircle size={16} color="#209D80" strokeWidth={2.25} />
+                                        <PlusCircle size={20} color="#209D80" strokeWidth={2.2} />
                                     </span>
-                                    <span>Tạo mới khách hàng</span>
+                                    <span className="to-empty-add-text">Tạo mới khách hàng</span>
                                 </button>
                             </div>
                         ) : null}
@@ -878,9 +911,9 @@ const TodayOrders = () => {
                         <p className="to-empty-text">Không có đơn phù hợp bộ lọc</p>
                         <button className="to-empty-add-btn" onClick={handleOpenCreateCustomerModal}>
                             <span className="to-empty-add-icon-wrap">
-                                <PlusCircle size={32} color="#209D80" />
+                                <PlusCircle size={20} color="#209D80" strokeWidth={2.2} />
                             </span>
-                            <span>Tạo mới khách hàng</span>
+                            <span className="to-empty-add-text">Tạo mới khách hàng</span>
                         </button>
                     </div>
                 )}
@@ -901,26 +934,68 @@ const TodayOrders = () => {
                         <h2 className="to-modal-title">Tạo mới khách hàng</h2>
 
                         <div className="to-modal-form">
-                            <div className="to-modal-field">
-                                <label className="to-modal-label">Khách hàng <span className="to-modal-req">*</span></label>
-                                <input
-                                    type="text"
-                                    className="to-modal-input"
-                                    placeholder="Tên khách hàng"
-                                    value={newCustomer.name}
-                                    onChange={(e) => setNewCustomer({...newCustomer, name: e.target.value})}
-                                />
+                            <div className="to-modal-field-group">
+                                <div className={`to-modal-field ${newCustomerErrors.name ? 'is-invalid' : ''}`}>
+                                    <label className="to-modal-label">Khách hàng <span className="to-modal-req">*</span></label>
+                                    <input
+                                        type="text"
+                                        className="to-modal-input"
+                                        placeholder="Tên khách hàng"
+                                        value={newCustomer.name}
+                                        onChange={(e) => {
+                                            const nextName = e.target.value;
+                                            setNewCustomer((prev) => ({ ...prev, name: nextName }));
+                                            setNewCustomerErrors((prev) => ({
+                                                ...prev,
+                                                name: validateCustomerName(nextName),
+                                            }));
+                                        }}
+                                        onBlur={(e) => {
+                                            setNewCustomerErrors((prev) => ({
+                                                ...prev,
+                                                name: validateCustomerName(e.target.value),
+                                            }));
+                                        }}
+                                        required
+                                        aria-required="true"
+                                        aria-invalid={Boolean(newCustomerErrors.name)}
+                                    />
+                                </div>
+                                {newCustomerErrors.name && (
+                                    <p className="to-modal-field-error">{newCustomerErrors.name}</p>
+                                )}
                             </div>
 
-                            <div className="to-modal-field">
-                                <label className="to-modal-label">Số điện thoại <span className="to-modal-req">*</span></label>
-                                <input
-                                    type="text"
-                                    className="to-modal-input"
-                                    placeholder="Số điện thoại"
-                                    value={newCustomer.phone}
-                                    onChange={(e) => setNewCustomer({...newCustomer, phone: e.target.value.replace(/[^\d]/g, '')})}
-                                />
+                            <div className="to-modal-field-group">
+                                <div className={`to-modal-field ${newCustomerErrors.phone ? 'is-invalid' : ''}`}>
+                                    <label className="to-modal-label">Số điện thoại <span className="to-modal-req">*</span></label>
+                                    <input
+                                        type="tel"
+                                        className="to-modal-input"
+                                        placeholder="Số điện thoại"
+                                        value={newCustomer.phone}
+                                        onChange={(e) => {
+                                            const sanitizedPhone = e.target.value.replace(/[^\d]/g, '').slice(0, 10);
+                                            setNewCustomer((prev) => ({ ...prev, phone: sanitizedPhone }));
+                                            setNewCustomerErrors((prev) => ({
+                                                ...prev,
+                                                phone: '',
+                                            }));
+                                        }}
+                                        onBlur={() => {
+                                            setNewCustomerErrors((prev) => ({
+                                                ...prev,
+                                                phone: validateCustomerPhone(newCustomer.phone),
+                                            }));
+                                        }}
+                                        required
+                                        aria-required="true"
+                                        aria-invalid={Boolean(newCustomerErrors.phone)}
+                                    />
+                                </div>
+                                {newCustomerErrors.phone && (
+                                    <p className="to-modal-field-error">{newCustomerErrors.phone}</p>
+                                )}
                             </div>
 
                         </div>
@@ -930,7 +1005,7 @@ const TodayOrders = () => {
                             <button
                                 className="to-modal-btn-submit"
                                 onClick={handleCreateCustomer}
-                                disabled={isCreatingCustomer}
+                                disabled={isCreatingCustomer || isNewCustomerFormInvalid}
                             >
                                 {isCreatingCustomer ? 'Đang tạo...' : 'Tạo mới'}
                             </button>
@@ -943,3 +1018,7 @@ const TodayOrders = () => {
 };
 
 export default TodayOrders;
+
+
+
+

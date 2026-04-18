@@ -46,23 +46,23 @@
 }
 
 .app-top-header-greeting {
-    font-size: 12px;
-    line-height: 1.2;
-    font-weight: 500;
+    font-size: 14px;
+    line-height: 1.25;
+    font-weight: 400;
     color: #1f2937;
     margin: 0;
 }
 
 .app-top-header-name {
-    font-size: clamp(15px, 4vw, 18px);
-    line-height: 1.2;
-    font-weight: 700;
+    font-size: 17px;
+    line-height: 1.25;
+    font-weight: 600;
     color: #111827;
     margin: 2px 0 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 58vw;
+    max-width: 54vw;
 }
 
 .app-top-header-actions {

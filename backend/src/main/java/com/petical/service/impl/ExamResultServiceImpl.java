@@ -5,28 +5,29 @@ import com.petical.dto.request.RecordExamResultRequest;
 import com.petical.dto.response.RecordExamResultResponse;
 import com.petical.entity.Doctor;
 import com.petical.entity.ExamResult;
-import com.petical.entity.ExamStatus;
 import com.petical.entity.MedicalRecord;
 import com.petical.entity.Medicine;
 import com.petical.entity.Prescription;
 import com.petical.entity.PrescriptionDetail;
 import com.petical.entity.ReceptionRecord;
 import com.petical.entity.ReceptionService;
+import com.petical.entity.ResultFile;
 import com.petical.entity.TreatmentDirection;
 import com.petical.enums.ErrorCode;
+import com.petical.enums.MedicalRecordStatus;
 import com.petical.enums.ReceptionServiceStatus;
 import com.petical.enums.ReceptionStatus;
 import com.petical.enums.TreatmentDecision;
 import com.petical.errors.AppException;
 import com.petical.repository.DoctorRepository;
 import com.petical.repository.ExamResultRepository;
-import com.petical.repository.ExamStatusRepository;
 import com.petical.repository.MedicalRecordRepository;
 import com.petical.repository.MedicineRepository;
 import com.petical.repository.PrescriptionDetailRepository;
 import com.petical.repository.PrescriptionRepository;
 import com.petical.repository.ReceptionRecordRepository;
 import com.petical.repository.ReceptionServiceRepository;
+import com.petical.repository.ResultFileRepository;
 import com.petical.repository.ServiceRepository;
 import com.petical.repository.TreatmentDirectionRepository;
 import com.petical.service.ExamResultService;
@@ -38,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,15 +54,13 @@ import java.util.UUID;
 @Service
 @RequiredArgsConstructor
 public class ExamResultServiceImpl implements ExamResultService {
-    private static final String DEFAULT_EXAM_STATUS_NAME = "IN_PROGRESS";
-    private static final String DEFAULT_TREATMENT_DIRECTION_NAME = "Cho về";
+    private static final String DEFAULT_TREATMENT_DIRECTION_NAME = "Cho ve";
     private static final long DEFAULT_CLINICAL_SERVICE_ID = 1L;
     private static final Path EXAM_RESULT_STORAGE_DIR = Paths.get("storage", "exam-results");
 
     private final ReceptionRecordRepository receptionRecordRepository;
     private final DoctorRepository doctorRepository;
     private final MedicalRecordRepository medicalRecordRepository;
-    private final ExamStatusRepository examStatusRepository;
     private final ExamResultRepository examResultRepository;
     private final TreatmentDirectionRepository treatmentDirectionRepository;
     private final ServiceRepository serviceRepository;
@@ -69,6 +69,7 @@ public class ExamResultServiceImpl implements ExamResultService {
     private final PrescriptionDetailRepository prescriptionDetailRepository;
     private final MedicineRepository medicineRepository;
     private final SseNotificationService sseNotificationService;
+    private final ResultFileRepository resultFileRepository;
 
     @Override
     @Transactional
@@ -96,10 +97,18 @@ public class ExamResultServiceImpl implements ExamResultService {
                         .receptionRecord(receptionRecord)
                         .doctor(doctor)
                         .status(resolveDefaultExamStatus())
+                        .examTypeOption(resolveExamTypeOption(receptionRecord))
+                        .emergency(resolveEmergency(receptionRecord))
                         .examDate(LocalDateTime.now())
                         .build()));
 
         medicalRecord.setDoctor(doctor);
+        if (medicalRecord.getExamTypeOption() == null) {
+            medicalRecord.setExamTypeOption(resolveExamTypeOption(receptionRecord));
+        }
+        if (!medicalRecord.isEmergency()) {
+            medicalRecord.setEmergency(resolveEmergency(receptionRecord));
+        }
         if (request.getExamDate() != null) {
             medicalRecord.setExamDate(request.getExamDate());
         } else if (medicalRecord.getExamDate() == null) {
@@ -114,14 +123,12 @@ public class ExamResultServiceImpl implements ExamResultService {
         examResult.setStartTime(request.getStartTime() == null ? LocalDateTime.now() : request.getStartTime());
         examResult.setEndTime(request.getEndTime());
 
-        List<String> savedEvidencePaths = storeEvidenceFiles(images);
-        if (!savedEvidencePaths.isEmpty()) {
-            examResult.setEvidencePath(String.join(";", savedEvidencePaths));
-        }
+        List<StoredEvidenceFile> savedEvidenceFiles = storeEvidenceFiles(images);
         examResult = examResultRepository.save(examResult);
+        saveExamResultFiles(examResult, savedEvidenceFiles);
 
         int serviceCount = upsertReceptionServices(receptionRecord, request.getServiceIds());
-        Prescription prescription = upsertPrescription(receptionRecord, examResult, request.getMedicines());
+        Prescription prescription = upsertPrescription(receptionRecord, medicalRecord, examResult, request.getMedicines());
         int medicineCount = request.getMedicines() == null ? 0 : request.getMedicines().size();
 
         boolean discharge = request.getTreatmentDecision() == TreatmentDecision.DISCHARGE
@@ -131,12 +138,17 @@ public class ExamResultServiceImpl implements ExamResultService {
             appliedDecision = TreatmentDecision.DISCHARGE;
         }
 
-        if (discharge) {
+                if (discharge) {
             receptionRecord.setStatus(ReceptionStatus.WAITING_PAYMENT);
+            String petName = receptionRecord.getPet() == null || receptionRecord.getPet().getName() == null
+                    ? "thu cung"
+                    : receptionRecord.getPet().getName();
+            Long receptionId = receptionRecord.getId();
             sseNotificationService.sendNotificationToRole("RECEPTIONIST",
                     NotificationMessage.builder()
-                            .title("Chỉ định thanh toán")
-                            .message("Bác sĩ đã hoàn tất khám cho thú cưng " + receptionRecord.getPet().getName() + " và chờ thanh toán.")
+                            .title("Ca kham cho thanh toan")
+                            .message("Bac si da hoan tat kham cho thu cung " + petName + ". Vui long thu ngan.")
+                            .link("/receptionists/payment/" + receptionId)
                             .timestamp(LocalDateTime.now())
                             .type("WAITING_PAYMENT")
                             .build());
@@ -152,7 +164,7 @@ public class ExamResultServiceImpl implements ExamResultService {
                 .examResultId(examResult.getId())
                 .treatmentDecision(appliedDecision)
                 .prescriptionId(prescription == null ? null : prescription.getId())
-                .evidencePaths(readEvidencePaths(examResult.getEvidencePath()))
+                .evidencePaths(loadExamEvidencePaths(examResult))
                 .serviceCount(serviceCount)
                 .medicineCount(medicineCount)
                 .receptionStatus(receptionRecord.getStatus())
@@ -172,9 +184,16 @@ public class ExamResultServiceImpl implements ExamResultService {
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
     }
 
-    private ExamStatus resolveDefaultExamStatus() {
-        return examStatusRepository.findFirstByNameIgnoreCase(DEFAULT_EXAM_STATUS_NAME)
-                .orElseGet(() -> examStatusRepository.save(ExamStatus.builder().name(DEFAULT_EXAM_STATUS_NAME).build()));
+    private MedicalRecordStatus resolveDefaultExamStatus() {
+        return MedicalRecordStatus.IN_PROGRESS;
+    }
+
+    private com.petical.entity.ExamTypeOption resolveExamTypeOption(ReceptionRecord receptionRecord) {
+        return null;
+    }
+
+    private boolean resolveEmergency(ReceptionRecord receptionRecord) {
+        return false;
     }
 
     private TreatmentDirection resolveTreatmentDirection(RecordExamResultRequest request) {
@@ -196,15 +215,19 @@ public class ExamResultServiceImpl implements ExamResultService {
         }
 
         return treatmentDirectionRepository.findFirstByNameIgnoreCase(DEFAULT_TREATMENT_DIRECTION_NAME)
-                .orElseGet(() -> treatmentDirectionRepository.save(TreatmentDirection.builder().name(DEFAULT_TREATMENT_DIRECTION_NAME).build()));
+                .orElseGet(() -> treatmentDirectionRepository.save(
+                        TreatmentDirection.builder()
+                                .name(DEFAULT_TREATMENT_DIRECTION_NAME)
+                                .build()
+                ));
     }
 
     private String mapTreatmentDecisionToDirectionName(TreatmentDecision decision) {
         return switch (decision) {
-            case DISCHARGE -> "Cho về";
-            case INPATIENT_TREATMENT -> "Điều trị nội trú";
-            case OUTPATIENT_TREATMENT -> "Điều trị ngoại trú";
-            case PARACLINICAL_EXAM -> "Khám cận lâm sàng";
+            case DISCHARGE -> "Cho vÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Â";
+            case INPATIENT_TREATMENT -> "ÃƒÆ’Ã¢â‚¬Å¾Ãƒâ€šÃ‚ÂiÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Âu trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ nÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â‚¬Å¾Ã‚Â¢i trÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âº";
+            case OUTPATIENT_TREATMENT -> "ÃƒÆ’Ã¢â‚¬Å¾Ãƒâ€šÃ‚ÂiÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»Ãƒâ€šÃ‚Âu trÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚Â»ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¹ ngoÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â¡i trÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âº";
+            case PARACLINICAL_EXAM -> "KhÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡m cÃƒÆ’Ã‚Â¡Ãƒâ€šÃ‚ÂºÃƒâ€šÃ‚Â­n lÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢m sÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â ng";
         };
     }
 
@@ -260,7 +283,12 @@ public class ExamResultServiceImpl implements ExamResultService {
         return attached;
     }
 
-    private Prescription upsertPrescription(ReceptionRecord receptionRecord, ExamResult examResult, List<AddExamPrescriptionItemRequest> medicines) {
+    private Prescription upsertPrescription(
+            ReceptionRecord receptionRecord,
+            MedicalRecord medicalRecord,
+            ExamResult examResult,
+            List<AddExamPrescriptionItemRequest> medicines
+    ) {
         if (medicines == null || medicines.isEmpty()) {
             return null;
         }
@@ -283,22 +311,31 @@ public class ExamResultServiceImpl implements ExamResultService {
                 if (ownerService != null) {
                     prescription = prescriptionRepository.findByReceptionServiceId(ownerService.getId())
                             .orElseGet(() -> prescriptionRepository.save(Prescription.builder()
+                                    .medicalRecord(medicalRecord)
                                     .examResult(examResult)
                                     .receptionService(ownerService)
                                     .build()));
                 } else {
-                    prescription = prescriptionRepository.findByExamResultIdIn(List.of(examResult.getId()))
-                        .stream()
-                        .findFirst()
-                        .orElseGet(() -> prescriptionRepository.save(Prescription.builder()
-                            .examResult(examResult)
-                            .build()));
+                    prescription = prescriptionRepository.findByMedicalRecordId(medicalRecord.getId())
+                            .orElseGet(() -> prescriptionRepository.findByExamResultIdIn(List.of(examResult.getId()))
+                                    .stream()
+                                    .findFirst()
+                                    .orElseGet(() -> prescriptionRepository.save(Prescription.builder()
+                                            .medicalRecord(medicalRecord)
+                                            .examResult(examResult)
+                                            .build())));
                 }
 
                 if (prescription.getReceptionService() == null && ownerService != null) {
                     prescription.setReceptionService(ownerService);
-                    prescription = prescriptionRepository.save(prescription);
                 }
+                if (prescription.getMedicalRecord() == null) {
+                    prescription.setMedicalRecord(medicalRecord);
+                }
+                if (prescription.getExamResult() == null) {
+                    prescription.setExamResult(examResult);
+                }
+                prescription = prescriptionRepository.save(prescription);
 
                 prescriptionByOwnerServiceId.put(ownerServiceId, prescription);
             }
@@ -344,6 +381,7 @@ public class ExamResultServiceImpl implements ExamResultService {
             if (requested != null) {
                 return requested;
             }
+            throw new AppException(ErrorCode.RESOURCE_NOT_FOUND);
         }
 
         return receptionServiceRepository.findFirstByReceptionRecordIdAndServiceIdOrderByIdAsc(
@@ -363,8 +401,8 @@ public class ExamResultServiceImpl implements ExamResultService {
         return item.getQuantity() == null ? 0 : item.getQuantity();
     }
 
-    private int resolveDoseValue(int rawDose) {
-        return Math.max(0, rawDose);
+    private BigDecimal resolveDoseValue(int rawDose) {
+        return BigDecimal.valueOf(Math.max(0, rawDose));
     }
 
     private String resolveDosageUnit(String requestedUnit, String fallbackUnit) {
@@ -373,6 +411,20 @@ public class ExamResultServiceImpl implements ExamResultService {
             return null;
         }
         return value.trim().replaceFirst("^/", "");
+    }
+
+    private List<String> loadExamEvidencePaths(ExamResult examResult) {
+        if (examResult == null || examResult.getId() <= 0) {
+            return List.of();
+        }
+
+        List<String> storedPaths = resultFileRepository.findByExamResultIdOrderByIdAsc(examResult.getId())
+                .stream()
+                .map(ResultFile::getFilePath)
+                .filter(path -> path != null && !path.isBlank())
+                .toList();
+
+        return storedPaths.isEmpty() ? readEvidencePaths(examResult.getEvidencePath()) : storedPaths;
     }
 
     private List<String> readEvidencePaths(String rawEvidencePath) {
@@ -386,12 +438,12 @@ public class ExamResultServiceImpl implements ExamResultService {
                 .toList();
     }
 
-    private List<String> storeEvidenceFiles(List<MultipartFile> images) {
+    private List<StoredEvidenceFile> storeEvidenceFiles(List<MultipartFile> images) {
         if (images == null || images.isEmpty()) {
             return List.of();
         }
 
-        List<String> saved = new ArrayList<>();
+        List<StoredEvidenceFile> saved = new ArrayList<>();
         try {
             Files.createDirectories(EXAM_RESULT_STORAGE_DIR);
             for (MultipartFile image : images) {
@@ -404,12 +456,35 @@ public class ExamResultServiceImpl implements ExamResultService {
                 String fileName = "exam-result-" + System.currentTimeMillis() + "-" + UUID.randomUUID() + extension;
                 Path destination = EXAM_RESULT_STORAGE_DIR.resolve(fileName);
                 Files.copy(image.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-                saved.add("./" + EXAM_RESULT_STORAGE_DIR.resolve(fileName).toString().replace("\\", "/"));
+                saved.add(new StoredEvidenceFile(
+                        "./" + EXAM_RESULT_STORAGE_DIR.resolve(fileName).toString().replace("\\", "/"),
+                        originalName,
+                        image.getContentType(),
+                        image.getSize()
+                ));
             }
             return saved;
         } catch (IOException e) {
             throw new AppException(ErrorCode.SERVER_ERROR);
         }
+    }
+
+    private void saveExamResultFiles(ExamResult examResult, List<StoredEvidenceFile> files) {
+        if (examResult == null || files == null || files.isEmpty()) {
+            return;
+        }
+
+        List<ResultFile> resultFiles = files.stream()
+                .filter(file -> file.filePath() != null && !file.filePath().isBlank())
+                .map(file -> ResultFile.builder()
+                        .examResult(examResult)
+                        .filePath(file.filePath())
+                        .originalFileName(file.originalFileName())
+                        .contentType(file.contentType())
+                        .fileSize(file.fileSize())
+                        .build())
+                .toList();
+        resultFileRepository.saveAll(resultFiles);
     }
 
     private String extractExtension(String fileName) {
@@ -422,4 +497,10 @@ public class ExamResultServiceImpl implements ExamResultService {
         }
         return fileName.substring(dotIndex);
     }
+
+    private record StoredEvidenceFile(String filePath, String originalFileName, String contentType, Long fileSize) {
+    }
 }
+
+
+

@@ -15,6 +15,7 @@ import com.petical.entity.Prescription;
 import com.petical.entity.PrescriptionDetail;
 import com.petical.entity.ReceptionRecord;
 import com.petical.entity.ReceptionService;
+import com.petical.entity.ResultFile;
 import com.petical.entity.ServiceOrder;
 import com.petical.entity.ServiceResult;
 import com.petical.entity.Technician;
@@ -31,6 +32,7 @@ import com.petical.repository.PrescriptionDetailRepository;
 import com.petical.repository.PrescriptionRepository;
 import com.petical.repository.ReceptionRecordRepository;
 import com.petical.repository.ReceptionServiceRepository;
+import com.petical.repository.ResultFileRepository;
 import com.petical.repository.ServiceOrderRepository;
 import com.petical.repository.ServiceResultRepository;
 import com.petical.repository.TechnicianRepository;
@@ -45,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,12 +55,10 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -80,6 +81,7 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
     private final PrescriptionDetailRepository prescriptionDetailRepository;
     private final MedicineRepository medicineRepository;
     private final SseNotificationService sseNotificationService;
+    private final ResultFileRepository resultFileRepository;
 
     @Override
     @Transactional(readOnly = true)
@@ -180,14 +182,11 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
             result.setResult(normalizedResult.isBlank() ? null : normalizedResult);
         }
 
-        List<String> mergedEvidencePaths = new ArrayList<>(readEvidencePaths(result.getEvidencePath()));
-        mergedEvidencePaths.addAll(storeEvidenceFiles(images));
-        if (!mergedEvidencePaths.isEmpty()) {
-            result.setEvidencePath(joinEvidencePaths(mergedEvidencePaths));
-        }
+        List<StoredEvidenceFile> savedEvidenceFiles = storeEvidenceFiles(images);
 
         result.setEndTime(LocalDateTime.now());
         result = serviceResultRepository.save(result);
+        saveServiceResultFiles(result, savedEvidenceFiles);
 
         upsertUsedMedicines(order, safeRequest.getMedicines());
         updateReceptionStatusesOnComplete(order);
@@ -268,7 +267,7 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
                 .startTime(item.getStartTime())
                 .endTime(item.getEndTime())
                 .result(result == null ? null : result.getResult())
-                .evidencePaths(result == null ? List.of() : readEvidencePaths(result.getEvidencePath()))
+                .evidencePaths(result == null ? List.of() : loadServiceEvidencePaths(result))
                 .medicines(loadUsedMedicines(order))
                 .build();
     }
@@ -363,12 +362,16 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
         return details.stream()
                 .filter(detail -> isMaterial(detail.getMedicine()))
                 .map(detail -> TechnicianUsedMedicineItemResponse.builder()
+                        .serviceId(order.getService() == null ? null : order.getService().getId())
+                        .serviceName(order.getService() == null ? null : order.getService().getName())
                         .medicineId(detail.getMedicine() == null ? null : detail.getMedicine().getId())
                         .medicineName(detail.getMedicine() == null ? null : detail.getMedicine().getName())
                 .description(detail.getMedicine() == null ? null : detail.getMedicine().getDescription())
                         .quantity(detail.getQuantity())
                         .dosageUnit(detail.getDosageUnit())
+                        .price(detail.getMedicine() == null ? null : detail.getMedicine().getBoxPrice())
                         .instruction(detail.getInstruction())
+                        .productType(detail.getMedicine() == null ? null : detail.getMedicine().getType())
                         .build())
                 .toList();
     }
@@ -383,14 +386,18 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
 
         Prescription prescription = prescriptionRepository.findByReceptionServiceId(receptionService.getId())
                 .orElseGet(() -> prescriptionRepository.save(Prescription.builder()
+                        .medicalRecord(order.getMedicalRecord())
                         .examResult(examResult)
                         .receptionService(receptionService)
                         .build()));
 
         if (prescription.getExamResult() == null) {
             prescription.setExamResult(examResult);
-            prescriptionRepository.save(prescription);
         }
+        if (prescription.getMedicalRecord() == null) {
+            prescription.setMedicalRecord(order.getMedicalRecord());
+        }
+        prescriptionRepository.save(prescription);
 
         prescriptionDetailRepository.deleteByPrescriptionId(prescription.getId());
 
@@ -461,8 +468,8 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
         return examResult;
     }
 
-    private int resolveDose(Integer value) {
-        return value == null ? 0 : Math.max(0, value);
+    private BigDecimal resolveDose(Integer value) {
+        return BigDecimal.valueOf(value == null ? 0 : Math.max(0, value));
     }
 
     private String normalizeNullableText(String value) {
@@ -492,20 +499,26 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
                 .toList();
     }
 
-    private String joinEvidencePaths(List<String> paths) {
-        Set<String> unique = new LinkedHashSet<>(paths);
-        return unique.stream()
-                .map(String::trim)
-                .filter(path -> !path.isBlank())
-                .collect(Collectors.joining(";"));
+    private List<String> loadServiceEvidencePaths(ServiceResult result) {
+        if (result == null || result.getId() <= 0) {
+            return List.of();
+        }
+
+        List<String> storedPaths = resultFileRepository.findByServiceResultIdOrderByIdAsc(result.getId())
+                .stream()
+                .map(ResultFile::getFilePath)
+                .filter(path -> path != null && !path.isBlank())
+                .toList();
+
+        return storedPaths.isEmpty() ? readEvidencePaths(result.getEvidencePath()) : storedPaths;
     }
 
-    private List<String> storeEvidenceFiles(List<MultipartFile> images) {
+    private List<StoredEvidenceFile> storeEvidenceFiles(List<MultipartFile> images) {
         if (images == null || images.isEmpty()) {
             return List.of();
         }
 
-        List<String> saved = new ArrayList<>();
+        List<StoredEvidenceFile> saved = new ArrayList<>();
         try {
             Files.createDirectories(TECH_RESULT_STORAGE_DIR);
             for (MultipartFile image : images) {
@@ -517,12 +530,35 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
                 String fileName = "tech-result-" + System.currentTimeMillis() + "-" + UUID.randomUUID() + extension;
                 Path destination = TECH_RESULT_STORAGE_DIR.resolve(fileName);
                 Files.copy(image.getInputStream(), destination, StandardCopyOption.REPLACE_EXISTING);
-                saved.add("./" + TECH_RESULT_STORAGE_DIR.resolve(fileName).toString().replace("\\", "/"));
+                saved.add(new StoredEvidenceFile(
+                        "./" + TECH_RESULT_STORAGE_DIR.resolve(fileName).toString().replace("\\", "/"),
+                        image.getOriginalFilename(),
+                        image.getContentType(),
+                        image.getSize()
+                ));
             }
             return saved;
         } catch (IOException exception) {
             throw new AppException(ErrorCode.SERVER_ERROR);
         }
+    }
+
+    private void saveServiceResultFiles(ServiceResult result, List<StoredEvidenceFile> files) {
+        if (result == null || files == null || files.isEmpty()) {
+            return;
+        }
+
+        List<ResultFile> resultFiles = files.stream()
+                .filter(file -> file.filePath() != null && !file.filePath().isBlank())
+                .map(file -> ResultFile.builder()
+                        .serviceResult(result)
+                        .filePath(file.filePath())
+                        .originalFileName(file.originalFileName())
+                        .contentType(file.contentType())
+                        .fileSize(file.fileSize())
+                        .build())
+                .toList();
+        resultFileRepository.saveAll(resultFiles);
     }
 
     private String extractExtension(String fileName) {
@@ -534,5 +570,8 @@ public class TechnicianWorkServiceImpl implements TechnicianWorkService {
             return "";
         }
         return fileName.substring(dotIndex);
+    }
+
+    private record StoredEvidenceFile(String filePath, String originalFileName, String contentType, Long fileSize) {
     }
 }

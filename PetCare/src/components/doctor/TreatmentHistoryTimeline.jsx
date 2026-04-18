@@ -249,7 +249,6 @@ const TreatmentHistoryTimeline = ({ petId }) => {
                                                     <h4>{service.name}</h4>
                                                     <span className={statusClassName(service.statusType)}>{service.status}</span>
                                                 </div>
-                                                <div className="th-row"><span>Người chỉ định</span><strong>{service.prescriber}</strong></div>
                                                 {service.performer && <div className="th-row"><span>Người thực hiện</span><strong>{service.performer}</strong></div>}
                                             </div>
                                         ))}
@@ -260,7 +259,7 @@ const TreatmentHistoryTimeline = ({ petId }) => {
                                                 {block.medicines.map((medicine) => (
                                                     <div className="th-row" key={medicine.id}>
                                                         <span>{medicine.name}</span>
-                                                        <strong>{`${medicine.quantity}${medicine.unit ? ` ${medicine.unit}` : ''}`}</strong>
+                                                        <strong>{`${medicine.quantity} ${medicine.unit ? `hộp` : ''}`}</strong>
                                                     </div>
                                                 ))}
                                             </div>

@@ -2,6 +2,7 @@ package com.petical.service;
 
 import com.petical.dto.request.CreateReceptionSlipRequest;
 import com.petical.dto.request.UpdateReceptionSlipRequest;
+import com.petical.dto.response.ExamAggregateResponse;
 import com.petical.dto.response.ReceptionAssignedServiceResponse;
 import com.petical.entity.ReceptionRecord;
 import com.petical.enums.ReceptionStatus;
@@ -16,6 +17,7 @@ public interface ReceptionService {
     List<ReceptionRecord> listReceptionSlips(ReceptionStatus status, LocalDate date, LocalDate fromDate, LocalDate toDate, Long branchId);
     List<ReceptionRecord> listReceptionSlipsByStates(List<ReceptionStatus> states, LocalDate date, LocalDate fromDate, LocalDate toDate);
     ReceptionRecord getReceptionSlip(long id);
+    ExamAggregateResponse getExamAggregate(long receptionId);
     List<ReceptionAssignedServiceResponse> getAssignedServices(long receptionId);
     void ensureDefaultClinicalServicePending(long receptionId);
     ReceptionRecord updateReceptionSlip(long id, UpdateReceptionSlipRequest request);

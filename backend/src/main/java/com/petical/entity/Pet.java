@@ -33,6 +33,9 @@ public class Pet {
 
     private String breed;
 
+    @Column(length = 20)
+    private String gender;
+
     private LocalDate dateOfBirth;
 }
 

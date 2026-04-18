@@ -8,16 +8,15 @@ import com.petical.dto.response.SaveParaclinicalServicesResponse;
 import com.petical.dto.response.TechnicianOptionResponse;
 import com.petical.dto.response.NotificationMessage;
 import com.petical.entity.Doctor;
-import com.petical.entity.ExamStatus;
 import com.petical.entity.MedicalRecord;
 import com.petical.entity.ReceptionRecord;
 import com.petical.entity.ReceptionService;
 import com.petical.entity.ServiceOrder;
 import com.petical.entity.Technician;
 import com.petical.enums.ErrorCode;
+import com.petical.enums.MedicalRecordStatus;
 import com.petical.enums.ReceptionServiceStatus;
 import com.petical.errors.AppException;
-import com.petical.repository.ExamStatusRepository;
 import com.petical.repository.MedicalRecordRepository;
 import com.petical.repository.ReceptionRecordRepository;
 import com.petical.repository.ReceptionServiceRepository;
@@ -38,14 +37,12 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class ParaclinicalServiceImpl implements ParaclinicalService {
-    private static final String DEFAULT_EXAM_STATUS_NAME = "IN_PROGRESS";
         private static final long DEFAULT_CLINICAL_SERVICE_ID = 1L;
 
     private final TechnicianRepository technicianRepository;
     private final ServiceRepository serviceRepository;
     private final ReceptionRecordRepository receptionRecordRepository;
     private final MedicalRecordRepository medicalRecordRepository;
-    private final ExamStatusRepository examStatusRepository;
     private final ServiceOrderRepository serviceOrderRepository;
     private final ReceptionServiceRepository receptionServiceRepository;
         private final SseNotificationService sseNotificationService;
@@ -99,8 +96,18 @@ public class ParaclinicalServiceImpl implements ParaclinicalService {
                         .receptionRecord(receptionRecord)
                         .doctor(resolveDoctor(receptionRecord))
                         .status(resolveDefaultExamStatus())
+                        .examTypeOption(resolveExamTypeOption(receptionRecord))
+                        .emergency(resolveEmergency(receptionRecord))
                         .examDate(LocalDateTime.now())
                         .build()));
+
+        if (medicalRecord.getExamTypeOption() == null) {
+            medicalRecord.setExamTypeOption(resolveExamTypeOption(receptionRecord));
+        }
+        if (!medicalRecord.isEmergency()) {
+            medicalRecord.setEmergency(resolveEmergency(receptionRecord));
+        }
+        medicalRecordRepository.save(medicalRecord);
 
         for (ParaclinicalServiceSelectionItemRequest item : request.getItems()) {
             if (item.getServiceId() == null || item.getServiceId() <= 0
@@ -227,8 +234,15 @@ public class ParaclinicalServiceImpl implements ParaclinicalService {
         return receptionRecord.getDoctor();
     }
 
-    private ExamStatus resolveDefaultExamStatus() {
-        return examStatusRepository.findFirstByNameIgnoreCase(DEFAULT_EXAM_STATUS_NAME)
-                .orElseGet(() -> examStatusRepository.save(ExamStatus.builder().name(DEFAULT_EXAM_STATUS_NAME).build()));
+    private MedicalRecordStatus resolveDefaultExamStatus() {
+        return MedicalRecordStatus.IN_PROGRESS;
+    }
+
+    private com.petical.entity.ExamTypeOption resolveExamTypeOption(ReceptionRecord receptionRecord) {
+        return null;
+    }
+
+    private boolean resolveEmergency(ReceptionRecord receptionRecord) {
+        return false;
     }
 }

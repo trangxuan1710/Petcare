@@ -9,7 +9,7 @@ import "@fontsource/roboto/500.css";
 import { Search } from 'lucide-react';
 import receptionService from '../../api/receptionService';
 import useHeaderProfile from '../../hooks/useHeaderProfile';
-import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE.jsx';
 import AppTopHeader from '../../components/common/AppTopHeader';
 import { toTitleCase } from '../../utils/textFormat';
 

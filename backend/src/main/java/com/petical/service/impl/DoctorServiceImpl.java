@@ -9,6 +9,7 @@ import com.petical.enums.ErrorCode;
 import com.petical.enums.ReceptionStatus;
 import com.petical.errors.AppException;
 import com.petical.repository.DoctorRepository;
+import com.petical.repository.MedicalRecordRepository;
 import com.petical.repository.ReceptionRecordRepository;
 import com.petical.repository.projection.DoctorWaitingCaseCountProjection;
 import com.petical.service.DoctorService;
@@ -39,6 +40,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     private final DoctorRepository doctorRepository;
     private final ReceptionRecordRepository receptionRecordRepository;
+    private final MedicalRecordRepository medicalRecordRepository;
 
         private Doctor getCurrentDoctorFromToken() {
                 User principal = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
@@ -98,15 +100,18 @@ public class DoctorServiceImpl implements DoctorService {
                 .findByDoctorIdAndReceptionTimeBetween(doctor.getId(), start, end);
 
         long emergencyCases = doctorRecords.stream()
-                .filter(record -> record.getStatus() == ReceptionStatus.WAITING_EXECUTION)
-                .filter(record -> record.getExamForm() != null && record.getExamForm().isEmergency())
+                .filter(record -> record.getStatus() == ReceptionStatus.WAITING_EXECUTION || record.getStatus() == ReceptionStatus.IN_PROGRESS)
+                .filter(ReceptionRecord::isEmergency)
                 .count();
+
         long pendingExaminationCases = doctorRecords.stream()
                 .filter(record -> PENDING_EXAM_STATUSES.contains(record.getStatus()))
                 .count();
+
         long waitingConclusionCases = doctorRecords.stream()
                 .filter(record -> record.getStatus() == ReceptionStatus.WAITING_CONCLUSION)
                 .count();
+
         long waitingTreatmentCases = doctorRecords.stream()
                 .filter(record -> WAITING_TREATMENT_STATUSES.contains(record.getStatus()))
                 .count();

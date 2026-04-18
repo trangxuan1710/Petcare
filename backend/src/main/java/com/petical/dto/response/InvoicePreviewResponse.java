@@ -73,6 +73,8 @@ public class InvoicePreviewResponse {
     public static class ChargeItem {
         private Long id;
         private String type;
+        private Long serviceId;
+        private String serviceName;
         private String name;
         private String unit;
         private Integer quantity;

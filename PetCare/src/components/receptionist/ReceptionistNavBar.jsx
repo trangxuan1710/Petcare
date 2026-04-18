@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { CalendarCheck, CreditCard, PlusCircle, Bell, Menu } from 'lucide-react';
 import { RECEPTIONIST_PATHS } from '../../routes/receptionistPaths';
 import './ReceptionistNavBar.css';
-import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE.jsx';
 
 const ReceptionistNavBar = () => {
     const navigate = useNavigate();

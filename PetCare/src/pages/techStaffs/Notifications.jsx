@@ -40,28 +40,34 @@ const TechNotifications = () => {
         };
     }, []);
 
-    const handleOpenNotification = async (item) => {
+    const handleOpenNotification = async (notif) => {
         try {
-            if (!item?.isRead) {
-                await notificationService.markAsRead(item.id);
+            if (!notif?.isRead) {
+                await notificationService.markAsRead(notif.id);
                 setNotifications((prev) => prev.map((current) => (
-                    current.id === item.id
+                    current.id === notif.id
                         ? { ...current, isRead: true }
                         : current
                 )));
             }
         } catch {
-            // Keep UI responsive even when mark-read fails.
+            // Keep UI responsive
         }
 
-        if (item?.link) {
-            navigate(item.link);
+        // 1. Prioritize receptionId for direct record result navigation
+        if (notif?.receptionId) {
+            navigate(`${TECH_PATHS.RECORD_RESULT}/${notif.receptionId}`);
             return;
         }
 
-        if (item?.receptionId) {
-            navigate(`${TECH_PATHS.RECORD_RESULT}/${item.receptionId}`);
+        // 2. Fallback to direct link
+        if (notif?.link) {
+            navigate(notif.link);
+            return;
         }
+
+        // 3. Last fallback
+        navigate(TECH_PATHS.HOME);
     };
 
     return (

@@ -233,6 +233,24 @@
     font-weight: 500;
 }
 
+.rr-exam-reason-section {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px dashed #e8eced;
+}
+
+.rr-exam-reason-box {
+    margin-top: 8px;
+    background-color: #f8fafc;
+    border: 1px solid #f1f5f9;
+    border-radius: 10px;
+    padding: 12px;
+    font-size: 14px;
+    color: #4b5563;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
 .rr-service-list {
     margin-top: 14px;
     border-top: 1px solid #f3f4f6;
@@ -296,11 +314,10 @@
 }
 
 .rr-section-title {
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 14px !important;
+    font-weight: 500 !important;
     color: #1a1a1a;
     margin: 0 0 12px 0;
-    font-family: "Roboto", sans-serif !important;
 }
 
 .rr-required {
@@ -593,7 +610,7 @@
 .rr-accordion-header h3 {
     margin: 0;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 500;
     color: #2c3136;
 }
 
@@ -1021,7 +1038,7 @@
     font-size: 13px;
     font-weight: 600;
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.12);
-    z-index: 1100;
+    z-index: 9999;
 }
 
 .rr-toast-success {

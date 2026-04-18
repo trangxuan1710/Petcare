@@ -21,8 +21,12 @@ public class Prescription {
     private long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exam_result_id", nullable = false)
+    @JoinColumn(name = "exam_result_id")
     private ExamResult examResult;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "medical_record_id")
+    private MedicalRecord medicalRecord;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reception_service_id")

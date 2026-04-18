@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Getter
 @Setter
@@ -41,4 +42,8 @@ public class MedicineSearchItemResponse {
 
     @Schema(description = "Loại thuốc/vật tư", example = "thuốc")
     private String type;
+
+    private List<String> speciesCodes;
+
+    private List<String> speciesLabels;
 }

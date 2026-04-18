@@ -2,7 +2,7 @@ import React from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './NavBar.css';
 import { ClipboardList, Package, Scan, Bell, Menu } from 'lucide-react';
-import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE.jsx';
 
 const NavBar = () => {
     const navigate = useNavigate();

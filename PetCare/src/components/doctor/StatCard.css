@@ -1,10 +1,10 @@
 .stat-card {
     border-radius: 16px;
-    padding: 16px;
+    padding: 15px 16px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 120px;
+    min-height: 118px;
     position: relative;
     box-sizing: border-box;
 }
@@ -26,11 +26,11 @@
 }
 
 .stat-card-title {
-    font-size: 15px;
-    font-weight: 600;
+    font-size: 15px !important;
+    font-weight: 500 !important;
     color: #101828;
-    line-height: 1.4;
-    max-width: 80%;
+    line-height: 1.35;
+    max-width: 82%;
 }
 
 .stat-card-icon {
@@ -56,13 +56,17 @@
     display: flex;
     align-items: baseline;
     gap: 4px;
-    margin-top: 16px;
+    margin-top: 18px;
+
+    span {
+        font-size: 23px;
+
+    }
 }
 
 .stat-card-number {
-    font-size: 32px;
-    font-weight: 700;
-    line-height: 1;
+    font-weight: 500 !important;
+    line-height: 1.25 !important;
 }
 
 .stat-card.danger .stat-card-number {
@@ -74,7 +78,6 @@
 }
 
 .stat-card-unit {
-    font-size: 14px;
-    font-weight: 500;
+    font-weight: 400 !important;
     color: #667085;
 }

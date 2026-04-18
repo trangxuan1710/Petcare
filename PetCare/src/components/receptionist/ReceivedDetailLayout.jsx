@@ -28,10 +28,10 @@ const ReceivedDetailLayout = ({ order, onBack, onSubmit }) => {
 
     const examinedPetKey = String(
         receptionRecord?.pet?.id
-            || receptionRecord?.petId
-            || pets[0]?.id
-            || pets[0]?.name
-            || ''
+        || receptionRecord?.petId
+        || pets[0]?.id
+        || pets[0]?.name
+        || ''
     );
 
     const selectedPet = pets.find((pet) => toPetKey(pet) === examinedPetKey) || pets[0] || null;
@@ -39,12 +39,12 @@ const ReceivedDetailLayout = ({ order, onBack, onSubmit }) => {
 
     return (
         <div className="rod-page">
-                <div className="rod-header">
-                    <button className="rod-back" type="button" onClick={onBack}>
-                        <ChevronLeft size={22} />
-                    </button>
-                    <h3>Chi tiết tiếp đón</h3>
-                </div>
+            <div className="rod-header">
+                <button className="rod-back" type="button" onClick={onBack}>
+                    <ChevronLeft size={22} />
+                </button>
+                <h3>Chi tiết tiếp đón</h3>
+            </div>
             <div className='rod-content'>
                 <div className="rod-summary">
                     <div>
@@ -97,7 +97,7 @@ const ReceivedDetailLayout = ({ order, onBack, onSubmit }) => {
                         <span className="rod-value">{receptionRecord?.weight ? `${receptionRecord.weight} kg` : '--'}</span>
                     </div>
                     <div className="rod-field">
-                        <span className="rod-label">Lý do khám</span>
+                        <span className="rod-label">Mô tả triệu chứng</span>
                         <span className="rod-value">{receptionRecord?.examReason || '--'}</span>
                     </div>
                     {/* 'symptomDescription' removed; description is stored in examReason */}
@@ -116,10 +116,10 @@ const ReceivedDetailLayout = ({ order, onBack, onSubmit }) => {
                 </div>
 
 
-            <div className="rod-actions">
-                <button className="rod-btn-cancel" type="button" onClick={onBack}>Hủy bỏ</button>
-                <button className="rod-btn-submit" type="button" onClick={onSubmit}>Thanh toán</button>
-            </div>
+                <div className="rod-actions">
+                    <button className="rod-btn-cancel" type="button" onClick={onBack}>Hủy bỏ</button>
+                    <button className="rod-btn-submit" type="button" onClick={onSubmit}>Thanh toán</button>
+                </div>
             </div>
 
         </div>

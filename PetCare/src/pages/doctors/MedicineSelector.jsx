@@ -4,6 +4,7 @@ import { ChevronLeft, Search, Minus, Plus, ChevronDown, PencilLine } from 'lucid
 import './MedicineSelector.css';
 import medicineService from '../../api/medicineService';
 import treatmentService from '../../api/treatmentService';
+import lookupService from '../../api/lookupService';
 
 const toArray = (raw) => {
     if (Array.isArray(raw)) return raw;
@@ -30,14 +31,12 @@ const getPriceNumber = (item) => {
     const digitsAndSeparators = rawText.replace(/[^\d,.-]/g, '');
     if (!digitsAndSeparators) return 0;
 
-    // Handle common VN currency formatting, e.g. 12.000 or 12.000,50.
     if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(digitsAndSeparators)) {
         const normalizedVn = digitsAndSeparators.replace(/\./g, '').replace(',', '.');
         const parsedVn = Number(normalizedVn);
         return Number.isFinite(parsedVn) ? parsedVn : 0;
     }
 
-    // Handle EN-style grouping, e.g. 12,000 or 12,000.50.
     if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(digitsAndSeparators)) {
         const normalizedEn = digitsAndSeparators.replace(/,/g, '');
         const parsedEn = Number(normalizedEn);
@@ -106,6 +105,52 @@ const normalizeDoseValue = (rawValue) => {
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : 1;
 };
 
+const normalizeSpeciesKey = (rawSpecies) => {
+    const normalized = String(rawSpecies || '')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    if (!normalized) return null;
+    if (normalized === 'dog' || normalized === 'cho') return 'cho';
+    if (normalized === 'cat' || normalized === 'meo') return 'meo';
+    return normalized;
+};
+
+const getSpeciesIdCandidate = (rawValue) => {
+    if (rawValue == null || rawValue === '') return null;
+    if (typeof rawValue === 'number') {
+        return Number.isFinite(rawValue) && rawValue > 0 ? rawValue : null;
+    }
+    if (typeof rawValue === 'string') {
+        const parsed = Number(rawValue.trim());
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    }
+    if (typeof rawValue === 'object') {
+        const nestedCandidates = [
+            rawValue?.id,
+            rawValue?.speciesId,
+            rawValue?.value,
+            rawValue?.code,
+        ];
+        for (const candidate of nestedCandidates) {
+            const parsed = getSpeciesIdCandidate(candidate);
+            if (parsed) return parsed;
+        }
+    }
+    return null;
+};
+
+const getSpeciesTextCandidate = (rawValue) => {
+    if (rawValue == null || rawValue === '') return null;
+    if (typeof rawValue === 'string') return rawValue;
+    if (typeof rawValue === 'object') {
+        return rawValue?.code || rawValue?.value || rawValue?.label || rawValue?.name || null;
+    }
+    return null;
+};
+
 const resolvePriceBySelectedUnit = (item, selectedUnit) => {
     const boxPrice = Number(item?.boxPrice ?? item?.rawBoxPrice ?? 0);
     const unitPrice = Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item));
@@ -120,22 +165,28 @@ const resolvePriceBySelectedUnit = (item, selectedUnit) => {
 };
 
 const normalizeMedicine = (item) => {
-    const baseUnit = item?.unit || item?.selectedUnit || '';
-    const normalizedSelectedUnit = toVietnameseUnit(baseUnit);
-    const selectedUnit = normalizedSelectedUnit || 'đơn vị';
+    const itemType = String(item?.type || 'THUOC').toUpperCase().trim();
+
     const rawUnitPrice = Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item));
     const quantityPerBox = Math.max(1, Number(item?.quantityPerBox ?? item?.boxQuantity ?? 1) || 1);
-    const rawBoxPrice = Number(item?.boxPrice ?? item?.rawBoxPrice ?? 0) || rawUnitPrice * quantityPerBox;
+    const rawBoxPrice = Number(item?.boxPrice ?? item?.rawBoxPrice ?? 0) || (rawUnitPrice * quantityPerBox);
+    const selectedUnit = toVietnameseUnit(item?.unit || item?.selectedUnit) || 'don vi';
+    const displayPrice = resolvePriceBySelectedUnit({ ...item, rawBoxPrice, rawUnitPrice }, selectedUnit);
 
-    const type = String(item?.type || 'THUOC').toUpperCase().trim();
+    const getFriendlyType = (t) => {
+        if (t === 'VAT_TU') return 'Vật tư';
+        if (t === 'THUOC') return 'Thuốc';
+        return t;
+    };
+
     return {
         ...item,
-        type,
-        desc: item?.desc || item?.description || type || '',
+        type: itemType,
+        desc: item?.desc || item?.description || getFriendlyType(itemType),
         rawUnitPrice,
         rawBoxPrice,
         quantityPerBox,
-        price: formatVnd(rawBoxPrice),
+        price: formatVnd(displayPrice),
         unit: `/${selectedUnit}`,
         stock: item?.stock ?? item?.stockQuantity ?? item?.availableStock ?? '--',
         qty: Math.max(1, Number(item?.qty ?? item?.quantity ?? 1)),
@@ -171,6 +222,7 @@ const mergeMedicinesBySelected = (apiMedicines, selectedMedicines) => {
             type: med.type,
             desc: med.desc,
             unit: med.unit,
+            boxPrice: med.boxPrice,
             unitOptions: med.unitOptions,
             selected: true,
         };
@@ -186,16 +238,22 @@ const mergeMedicinesBySelected = (apiMedicines, selectedMedicines) => {
 const MedicineSelector = () => {
     const navigate = useNavigate();
     const location = useLocation();
+
     const selectedFromState = useMemo(
         () => toArray(location.state?.selectedMedicines)
             .map(normalizeMedicine)
             .filter((item) => Boolean(item?.selected)),
         [location.state?.selectedMedicines]
     );
+
     const returnPath = location.state?.returnPath;
     const treatmentSlipId = location.state?.treatmentSlipId;
     const receptionId = location.state?.receptionId;
+    const petSpeciesIdRaw = location.state?.petSpeciesId;
+    const petSpeciesRaw = location.state?.petSpecies;
+    const petWeightRaw = location.state?.petWeight;
     const recordResultDraft = location.state?.recordResultDraft;
+
     const [showDosageModal, setShowDosageModal] = useState(false);
     const [activeDosageMedId, setActiveDosageMedId] = useState(null);
     const [dosageDraft, setDosageDraft] = useState({
@@ -211,40 +269,136 @@ const MedicineSelector = () => {
 
     const [medsList, setMedsList] = useState([]);
     const [autofillByMedicineId, setAutofillByMedicineId] = useState({});
+    const [resolvedSpeciesId, setResolvedSpeciesId] = useState(null);
+
+    const petSpeciesText = useMemo(() => getSpeciesTextCandidate(petSpeciesRaw), [petSpeciesRaw]);
+
+    const petSpeciesNormalized = useMemo(() => {
+        if (!petSpeciesText || typeof petSpeciesText !== 'string') return null;
+        return petSpeciesText.trim().toUpperCase();
+    }, [petSpeciesText]);
+
+    const petSpeciesId = useMemo(() => {
+        return getSpeciesIdCandidate(petSpeciesIdRaw) || getSpeciesIdCandidate(petSpeciesRaw);
+    }, [petSpeciesIdRaw, petSpeciesRaw]);
+
+    useEffect(() => {
+        setResolvedSpeciesId(petSpeciesId);
+    }, [petSpeciesId]);
+
+    const petWeightValue = useMemo(() => {
+        if (petWeightRaw == null || petWeightRaw === '') {
+            return null;
+        }
+        if (typeof petWeightRaw === 'number') {
+            return Number.isFinite(petWeightRaw) && petWeightRaw > 0 ? petWeightRaw : null;
+        }
+
+        const normalized = String(petWeightRaw).trim().replace(',', '.').replace(/[^\d.-]/g, '');
+        const parsed = Number(normalized);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    }, [petWeightRaw]);
 
     const applyAutofillIfAvailable = (medicine) => {
         if (!medicine) return medicine;
 
-        const autofill = autofillByMedicineId[medicine.id];
+        const normalizedMedicineId = Number(medicine.id);
+        const autofill = autofillByMedicineId[normalizedMedicineId];
         if (!autofill) {
             return medicine;
         }
 
-        const selectedUnit = autofill.selectedUnit || medicine.selectedUnit;
-        const mergedMedicine = {
-            ...medicine,
-            qty: Math.max(1, Number(autofill.qty ?? medicine.qty ?? 1)),
-            selectedUnit,
-            dosage: {
-                morning: normalizeDoseValue(autofill?.dosage?.morning ?? medicine?.dosage?.morning),
-                noon: normalizeDoseValue(autofill?.dosage?.noon ?? medicine?.dosage?.noon),
-                afternoon: normalizeDoseValue(autofill?.dosage?.afternoon ?? medicine?.dosage?.afternoon),
-                evening: normalizeDoseValue(autofill?.dosage?.evening ?? medicine?.dosage?.evening),
-                note: autofill?.dosage?.note ?? medicine?.dosage?.note ?? '',
-            },
+        return applyAutofillValues(medicine, autofill);
+    };
+
+    const applyAutofillValues = (medicine, autofill) => {
+        if (!medicine || !autofill) return medicine;
+
+        const mergedDosage = {
+            morning: normalizeDoseValue(autofill?.dosage?.morning ?? medicine?.dosage?.morning),
+            noon: normalizeDoseValue(autofill?.dosage?.noon ?? medicine?.dosage?.noon),
+            afternoon: normalizeDoseValue(autofill?.dosage?.afternoon ?? medicine?.dosage?.afternoon),
+            evening: normalizeDoseValue(autofill?.dosage?.evening ?? medicine?.dosage?.evening),
+            note: autofill?.dosage?.note ?? medicine?.dosage?.note ?? '',
         };
 
         return {
-            ...mergedMedicine,
-            price: formatVnd(mergedMedicine.rawBoxPrice || resolvePriceBySelectedUnit(mergedMedicine, 'hộp')),
-            unit: `/${selectedUnit}`,
+            ...medicine,
+            dosage: mergedDosage,
         };
+    };
+
+    const fetchAutofillByMedicineId = async (medicineId) => {
+        try {
+            const resolveSpeciesIdForPayload = async () => {
+                if (petSpeciesId) return petSpeciesId;
+                if (resolvedSpeciesId) return resolvedSpeciesId;
+                if (!petSpeciesText) return null;
+
+                const speciesOptions = await lookupService.listPetSpecies();
+                const targetKey = normalizeSpeciesKey(petSpeciesText);
+                const matched = speciesOptions.find((option) => {
+                    const candidates = [option?.code, option?.value, option?.label];
+                    return candidates.some((candidate) => normalizeSpeciesKey(candidate) === targetKey);
+                });
+                const matchedId = matched?.id == null ? null : Number(matched.id);
+                if (Number.isFinite(matchedId) && matchedId > 0) {
+                    setResolvedSpeciesId(matchedId);
+                    return matchedId;
+                }
+                return null;
+            };
+
+            const payload = {};
+            const normalizedMedicineId = Number(medicineId);
+            if (Number.isFinite(normalizedMedicineId) && normalizedMedicineId > 0) {
+                payload.medicineId = normalizedMedicineId;
+            }
+            const speciesIdForPayload = await resolveSpeciesIdForPayload();
+            if (speciesIdForPayload) {
+                payload.speciesId = speciesIdForPayload;
+            }
+            if (petWeightValue) {
+                payload.weight = petWeightValue;
+            }
+
+            const autofillResponse = await treatmentService.getPrescriptionAutofillByContext(payload);
+            const autofillMedicines = toArray(autofillResponse?.data?.data?.medicines)
+                .map((item) => normalizeMedicine({
+                    ...item,
+                    qty: Math.max(Number(item?.quantity || 0), 1),
+                }));
+
+            if (autofillMedicines.length === 0) {
+                setAutofillByMedicineId({});
+                return {};
+            }
+
+            const cache = autofillMedicines.reduce((acc, medicine) => {
+                const normalizedMedicineId = Number(medicine.id);
+                if (!Number.isFinite(normalizedMedicineId) || normalizedMedicineId <= 0) {
+                    return acc;
+                }
+                acc[normalizedMedicineId] = {
+                    dosage: medicine.dosage,
+                };
+                return acc;
+            }, {});
+            setAutofillByMedicineId(cache);
+            return cache;
+        } catch {
+            setAutofillByMedicineId({});
+            return {};
+        }
     };
 
     useEffect(() => {
         let isMounted = true;
         const fetchMedicines = async () => {
-            const response = await medicineService.listMedicines();
+            const listParams = {
+                species: petSpeciesNormalized,
+            };
+            const response = await medicineService.listMedicines(listParams);
             if (!isMounted) return;
             const apiMedicines = toArray(response?.data || []).map(normalizeMedicine);
             setAutofillByMedicineId({});
@@ -254,63 +408,51 @@ const MedicineSelector = () => {
                 return;
             }
 
-            if (!receptionId) {
-                setMedsList(apiMedicines);
-                return;
-            }
-
-            try {
-                const autofillResponse = await treatmentService.getPrescriptionAutofill(receptionId);
-                if (!isMounted) return;
-
-                const autofillMedicines = toArray(autofillResponse?.data?.data?.medicines)
-                    .map((item) => normalizeMedicine({
-                        ...item,
-                        qty: Math.max(Number(item?.quantity || 0), 1),
-                    }));
-
-                if (autofillMedicines.length > 0) {
-                    const cache = autofillMedicines.reduce((acc, medicine) => {
-                        acc[medicine.id] = {
-                            qty: medicine.qty,
-                            selectedUnit: medicine.selectedUnit,
-                            dosage: medicine.dosage,
-                        };
-                        return acc;
-                    }, {});
-                    setAutofillByMedicineId(cache);
-                }
-            } catch {
-                // Fallback to manual selection list if autofill endpoint is unavailable.
-                if (isMounted) {
-                    setAutofillByMedicineId({});
-                }
-            }
-
             setMedsList(apiMedicines);
         };
         fetchMedicines();
         return () => {
             isMounted = false;
         };
-    }, [selectedFromState, receptionId]);
+    }, [selectedFromState, petSpeciesNormalized]);
 
-    const toggleSelection = (id) => {
-        setMedsList(prevList =>
-            prevList.map(med =>
-                med.id === id
-                    ? (() => {
-                        const isSelecting = !med.selected;
-                        const selectedMed = isSelecting ? applyAutofillIfAvailable(med) : med;
-                        return {
-                            ...selectedMed,
-                            selected: isSelecting,
-                            expanded: isSelecting ? selectedMed.expanded : false,
-                            qty: Math.max(1, Number(selectedMed.qty || 0)),
-                        };
-                    })()
-                    : med
-            )
+    const toggleSelection = async (id) => {
+        const currentMedicine = medsList.find((med) => med.id === id);
+        const isSelecting = Boolean(currentMedicine && !currentMedicine.selected);
+
+        setMedsList((prevList) =>
+            prevList.map((med) => {
+                if (med.id !== id) return med;
+
+                const nextSelected = !med.selected;
+                const selectedMed = nextSelected ? applyAutofillIfAvailable(med) : med;
+                return {
+                    ...selectedMed,
+                    selected: nextSelected,
+                    expanded: nextSelected ? selectedMed.expanded : false,
+                    qty: Math.max(1, Number(selectedMed.qty || 0)),
+                };
+            })
+        );
+
+        if (!isSelecting) {
+            return;
+        }
+
+        const latestAutofill = await fetchAutofillByMedicineId(id);
+        const normalizedMedicineId = Number(id);
+        const recommendForMedicine = latestAutofill[normalizedMedicineId] || latestAutofill[id];
+        if (!recommendForMedicine) {
+            return;
+        }
+
+        setMedsList((prevList) =>
+            prevList.map((med) => {
+                if (med.id !== id || !med.selected) {
+                    return med;
+                }
+                return applyAutofillValues(med, recommendForMedicine);
+            })
         );
     };
 
@@ -367,7 +509,10 @@ const MedicineSelector = () => {
         return `${med.name} ${med.desc}`.toLowerCase().includes(keyword);
     });
 
-    const getSelectedMedicines = () => medsList.filter((med) => med.selected);
+    const getSelectedMedicines = () => medsList.filter((med) => med.selected).map((med) => ({
+        ...med,
+        price: med.boxPrice ?? med.rawBoxPrice ?? med.price,
+    }));
 
     const navigateBackToRecordResult = (selectedMedicines) => {
         if (!returnPath) {
@@ -393,7 +538,7 @@ const MedicineSelector = () => {
         setIsSubmitting(true);
         try {
             const selectedMedicines = getSelectedMedicines();
-            await medicineService.saveSelection(selectedMedicines);
+            // await medicineService.saveSelection(selectedMedicines); // Backend might not need this if we pass medList back
             navigateBackToRecordResult(selectedMedicines);
         } finally {
             setIsSubmitting(false);
@@ -402,29 +547,23 @@ const MedicineSelector = () => {
 
     return (
         <div className="med-selector-page">
-            {/* Header */}
             <div className="ms-header">
-                <button className="ms-btn-icon" onClick={() => navigateBackToRecordResult(getSelectedMedicines())}><ChevronLeft size={24} color="#1a1a1a" /></button>
+                <button className="ms-btn-icon" onClick={() => navigate(-1)}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="ms-title">Thuốc & Vật tư đi kèm</h1>
                 <div style={{ width: 32 }}></div>
             </div>
 
-            {/* Search Bar */}
             <div className="ms-search-container">
                 <div className="ms-search-box">
                     <Search size={20} color="#209D80" className="ms-search-icon" />
                     <input type="text" placeholder="Search" className="ms-search-input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
                 </div>
-                {/* <button className="ms-filter-btn">
-                    <SlidersHorizontal size={20} color="#209D80" />
-                </button> */}
             </div>
 
-            {/* Meds List */}
             <div className="ms-content">
                 <div className="ms-meds-list">
                     {filteredMeds.map(med => (
-                        <article key={med.id} className={`ms-lite-card ${med.selected ? 'selected' : ''}`}>
+                        <article onClick={() => console.log(med)} key={med.id} className={`ms-lite-card ${med.selected ? 'selected' : ''}`}>
                             <div className="ms-lite-head">
                                 <label className="ms-lite-check" aria-label={`Chọn ${med.name}`}>
                                     <input
@@ -439,13 +578,17 @@ const MedicineSelector = () => {
                                 <div className="ms-lite-main">
                                     <div className="ms-lite-top">
                                         <strong className="ms-lite-name">{med.name}</strong>
-                                        <strong>{med.price}</strong>
+                                        <strong>
+                                            {new Intl.NumberFormat('vi-VN', {
+                                                style: 'currency',
+                                                currency: 'VND',
+                                            }).format(med.boxPrice)}
+                                        </strong>
                                     </div>
 
                                     {med.desc ? <p className="ms-lite-desc">{med.desc}</p> : null}
 
                                     <div className="ms-lite-meta">
-                                        {/* <span>Dự kiến: {med.qty} {med.selectedUnit}</span> */}
                                         <span>Tồn: {formatStock(med.stock)}</span>
                                     </div>
                                 </div>
@@ -464,9 +607,7 @@ const MedicineSelector = () => {
                                             </button>
                                         </div>
 
-                                        <div className="ms-lite-unit-text">
-                                            {med.selectedUnit}
-                                        </div>
+                                        <div className="ms-lite-unit-text"> Hộp</div>
 
                                         {isMedicineType(med.type) && (
                                             <button className="ms-lite-dosage" type="button" onClick={() => openDosageModal(med.id)}>
@@ -506,13 +647,11 @@ const MedicineSelector = () => {
                 </div>
             </div>
 
-            {/* Bottom Actions */}
             <div className="ms-bottom-actions">
                 <button className="ms-btn-skip" onClick={() => navigateBackToRecordResult(getSelectedMedicines())}>Bỏ qua</button>
                 <button className="ms-btn-confirm" onClick={handleConfirm}>{isSubmitting ? 'Đang lưu...' : 'Xác nhận'}</button>
             </div>
 
-            {/* Dosage Modal Bottom Sheet */}
             {showDosageModal && (
                 <>
                     <div className="dosage-modal-overlay" onClick={() => setShowDosageModal(false)}></div>

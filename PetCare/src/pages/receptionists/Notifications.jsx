@@ -53,27 +53,39 @@ const Notifications = () => {
         showToast('success', 'Đang tải lại thông báo...');
     };
 
-    const handleOpenPayment = (item) => {
-        if (!item?.isRead) {
-            notificationService.markAsRead(item.id).catch(() => null);
-            setNotifications((prev) => prev.map((current) => (
-                current.id === item.id
-                    ? { ...current, isRead: true }
-                    : current
-            )));
+    const handleOpenNotification = async (notif) => {
+        try {
+            if (!notif?.isRead) {
+                await notificationService.markAsRead(notif.id);
+                setNotifications((prev) => prev.map((current) => (
+                    current.id === notif.id
+                        ? { ...current, isRead: true }
+                        : current
+                )));
+            }
+        } catch {
+            // Keep UI responsive
         }
 
-        if (item?.link) {
-            navigate(item.link);
+        // 1. Prioritize receptionId for target page (Payment)
+        if (notif?.receptionId) {
+            navigate(RECEPTIONIST_PATHS.PAYMENT, {
+                state: {
+                    receptionId: notif.receptionId,
+                    customerName: '',
+                },
+            });
             return;
         }
 
-        navigate(RECEPTIONIST_PATHS.PAYMENT, {
-            state: {
-                receptionId: item?.receptionId,
-                customerName: '',
-            },
-        });
+        // 2. Fallback to direct link
+        if (notif?.link) {
+            navigate(notif.link);
+            return;
+        }
+
+        // 3. Last fallback
+        navigate(RECEPTIONIST_PATHS.PAYMENT);
     };
 
     return (
@@ -110,7 +122,7 @@ const Notifications = () => {
                         key={item.id}
                         type="button"
                         className={`rnotif-card ${!item.isRead ? 'rnotif-card-unread' : ''}`}
-                        onClick={() => handleOpenPayment(item)}
+                        onClick={() => handleOpenNotification(item)}
                     >
                         <div className="rnotif-icon-wrap">
                             <Bell size={18} color="#24C7A9" fill="#24C7A9" />

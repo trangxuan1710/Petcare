@@ -42,7 +42,7 @@
 .so-title {
     font-family: "Roboto", sans-serif !important;
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 500;
     margin: 0;
 }
 
@@ -50,7 +50,8 @@
     flex: 1;
     overflow-y: auto;
     padding-top: 8px;
-    padding-bottom: 90px; /* space for bottom actions */
+    padding-bottom: 90px;
+    /* space for bottom actions */
 }
 
 /* Customer card */
@@ -68,7 +69,7 @@
 
 .so-customer-name {
     font-size: 16px;
-    font-weight: 600;
+    font-weight: 500;
     margin: 0 0 6px 0;
 }
 
@@ -90,8 +91,9 @@
 }
 
 .so-paid {
-    color: #f05252; /* redish orange */
-    font-weight: 600;
+    color: #f05252;
+    /* redish orange */
+    font-weight: 500;
 }
 
 .so-total {
@@ -133,7 +135,7 @@
 }
 
 .so-pet-name {
-    font-weight: 600;
+    font-weight: 500;
     color: #1a1a1a;
 }
 
@@ -158,6 +160,7 @@
     scrollbar-width: none;
     margin: 0 16px;
 }
+
 .so-tabs::-webkit-scrollbar {
     display: none;
 }
@@ -212,7 +215,7 @@
 .so-accordion-header h3 {
     margin: 0;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 500;
     color: #2c3136;
 }
 
@@ -250,7 +253,7 @@
 
 .so-service-name {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     color: #888;
 }
 
@@ -260,7 +263,8 @@
 }
 
 .so-service-status.pending {
-    color: #d97706; /* orangeish yellow */
+    color: #d97706;
+    /* orangeish yellow */
 }
 
 .so-service-status.in_progress {
@@ -277,7 +281,7 @@
 
 .so-price-val {
     color: #f05252;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .so-price-unit {
@@ -351,7 +355,7 @@
 .so-result-summary-label {
     font-size: 16px;
     color: #2f3533;
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .so-result-summary-btn {
@@ -362,7 +366,7 @@
     background: #F5FBFA;
     color: #15957a;
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 500;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -394,7 +398,7 @@
     color: #2c3136;
     font-family: inherit;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
 }
 
@@ -431,7 +435,7 @@
     margin: 0;
     color: #374151;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
     line-height: 1.35;
 }
 
@@ -516,7 +520,7 @@
     margin: 0;
     font-size: 14px;
     color: #1a1a1a;
-    font-weight: 600;
+    font-weight: 500;
 }
 
 .so-required {
@@ -584,12 +588,12 @@
     display: none;
 }
 
-.so-option-item input[type="radio"]:disabled + .so-option-dot {
+.so-option-item input[type="radio"]:disabled+.so-option-dot {
     opacity: 0.55;
 }
 
-.so-option-item input[type="radio"]:disabled ~ span,
-.so-option-item input[type="radio"]:disabled + .so-option-dot {
+.so-option-item input[type="radio"]:disabled~span,
+.so-option-item input[type="radio"]:disabled+.so-option-dot {
     cursor: not-allowed;
 }
 
@@ -604,11 +608,11 @@
     flex-shrink: 0;
 }
 
-.so-option-item input[type="radio"]:checked + .so-option-dot {
+.so-option-item input[type="radio"]:checked+.so-option-dot {
     border-color: #209D80;
 }
 
-.so-option-item input[type="radio"]:checked + .so-option-dot::after {
+.so-option-item input[type="radio"]:checked+.so-option-dot::after {
     content: '';
     position: absolute;
     top: 50%;
@@ -638,15 +642,16 @@
     background-color: #fff;
     display: flex;
     gap: 12px;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
 }
 
-.so-btn-cancel, .so-btn-execute {
+.so-btn-cancel,
+.so-btn-execute {
     flex: 1;
     padding: 14px;
     border-radius: 20px;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 500;
     cursor: pointer;
     text-align: center;
     border: none;
@@ -687,7 +692,7 @@
     background-color: #209D80;
     color: #fff;
     font-size: 15px;
-    font-weight: 700;
+    font-weight: 500;
     cursor: pointer;
 }
 
@@ -696,16 +701,11 @@
     cursor: not-allowed;
 }
 
-/* Meds List */
-.so-accordion-content.meds-list-container {
-    padding: 16px 0 !important;
-}
 
-.so-meds-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 0 16px;
+
+.so-btn-finish:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .so-med-item {
@@ -720,7 +720,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-top: 18px; /* aligns vertically with image */
+    margin-top: 18px;
+    /* aligns vertically with image */
 }
 
 .so-med-checkbox input[type="checkbox"] {
@@ -739,12 +740,12 @@
     position: relative;
 }
 
-.so-med-checkbox input[type="checkbox"]:checked + label {
+.so-med-checkbox input[type="checkbox"]:checked+label {
     background-color: #209D80;
     border-color: #209D80;
 }
 
-.so-med-checkbox input[type="checkbox"]:checked + label::after {
+.so-med-checkbox input[type="checkbox"]:checked+label::after {
     content: '';
     position: absolute;
     left: 5px;
@@ -772,7 +773,7 @@
 
 .so-med-name {
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 500;
     color: #3f3f46;
     margin: 0 0 6px 0;
 }
@@ -792,7 +793,7 @@
 
 .so-med-price-box .so-med-price {
     font-size: 16px;
-    font-weight: 700;
+    font-weight: 500;
     color: #209D80;
 }
 
@@ -808,5 +809,29 @@
 
 .so-med-stock strong {
     color: #4a4a4a;
+    font-weight: 500;
+}
+
+/* Grouping Styles */
+.so-medicine-list-grouped {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.so-med-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.so-med-group-title {
+    font-size: 13px;
     font-weight: 600;
+    color: #209D80;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 4px 0 0 4px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #eef2f1;
 }

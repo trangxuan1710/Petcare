@@ -1,6 +1,7 @@
 package com.petical.entity;
 
 
+import com.petical.enums.MedicalRecordStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,9 +26,15 @@ public class MedicalRecord {
     @JoinColumn(name = "doctor_id", nullable = false)
     private Doctor doctor;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 50)
+    private MedicalRecordStatus status;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "status_id", nullable = false)
-    private ExamStatus status;
+    @JoinColumn(name = "exam_type_option_id")
+    private ExamTypeOption examTypeOption;
+
+    private boolean emergency;
 
     private LocalDateTime examDate;
 }

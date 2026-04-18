@@ -1,3 +1,4 @@
+
 .home-container {
     padding: 16px;
     background: linear-gradient(180deg, #F9FDFD 0%, #DFF4EF 100%);
@@ -97,9 +98,10 @@
 .home-tab {
     flex: 1;
     text-align: center;
-    padding: 10px 0;
+    padding: 10px 8px;
     font-size: 15px;
     font-weight: 600;
+    line-height: 1.25;
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.2s ease;
@@ -135,14 +137,15 @@
 }
 
 .workspace-title {
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 17px;
+    font-weight: 600;
     color: #101828;
     margin-bottom: 4px;
 }
 
 .workspace-subtitle {
-    font-size: 14px;
+    font-size: 15px;
+    font-weight: 400;
     color: #667085;
 }
 
@@ -165,7 +168,7 @@
 }
 
 .status-text {
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 400;
     color: #099A4A;
 }
@@ -180,4 +183,5 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
+     --app-font-size-body: 16px; 
 }

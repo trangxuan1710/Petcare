@@ -142,9 +142,9 @@
 }
 
 .cs-name {
-    font-size: 16px;
+    font-size: 14px;
     color: #1a1a1a;
-    font-weight: 600;
+    font-weight: 500;
     flex: 1;
     line-height: 1.35;
 }

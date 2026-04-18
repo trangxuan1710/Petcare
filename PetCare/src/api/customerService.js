@@ -1,4 +1,5 @@
 import {authApi} from './baseApi';
+import { toTitleCase } from '../utils/textFormat';
 
 const getApiData = (response) => response?.data?.data;
 
@@ -11,7 +12,7 @@ const toArray = (raw) => {
 };
 
 const normalizeClientPayload = (payload = {}) => ({
-    name: payload?.name || payload?.fullName || '',
+    name: toTitleCase(payload?.name || payload?.fullName || ''),
     phone: payload?.phone || payload?.phoneNumber || '',
 });
 

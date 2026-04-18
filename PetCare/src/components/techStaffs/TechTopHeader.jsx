@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import useHeaderProfile from '../../hooks/useHeaderProfile';
-import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE.jsx';
 import AppTopHeader from '../common/AppTopHeader';
 
 import { TECH_PATHS } from '../../routes/techPaths';

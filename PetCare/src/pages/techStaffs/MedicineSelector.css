@@ -2,7 +2,8 @@
     display: flex;
     flex-direction: column;
     height: 100vh;
-    background-color: #f5f9f8; /* slightly green-tinted background from the design */
+    background-color: #f5f9f8;
+    /* slightly green-tinted background from the design */
     font-family: "Roboto", Helvetica, Arial, sans-serif;
     color: #1a1a1a;
 }
@@ -193,8 +194,7 @@
 }
 
 .ms-lite-controls {
-    margin:12px;
-    border-top: 1px solid #edf1f2;
+    margin: 12px;
     display: grid;
     grid-template-columns: 1fr 78px auto;
     gap: 10px;
@@ -256,7 +256,7 @@
 }
 
 .ms-lite-dosage-summary {
-    margin:12px;
+    margin: 12px;
     border-top: 1px dashed #e5eaec;
     padding-top: 8px;
     display: flex;
@@ -290,7 +290,7 @@
     background-color: #fff;
     border-radius: 12px;
     padding: 16px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     border: 1px solid transparent;
     cursor: pointer;
 }
@@ -302,7 +302,8 @@
 
 /* Selection state */
 .ms-med-card.selected {
-    box-shadow: 0 4px 12px rgba(32, 157, 128, 0.08); /* slight greenish shadow */
+    box-shadow: 0 4px 12px rgba(32, 157, 128, 0.08);
+    /* slight greenish shadow */
 }
 
 .ms-med-main-row {
@@ -313,7 +314,8 @@
 
 /* Custom Checkbox mimicking the image */
 .ms-med-checkbox {
-    padding-top: 18px; /* align with image */
+    padding-top: 18px;
+    /* align with image */
     cursor: pointer;
 }
 
@@ -408,13 +410,14 @@
     gap: 12px;
 }
 
-.ms-qty-row, .ms-dosage-row {
+.ms-qty-row,
+.ms-dosage-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.ms-qty-row{
+.ms-qty-row {
     border-bottom: 1px solid #ebebeb;
     padding-bottom: 16px;
 }
@@ -423,7 +426,8 @@
     font-size: 16px;
     font-weight: 600;
     color: #4a4a4a;
-    margin-left: 32px; /* indent to align with text */
+    margin-left: 32px;
+    /* indent to align with text */
 }
 
 /* Controls */
@@ -532,11 +536,12 @@
     background-color: #fff;
     display: flex;
     gap: 12px;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
     border-top: 1px solid #f0f0f0;
 }
 
-.ms-btn-skip, .ms-btn-confirm {
+.ms-btn-skip,
+.ms-btn-confirm {
     flex: 1;
     padding: 14px;
     border-radius: 20px;
@@ -580,13 +585,19 @@
     z-index: 1001;
     display: flex;
     flex-direction: column;
-    max-height: 90vh; /* up to 90% of screen */
+    max-height: 90vh;
+    /* up to 90% of screen */
     animation: slideUp 0.3s ease-out;
 }
 
 @keyframes slideUp {
-    from { transform: translateY(100%); }
-    to { transform: translateY(0); }
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
 }
 
 .dosage-modal-handle {

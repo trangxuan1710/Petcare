@@ -6,7 +6,9 @@ import com.petical.enums.ErrorCode;
 import com.petical.enums.ReceptionStatus;
 import com.petical.errors.AppException;
 import com.petical.repository.*;
+import com.petical.dto.response.NotificationMessage;
 import com.petical.service.PaymentService;
+import com.petical.service.SseNotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final ReceptionServiceRepository receptionServiceRepository;
     private final PrescriptionRepository prescriptionRepository;
     private final PrescriptionDetailRepository prescriptionDetailRepository;
+    private final SseNotificationService sseNotificationService;
 
     @Override
     @Transactional(readOnly = true)
@@ -105,6 +108,7 @@ public class PaymentServiceImpl implements PaymentService {
         if (receptionRecord != null) {
             receptionRecord.setStatus(ReceptionStatus.PAID);
             receptionRecordRepository.save(receptionRecord);
+            notifyPaidToReceptionist(receptionRecord);
         }
 
         Invoice savedInvoice = invoiceRepository.save(toSave);
@@ -148,6 +152,7 @@ public class PaymentServiceImpl implements PaymentService {
                 if (receptionRecord != null) {
                     receptionRecord.setStatus(ReceptionStatus.PAID);
                     receptionRecordRepository.save(receptionRecord);
+                    notifyPaidToReceptionist(receptionRecord);
                 }
             }
         }
@@ -204,7 +209,6 @@ public class PaymentServiceImpl implements PaymentService {
                 .chargeItems(chargeItems)
                 .build();
     }
-
     private List<InvoicePreviewResponse.ChargeItem> buildChargeItems(MedicalRecord medicalRecord) {
         List<InvoicePreviewResponse.ChargeItem> chargeItems = new ArrayList<>();
         if (medicalRecord == null) {
@@ -230,8 +234,10 @@ public class PaymentServiceImpl implements PaymentService {
             chargeItems.add(InvoicePreviewResponse.ChargeItem.builder()
                     .id(receptionService.getId())
                     .type(CHARGE_TYPE_SERVICE)
+                    .serviceId(service.getId())
+                    .serviceName(service.getName())
                     .name(service.getName())
-                    .unit("lượt")
+                    .unit("luot")
                     .quantity(quantity)
                     .unitPrice(unitPrice)
                     .discount(BigDecimal.ZERO)
@@ -244,6 +250,13 @@ public class PaymentServiceImpl implements PaymentService {
         List<Prescription> prescriptions = receptionServiceIds.isEmpty()
                 ? List.of()
                 : prescriptionRepository.findByReceptionServiceIdIn(receptionServiceIds);
+        java.util.Map<Long, Prescription> prescriptionById = prescriptions.stream()
+                .filter(item -> item != null && item.getId() > 0)
+                .collect(java.util.stream.Collectors.toMap(
+                        Prescription::getId,
+                        java.util.function.Function.identity(),
+                        (left, right) -> left
+                ));
 
         if (!prescriptions.isEmpty()) {
             List<Long> prescriptionIds = prescriptions.stream().map(Prescription::getId).toList();
@@ -251,28 +264,33 @@ public class PaymentServiceImpl implements PaymentService {
 
             for (PrescriptionDetail detail : details) {
                 Medicine medicine = detail.getMedicine();
-                if (medicine == null) {
-                    continue;
-                }
-                if (!isBillableMedicine(medicine)) {
+                if (medicine == null || !isBillableMedicine(medicine)) {
                     continue;
                 }
 
-                String dosageUnit = detail.getDosageUnit() == null || detail.getDosageUnit().isBlank()
-                        ? medicine.getUnit()
-                        : detail.getDosageUnit().trim();
-                BigDecimal unitPrice = resolveMedicinePrice(medicine, dosageUnit);
-                int quantity = Math.max(detail.getQuantity(), 1);
-                BigDecimal amount = unitPrice.multiply(BigDecimal.valueOf(quantity));
-                String unit = dosageUnit == null || dosageUnit.isBlank() ? "đơn vị" : dosageUnit;
+                BigDecimal boxPrice = (medicine.getBoxPrice() != null && medicine.getBoxPrice().signum() > 0)
+                        ? medicine.getBoxPrice()
+                        : (medicine.getUnitPrice() != null ? medicine.getUnitPrice() : BigDecimal.ZERO);
+                int prescribedQuantity = Math.max(detail.getQuantity(), 1);
+                int quantityPerBox = Math.max(medicine.getQuantityPerBox(), 1);
+                int boxQuantity = (int) Math.ceil((double) prescribedQuantity / quantityPerBox);
+                BigDecimal amount = boxPrice.multiply(BigDecimal.valueOf(boxQuantity));
+
+                Prescription ownerPrescription = detail.getPrescription() == null
+                        ? null
+                        : prescriptionById.get(detail.getPrescription().getId());
+                ReceptionService ownerReceptionService = ownerPrescription == null ? null : ownerPrescription.getReceptionService();
+                com.petical.entity.Service ownerService = ownerReceptionService == null ? null : ownerReceptionService.getService();
 
                 chargeItems.add(InvoicePreviewResponse.ChargeItem.builder()
                         .id(detail.getId())
                         .type(CHARGE_TYPE_MEDICINE)
+                        .serviceId(ownerService == null ? null : ownerService.getId())
+                        .serviceName(ownerService == null ? null : ownerService.getName())
                         .name(medicine.getName())
-                        .unit(unit)
-                        .quantity(quantity)
-                        .unitPrice(unitPrice)
+                        .unit("hop")
+                        .quantity(boxQuantity)
+                        .unitPrice(boxPrice)
                         .discount(BigDecimal.ZERO)
                         .insurance(BigDecimal.ZERO)
                         .amount(amount)
@@ -282,7 +300,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         return chargeItems;
     }
-
     private boolean isBillableMedicine(Medicine medicine) {
         String type = medicine == null || medicine.getType() == null
                 ? ""
@@ -297,17 +314,16 @@ public class PaymentServiceImpl implements PaymentService {
             return BigDecimal.ZERO;
         }
 
-        String normalizedUnit = dosageUnit == null ? "" : dosageUnit.trim().toLowerCase();
-        if ("hộp".equals(normalizedUnit) || "hop".equals(normalizedUnit) || "box".equals(normalizedUnit)) {
-            if (medicine.getBoxPrice() != null && medicine.getBoxPrice().signum() > 0) {
-                return medicine.getBoxPrice();
+        // Rule: Medicines are always sold by box in the billing module.
+        // We prioritize the box price (unit price * quantity per box) for all billable medications.
+        if (medicine.getQuantityPerBox() > 0) {
+            BigDecimal boxPrice = medicine.getBoxPrice();
+            if (boxPrice != null && boxPrice.signum() > 0) {
+                return boxPrice;
             }
         }
 
-        if (medicine.getUnitPrice() != null && medicine.getUnitPrice().signum() > 0) {
-            return medicine.getUnitPrice();
-        }
-        return BigDecimal.ZERO;
+        return medicine.getUnitPrice() != null ? medicine.getUnitPrice() : BigDecimal.ZERO;
     }
 
     private InvoicePreviewResponse.CustomerInfo mapCustomerInfo(ReceptionRecord receptionRecord) {
@@ -337,4 +353,26 @@ public class PaymentServiceImpl implements PaymentService {
                 .build();
     }
 
+    private void notifyPaidToReceptionist(ReceptionRecord receptionRecord) {
+        if (receptionRecord == null || receptionRecord.getId() <= 0) {
+            return;
+        }
+
+        String petName = receptionRecord.getPet() == null || receptionRecord.getPet().getName() == null
+                ? "thu cung"
+                : receptionRecord.getPet().getName();
+
+        sseNotificationService.sendNotificationToRole("RECEPTIONIST",
+                NotificationMessage.builder()
+                        .title("Da thanh toan")
+                        .message("Hoa don cua thu cung " + petName + " da duoc thanh toan.")
+                        .link("/receptionists/payment/" + receptionRecord.getId())
+                        .timestamp(LocalDateTime.now())
+                        .type("PAID")
+                        .build());
+    }
+
 }
+
+
+

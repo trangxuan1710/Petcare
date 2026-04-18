@@ -12,11 +12,12 @@
 
 .tickets-header-area {
     background-color: #f7fdfb;
-    padding: 0 16px 16px 16px;
+    padding: 10px 16px;
     border-bottom: 1px solid #e5e7eb;
     position: sticky;
     top: 0;
     z-index: 10;
+    height: 130px;
 }
 
 .tickets-page-title-group {
@@ -79,7 +80,7 @@
 }
 
 .tickets-content-area {
-    padding: 24px 16px;
+    padding: 10px 16px;
     height: calc(100vh - 180px);
     overflow-y: auto;
 }

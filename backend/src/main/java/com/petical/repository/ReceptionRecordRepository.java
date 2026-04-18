@@ -17,55 +17,51 @@ import java.util.List;
 @Repository
 public interface ReceptionRecordRepository extends JpaRepository<ReceptionRecord, Long> {
 	@Override
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findAll();
 
 	@Override
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	java.util.Optional<ReceptionRecord> findById(Long id);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByStatus(ReceptionStatus status);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByStatusIn(Collection<ReceptionStatus> statuses);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByReceptionTimeBetween(LocalDateTime start, LocalDateTime end);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByDoctorIdIn(Collection<Long> doctorIds);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByDoctorIdAndReceptionTimeBetween(Long doctorId, LocalDateTime start, LocalDateTime end);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByDoctorId(Long doctorId);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByDoctorIdAndStatusIn(Long doctorId, Collection<ReceptionStatus> statuses);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByDoctorIdAndStatusInAndReceptionTimeBetween(Long doctorId, Collection<ReceptionStatus> statuses, LocalDateTime start, LocalDateTime end);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByStatusAndReceptionTimeBetween(ReceptionStatus status, LocalDateTime start, LocalDateTime end);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByStatusInAndReceptionTimeBetween(Collection<ReceptionStatus> statuses, LocalDateTime start, LocalDateTime end);
 
-	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examForm"})
+	@EntityGraph(attributePaths = {"client", "pet", "receptionist", "doctor", "examTypeOption"})
 	List<ReceptionRecord> findByPetIdOrderByReceptionTimeDesc(Long petId);
 
 	boolean existsByPetIdAndStatusNot(Long petId, com.petical.enums.ReceptionStatus status);
 
-	long countByExamFormIsEmergencyTrueAndReceptionTimeBetween(LocalDateTime start, LocalDateTime end);
-
 	long countByStatusInAndReceptionTimeBetween(Collection<ReceptionStatus> statuses, LocalDateTime start, LocalDateTime end);
 
 	long countByStatusAndReceptionTimeBetween(ReceptionStatus status, LocalDateTime start, LocalDateTime end);
-
-	long countByDoctorIdAndExamFormIsEmergencyTrueAndReceptionTimeBetween(Long doctorId, LocalDateTime start, LocalDateTime end);
 
 	long countByDoctorIdAndStatusInAndReceptionTimeBetween(Long doctorId, Collection<ReceptionStatus> statuses, LocalDateTime start, LocalDateTime end);
 

@@ -9,9 +9,10 @@ import '../../components/doctor/TicketCard.css';
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/600.css";
-import {Divider} from "semantic-ui-react";
+import { Divider } from "semantic-ui-react";
 import receptionService from '../../api/receptionService';
 import treatmentService from '../../api/treatmentService';
+import { capitalizeFirstText, toTitleCase } from '../../utils/textFormat';
 
 const AlertBadgeIcon = () => <TriangleAlert size={24} color="#ef4444" strokeWidth={2} />;
 
@@ -94,6 +95,8 @@ const getPriceNumber = (item) => Number(
 ) || 0;
 
 const formatVnd = (value) => `${getPriceNumber({ price: value }).toLocaleString('vi-VN')}đ`;
+
+const formatDisplayText = (value, fallback = '') => capitalizeFirstText(value || fallback);
 
 const normalizeDoseValue = (value) => {
     const parsed = Number(value);
@@ -497,8 +500,8 @@ export default function ServiceOrder() {
                         </div> */}
                     </div>
 
-                    <Divider/>
-                    
+                    <Divider />
+
                     <div className="so-created-info">
                         <span>
                             Được tạo từ đơn tiếp đón lúc <span className="so-time">{receptionDetail?.receptionTime ? new Date(receptionDetail.receptionTime).toLocaleString('vi-VN') : '--:-- --/--/----'}</span>
@@ -538,8 +541,8 @@ export default function ServiceOrder() {
                 {/* Tabs */}
                 <div className="so-tabs">
                     {tabs.map(tab => (
-                        <div 
-                            key={tab} 
+                        <div
+                            key={tab}
                             className={`so-tab ${activeTab === tab ? 'active' : ''}`}
                             onClick={() => setActiveTab(tab)}
                         >
@@ -564,26 +567,26 @@ export default function ServiceOrder() {
                                                 const serviceStatusMeta = normalizeReceptionStatus(service?.status);
                                                 return (
                                                     <>
-                                            <div className="so-service-row">
-                                                <span className="so-service-name">{service.name}</span>
-                                                <span className={`so-service-status ${serviceStatusMeta.key}`}>{serviceStatusMeta.label}</span>
-                                            </div>
-                                            <div className="so-service-price">
-                                                {(() => {
-                                                    const quantity = Math.max(1, Number(service?.quantity || 1));
-                                                    const unitPrice = toNumber(service?.price);
-                                                    const lineAmount = unitPrice * quantity;
-                                                    return (
-                                                        <>
-                                                            <span className="so-price-val">{lineAmount.toLocaleString('vi-VN')}đ</span>
-                                                        </>
-                                                    );
-                                                })()}
-                                            </div>
-                                            <div className="so-service-executor">
-                                                <span className="so-exec-label">Người thực hiện</span>
-                                                <span className="so-exec-name">{service.technicianName}</span>
-                                            </div>
+                                                        <div className="so-service-row">
+                                                            <span className="so-service-name">{formatDisplayText(service.name, 'Dịch vụ')}</span>
+                                                            <span className={`so-service-status ${serviceStatusMeta.key}`}>{formatDisplayText(serviceStatusMeta.label)}</span>
+                                                        </div>
+                                                        <div className="so-service-price">
+                                                            {(() => {
+                                                                const quantity = Math.max(1, Number(service?.quantity || 1));
+                                                                const unitPrice = toNumber(service?.price);
+                                                                const lineAmount = unitPrice * quantity;
+                                                                return (
+                                                                    <>
+                                                                        <span className="so-price-val">{lineAmount.toLocaleString('vi-VN')}đ</span>
+                                                                    </>
+                                                                );
+                                                            })()}
+                                                        </div>
+                                                        <div className="so-service-executor">
+                                                            <span className="so-exec-label">Người thực hiện</span>
+                                                            <span className="so-exec-name">{toTitleCase(service.technicianName) || service.technicianName}</span>
+                                                        </div>
                                                     </>
                                                 );
                                             })()}
@@ -645,52 +648,75 @@ export default function ServiceOrder() {
                                 {isMedsExpanded && (
                                     <div className={`so-medicine-content ${medsList.length === 0 ? 'is-empty' : ''}`}>
                                         {medsList.length > 0 && (
-                                            <div className="so-medicine-list">
-                                                {medsList.map((med, index) => {
-                                                    const quantity = Number(med?.qty ?? med?.quantity ?? 1) || 1;
-                                                    const isThuoc = med?.type === 'THUOC' || med?.type === 'MEDICINE';
-                                                    const originalUnit = String(med?.selectedUnit || med?.unit || 'Đơn vị').replace(/^\//, '');
-                                                    const quantityUnit = isThuoc ? 'hộp' : originalUnit;
-                                                    const dosageRows = [
-                                                        { label: 'Sáng', value: med?.dosage?.morning || 0 },
-                                                        { label: 'Trưa', value: med?.dosage?.noon || 0 },
-                                                        { label: 'Chiều', value: med?.dosage?.afternoon || 0 },
-                                                        { label: 'Tối', value: med?.dosage?.evening || 0 },
-                                                    ].filter((dosage) => dosage.value > 0);
+                                            <div className="so-medicine-list-grouped">
+                                                {(() => {
+                                                    const serviceNameMap = new Map();
+                                                    paraclinicalServices.forEach((s) => {
+                                                        serviceNameMap.set(Number(s.serviceId || s.id), s.name || s.serviceName);
+                                                    });
+                                                    serviceNameMap.set(1, 'Khám lâm sàng');
 
-                                                    return (
-                                                        <div key={`${med?.id || med?.medicineId || med?.name || 'medicine'}-${index}`} className="so-medicine-item">
-                                                            <div className="so-medicine-item-head">
-                                                                <h4>{med.name}</h4>
-                                                                <button
-                                                                    type="button"
-                                                                    className="so-medicine-edit"
-                                                                    onClick={openMedicineSelector}
-                                                                    disabled={isReadonlyMode}
-                                                                    aria-label={`Chỉnh thuốc và vật tư cho ${med.name}`}
-                                                                >
-                                                                    <PencilLine size={15} color="#209D80" />
-                                                                </button>
+                                                    const groups = medsList.reduce((acc, med) => {
+                                                        const sid = Number(med.serviceId || 1);
+                                                        if (!acc[sid]) acc[sid] = [];
+                                                        acc[sid].push(med);
+                                                        return acc;
+                                                    }, {});
+
+                                                    return Object.entries(groups).map(([sid, items]) => {
+                                                        const serviceName = serviceNameMap.get(Number(sid)) || `Dịch vụ #${sid}`;
+                                                        return (
+                                                            <div key={`group-${sid}`} className="so-med-group">
+                                                                <h5 className="so-med-group-title">{serviceName}</h5>
+                                                                {items.map((med, index) => {
+                                                                    const quantity = Number(med?.qty ?? med?.quantity ?? 1) || 1;
+                                                                    const isThuoc = med?.type === 'THUOC' || med?.type === 'MEDICINE';
+                                                                    const originalUnit = String(med?.selectedUnit || med?.unit || 'Đơn vị').replace(/^\//, '');
+                                                                    const quantityUnit = originalUnit;
+                                                                    const dosageRows = [
+                                                                        { label: 'Sáng', value: med?.dosage?.morning || 0 },
+                                                                        { label: 'Trưa', value: med?.dosage?.noon || 0 },
+                                                                        { label: 'Chiều', value: med?.dosage?.afternoon || 0 },
+                                                                        { label: 'Tối', value: med?.dosage?.evening || 0 },
+                                                                    ].filter((dosage) => dosage.value > 0);
+
+                                                                    return (
+                                                                        <div key={`${med?.id || med?.medicineId || med?.name || 'medicine'}-${index}`} className="so-medicine-item">
+                                                                            <div className="so-medicine-item-head">
+                                                                                <h4>{med.name}</h4>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    className="so-medicine-edit"
+                                                                                    onClick={openMedicineSelector}
+                                                                                    disabled={isReadonlyMode}
+                                                                                    aria-label={`Chỉnh thuốc và vật tư cho ${med.name}`}
+                                                                                >
+                                                                                    <PencilLine size={15} color="#209D80" />
+                                                                                </button>
+                                                                            </div>
+                                                                            <div className="so-medicine-row">
+                                                                                <span>Số lượng</span>
+                                                                                <strong>{quantity} {quantityUnit}</strong>
+                                                                            </div>
+                                                                            {isThuoc && dosageRows.length > 0 && dosageRows.map((dosage) => (
+                                                                                <div key={`${med?.id || med?.medicineId}-${dosage.label}`} className="so-medicine-row">
+                                                                                    <span>{dosage.label}</span>
+                                                                                    <strong>{dosage.value} {originalUnit}</strong>
+                                                                                </div>
+                                                                            ))}
+                                                                            {isThuoc && (
+                                                                                <div className="so-medicine-row">
+                                                                                    <span>Chỉ định khác</span>
+                                                                                    <strong>{med?.dosage?.note || med?.note || '---'}</strong>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                })}
                                                             </div>
-                                                            <div className="so-medicine-row">
-                                                                <span>Số lượng</span>
-                                                                <strong>{quantity} {quantityUnit}</strong>
-                                                            </div>
-                                                            {isThuoc && dosageRows.map((dosage) => (
-                                                                <div key={`${med?.id || med?.medicineId}-${dosage.label}`} className="so-medicine-row">
-                                                                    <span>{dosage.label}</span>
-                                                                    <strong>{dosage.value} {originalUnit}</strong>
-                                                                </div>
-                                                            ))}
-                                                            {isThuoc && (
-                                                                <div className="so-medicine-row">
-                                                                    <span>Chỉ định khác</span>
-                                                                    <strong>{med?.dosage?.note || med?.note || '---'}</strong>
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
+                                                        );
+                                                    });
+                                                })()}
                                             </div>
                                         )}
 
@@ -719,6 +745,8 @@ export default function ServiceOrder() {
                                         maxLength={MAX_CONCLUSION_LENGTH}
                                         rows={4}
                                         readOnly={isReadonlyMode}
+                                        required
+                                        aria-required="true"
                                     />
                                     <span className="so-conclusion-count">{MAX_CONCLUSION_LENGTH - conclusionText.length}</span>
                                 </div>
@@ -739,6 +767,8 @@ export default function ServiceOrder() {
                                                 checked={selectedConclusion === option}
                                                 onChange={() => setSelectedConclusion(option)}
                                                 disabled={isReadonlyMode}
+                                                required
+                                                aria-required="true"
                                             />
                                             <span className="so-option-dot" />
                                             <span>{option}</span>

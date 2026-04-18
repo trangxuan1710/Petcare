@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, Phone, Mars, Weight, ChevronUp, ChevronDown, Plus, Upload, Minus, PencilLine } from 'lucide-react';
+import { ChevronLeft, Phone, Mars, Weight, ChevronUp, ChevronDown, Plus, Upload, Minus, PencilLine, Venus, Box } from 'lucide-react';
 import receptionService from '../../api/receptionService';
 import treatmentService from '../../api/treatmentService';
 import './RecordResult.css';
@@ -49,14 +49,12 @@ const getPriceNumber = (item) => {
     const digitsAndSeparators = rawText.replace(/[^\d,.-]/g, '');
     if (!digitsAndSeparators) return 0;
 
-    // Handle common VN currency formatting, e.g. 12.000 or 12.000,50.
     if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(digitsAndSeparators)) {
         const normalizedVn = digitsAndSeparators.replace(/\./g, '').replace(',', '.');
         const parsedVn = Number(normalizedVn);
         return Number.isFinite(parsedVn) ? parsedVn : 0;
     }
 
-    // Handle EN-style grouping, e.g. 12,000 or 12,000.50.
     if (/^-?\d{1,3}(,\d{3})+(\.\d+)?$/.test(digitsAndSeparators)) {
         const normalizedEn = digitsAndSeparators.replace(/,/g, '');
         const parsedEn = Number(normalizedEn);
@@ -299,6 +297,7 @@ export const RecordResult = () => {
         return {
             name: pet?.name || '---',
             breed: pet?.breed || pet?.species || '---',
+            gender: String(pet?.gender || '').toLowerCase() === 'female' ? 'female' : 'male',
             weight: receptionDetail?.weight ? `${receptionDetail.weight}kg` : (pet?.weight ? `${pet.weight}kg` : '--kg'),
         };
     }, [receptionDetail]);
@@ -484,6 +483,7 @@ export const RecordResult = () => {
                 medicine.id === activeDosageMedId
                     ? {
                         ...medicine,
+                        boxPrice: dosageDraft.boxPrice,
                         dosage: {
                             morning: dosageDraft.morning,
                             noon: dosageDraft.noon,
@@ -524,7 +524,7 @@ export const RecordResult = () => {
 
                     <div className="rr-pet-info-inline">
                         <span className="rr-pet-name">{petInfo.name}</span>
-                        <span className="rr-pet-breed">{petInfo.breed} <Mars size={12} color="#3b82f6" style={{ display: 'inline', marginLeft: '2px' }} /></span>
+                        <span className="rr-pet-breed">{petInfo.breed} {petInfo.gender === 'female' ? <Venus size={12} color="#ec4899" /> : <Mars size={12} color="#3b82f6" />}</span>
                         <span className="rr-pet-stat"><Weight size={14} color="#888" /> {petInfo.weight}</span>
                     </div>
                 </div>
@@ -550,32 +550,14 @@ export const RecordResult = () => {
                         <span className="rr-exam-value">{clinicalStartedAt ? new Date(clinicalStartedAt).toLocaleString('vi-VN') : '--:-- - --/--/----'}</span>
                     </div>
 
-                    {/* <div className="rr-service-list">
-                        <div className="rr-service-item">
-                            <div className="rr-service-row">
-                                <span className="rr-service-name">{receptionDetail?.examForm?.examType || 'Khám lâm sàng'}</span>
-                                <span className={`rr-service-status ${clinicalStatusMeta.className}`}>{clinicalStatusMeta.label}</span>
-                            </div>
-                            <div className="rr-service-row rr-service-meta">
-                                <span>{formatVnd(receptionDetail?.examForm?.price || 0)} /lượt</span>
+                    {receptionDetail?.examReason && (
+                        <div className="rr-exam-reason-section">
+                            <span className="rr-exam-label">Mô tả triệu chứng</span>
+                            <div className="rr-exam-reason-box">
+                                {receptionDetail.examReason}
                             </div>
                         </div>
-
-                        {selectedParaclinical.map((service, index) => {
-                            const statusMeta = normalizeServiceStatus(service?.rawStatus);
-                            return (
-                                <div className="rr-service-item" key={`${service?.id || service?.name || 'service'}-${index}`}>
-                                    <div className="rr-service-row">
-                                        <span className="rr-service-name">{service?.name}</span>
-                                        <span className={`rr-service-status ${statusMeta.className}`}>{statusMeta.label}</span>
-                                    </div>
-                                    <div className="rr-service-row rr-service-meta">
-                                        <span>{formatVnd(service?.price)} /lượt x{service?.quantity || 1}</span>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div> */}
+                    )}
                 </div>
 
                 <div className="rr-section-block">
@@ -587,6 +569,8 @@ export const RecordResult = () => {
                             onChange={(event) => setConclusionText(event.target.value)}
                             rows={4}
                             readOnly={isReadonlyMode}
+                            required
+                            aria-required="true"
                         />
                         <span className="rr-char-count">2000</span>
                     </div>
@@ -646,7 +630,7 @@ export const RecordResult = () => {
                     <label className="rr-file-upload-btn" style={isReadonlyMode ? { opacity: 0.55, pointerEvents: 'none' } : {}}>
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect><path d="M12 16v-8"></path><path d="M8 12l4-4 4 4"></path></svg>
                         <span style={{ fontSize: '13px' }}>Tải lên hình ảnh thú trước và sau điều trị</span>
-                        <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple onChange={handleSelectFiles} hidden disabled={isReadonlyMode} />
+                        <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple onChange={handleSelectFiles} hidden disabled={isReadonlyMode} aria-required="true" />
                     </label>
                 </div>
 
@@ -663,9 +647,9 @@ export const RecordResult = () => {
                                         const quantity = Number(med?.qty ?? med?.quantity ?? 1) || 1;
                                         const isThuoc = med?.type === 'THUOC' || med?.type === 'MEDICINE';
                                         const originalUnit = med?.selectedUnit || med?.unit?.replace('/', '') || 'Đơn vị';
-                                        const quantityUnit = isThuoc ? 'hộp' : originalUnit;
+                                        const quantityUnit = originalUnit;
                                         return (
-                                            <div key={`${med?.id || med?.medicineId || med?.name || 'medicine'}-${index}`} className="rr-med-item-minimal">
+                                            <div onClick={() => console.log(med)} key={`${med?.id || med?.medicineId || med?.name || 'medicine'}-${index}`} className="rr-med-item-minimal">
                                                 <div className="rr-med-row-header">
                                                     <h4 className="rr-med-name-min">{med.name}</h4>
                                                     <button
@@ -679,15 +663,15 @@ export const RecordResult = () => {
                                                     </button>
                                                 </div>
                                                 <div className="rr-med-row-price">
-                                                    <div>
+                                                    <div onClick={() => console.log(med)}>
                                                         <span className="rr-med-price-min">{med.price}</span>
-                                                        <span className="rr-med-unit-min"> {med.unit}</span>
+                                                        <span className="rr-med-unit-min">/Hộp</span>
                                                     </div>
                                                 </div>
 
                                                 <div className="rr-med-row-note">
                                                     <span className="rr-note-lbl">Số lượng</span>
-                                                    <span className="rr-note-val">{quantity} {quantityUnit}</span>
+                                                    <span className="rr-note-val">{quantity} Hộp</span>
                                                 </div>
 
                                                 {isThuoc && [
@@ -701,13 +685,6 @@ export const RecordResult = () => {
                                                         <span className="rr-dosage-val">{dosage.value} {originalUnit}</span>
                                                     </div>
                                                 ))}
-                                                {/* 
-                                                {isThuoc && (
-                                                    <div className="rr-med-row-note">
-                                                        <span className="rr-note-lbl">Đơn vị</span>
-                                                        <span className="rr-note-val">{originalUnit}</span>
-                                                    </div>
-                                                )} */}
                                                 {isThuoc && (
                                                     <div className="rr-med-row-note">
                                                         <span className="rr-note-lbl">Chỉ định khác</span>
@@ -728,6 +705,9 @@ export const RecordResult = () => {
                                     onClick={() => navigate('/doctors/medicine-selector', {
                                         state: {
                                             receptionId: id,
+                                            petSpeciesId: receptionDetail?.pet?.speciesId ?? receptionDetail?.pet?.species?.id ?? null,
+                                            petSpecies: receptionDetail?.pet?.species || receptionDetail?.pet?.speciesLabel || receptionDetail?.pet?.speciesCode,
+                                            petWeight: receptionDetail?.weight ?? receptionDetail?.pet?.weight ?? null,
                                             treatmentSlipId,
                                             selectedMedicines: medsList,
                                             recordResultDraft: {
@@ -737,7 +717,7 @@ export const RecordResult = () => {
                                                 isMedsExpanded,
                                                 medsList,
                                             },
-                                            returnPath: `/doctors/record-result/${id ?? 1}`,
+                                            returnPath: `/doctors/record-result/${id ?? useParams().id}`,
                                         },
                                     })}
                                     disabled={isReadonlyMode}
@@ -761,11 +741,10 @@ export const RecordResult = () => {
                                     checked={selectedConclusion === option.id}
                                     onChange={() => {
                                         setSelectedConclusion(option.id);
-                                        if (isDevelopingTreatmentOption(option.label)) {
-                                            showToast('success', 'Tính năng đang phát triển.');
-                                        }
                                     }}
                                     disabled={isReadonlyMode}
+                                    required
+                                    aria-required="true"
                                 />
                                 <span className="rr-radio-custom"></span>
                                 {option.label}
@@ -813,7 +792,7 @@ export const RecordResult = () => {
                                                         ? dosageDraft.noon
                                                         : idx === 2
                                                             ? dosageDraft.afternoon
-                                                            : dosageDraft.evening} { }
+                                                            : dosageDraft.evening}
                                             </span>
                                             <button
                                                 className="rr-dosage-step-btn"

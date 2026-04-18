@@ -8,7 +8,7 @@ import dashboardService from '../../api/dashboardService';
 import authService from '../../api/authService';
 import useHeaderProfile from '../../hooks/useHeaderProfile';
 import FeatureDevelopingModal from '../../components/common/FeatureDevelopingModal';
-import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE.jsx';
 import AppTopHeader from '../../components/common/AppTopHeader';
 
 const Home = () => {
@@ -81,7 +81,7 @@ const Home = () => {
         {
             id: 3,
             title: 'Ca khám cần kết luận',
-            count: readMetric(['waitingTreatmentCases', 'inProgressCases', 'activeTreatmentCases', 'waitingConclusionCases']),
+            count: readMetric(['waitingConclusionCases']),
             unit: 'đơn',
             variant: 'success',
             onClick: () => navigate('/doctors/tickets', { state: { initialTab: 'in_progress' } })
@@ -94,7 +94,7 @@ const Home = () => {
             variant: 'success',
             onClick: () => setIsFeatureModalOpen(true)
         }
-    ], [readMetric]);
+    ], [summary, navigate]);
 
     // Icon arrow chung cho StatCard
     const TargetIcon = () => (
@@ -186,3 +186,4 @@ const Home = () => {
 };
 
 export default Home;
+

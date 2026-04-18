@@ -30,16 +30,20 @@
 
 .new-reception-page {
     /* ensure content doesn't go under the fixed header */
-    padding-top: 72px; /* header height + gap */
+    padding-top: 72px;
+    /* header height + gap */
     /* allow scrolling within the page container but hide scrollbar for a mobile-like look */
     height: 100vh;
     overflow-y: auto;
-    -ms-overflow-style: none; /* IE/Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+    scrollbar-width: none;
+    /* Firefox */
 }
 
 .new-reception-page::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, Opera */
+    display: none;
+    /* Chrome, Safari, Opera */
     width: 0;
     height: 0;
 }
@@ -206,7 +210,7 @@
     height: 36px;
     border-radius: 50%;
     border: 1px none #209D80;
-    background: none;   
+    background: none;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -217,7 +221,7 @@
 .nr-form-section {
     background-color: #fff;
     border-radius: 16px;
-    padding: 20px 16px;
+    padding: 5px 0;
 }
 
 .nr-form-title {
@@ -235,9 +239,10 @@
     align-items: center;
     justify-content: space-between;
     padding: 12px;
-    background-color: #f7fbf9;
+    background-color: #f3f3f3;
     border-radius: 10px;
     margin-bottom: 16px;
+
 }
 
 .nr-pet-info-details {
@@ -303,14 +308,15 @@
 
 .nr-field-label {
     position: absolute;
-    top: -8px;
+    top: -10px;
     left: 12px;
     font-size: 12px;
+    font-weight: 400;
     color: #888;
-    background: #fff;
+    background: rgba(255, 255, 255, 1);
     padding: 0 4px;
     margin: 0;
-    z-index: 2;
+    z-index: 1000;
     line-height: 1;
 }
 
@@ -361,6 +367,7 @@
     padding: 14px 16px 14px 0;
     font-size: 15px;
     color: #aaa;
+    background-color: rgba(0, 0, 0, 0);
 }
 
 .nr-select-wrapper {
@@ -396,6 +403,7 @@
 
 .nr-dropup {
     position: relative;
+    width: 100%;
 }
 
 .nr-dropup-trigger {
@@ -416,6 +424,7 @@
     background-color: #f3f4f6;
     border-radius: 8px;
 }
+
 .nr-dropup.is-disabled .nr-dropup-text {
     color: #6b7280;
 }
@@ -447,14 +456,15 @@
     left: 0;
     right: 0;
     bottom: calc(100% + 6px);
-    background: #fff;
+    background: #ffffff;
+    opacity: 1;
     border: 1px solid #d1d5db;
     border-radius: 10px;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
     padding: 4px;
     max-height: 220px;
     overflow-y: auto;
-    z-index: 50;
+    z-index: 1500;
 }
 
 .nr-dropup-option {
@@ -466,6 +476,7 @@
     border-radius: 8px;
     font-size: 14px;
     color: #111827;
+    font-weight: 400 !important;
     cursor: pointer;
 }
 
@@ -476,6 +487,22 @@
 .nr-dropup-option.active {
     background: #ecfdf5;
     color: #047857;
+}
+
+.nr-doctor-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 16px;
+}
+
+.nr-doctor-option-count {
+    color: #209D80;
+    font-size: 16px;
+    font-weight: 500;
+    white-space: nowrap;
 }
 
 .nr-select-skeleton {
@@ -519,8 +546,8 @@
     color: #fff;
     font-size: 13px;
     font-weight: 500;
-    z-index: 1000;
-    box-shadow: 0 10px 24px rgba(16, 24, 40, 0.18);
+    z-index: 2000;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
 }
 
 .nr-toast-error {
@@ -535,6 +562,7 @@
     0% {
         background-position: 200% 0;
     }
+
     100% {
         background-position: -200% 0;
     }
@@ -552,6 +580,11 @@
     font-family: inherit;
     background-color: transparent;
     box-sizing: border-box;
+}
+
+.nr-symptom-textarea {
+    min-height: 92px;
+    line-height: 1.45;
 }
 
 .nr-assigned-row {
@@ -665,7 +698,7 @@
     top: 3px;
     left: 3px;
     transition: transform 0.25s;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .nr-toggle.active .nr-toggle-thumb {
@@ -694,13 +727,14 @@
     background-color: #fff;
     display: flex;
     gap: 12px;
-    box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.03);
     max-width: 480px;
     margin: 0 auto;
     z-index: 100;
 }
 
-.nr-btn-cancel, .nr-btn-submit {
+.nr-btn-cancel,
+.nr-btn-submit {
     flex: 1;
     padding: 14px;
     border-radius: 20px;
@@ -775,15 +809,34 @@
 
 .nr-pet-modal-form-row {
     display: flex;
-    gap: 8px;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-start;
 }
 
+.nr-pet-modal-field-group {
+    margin-bottom: 0px;
+    flex-basis: calc(50% - 6px);
+}
+
+
+
 .nr-pet-modal-field {
-    border: 1px solid #d1d5db;
+    border: 1px solid #cbd5e1;
     border-radius: 12px;
-    padding: 2px 10px 8px;
-    margin-bottom: 10px;
+    padding: 0 14px;
+    margin-bottom: 12px;
+    height: 52px;
+    display: flex;
+    align-items: center;
     box-sizing: border-box;
+    background: #fff;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.nr-pet-modal-field.is-invalid {
+    border-color: #ef4444;
 }
 
 .nr-pet-modal-field-half {
@@ -791,28 +844,48 @@
 }
 
 .nr-pet-modal-label {
-    display: block;
-    font-size: 12px;
-    color: #6b7280;
-    margin-bottom: 2px;
+    position: absolute;
+    top: -9px;
+    left: 10px;
+    background: #fff;
+    padding: 0 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4b5563;
+    pointer-events: none;
+    z-index: 10;
 }
 
 .nr-pet-modal-input {
     width: 100%;
     border: none;
     outline: none;
-    font-size: 14px;
-    color: #111827;
+    font-size: 16px;
+    color: #1a1a1a;
     background: transparent;
-    padding: 4px 0;
+    padding: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.nr-pet-modal-field-error {
+    margin: 0 2px;
+    padding-bottom: 12px;
+    display: block;
+    color: #ef4444;
+    font-size: 13px;
+    line-height: 1.35;
 }
 
 .nr-pet-modal-select-wrapper {
     position: relative;
+    width: 100%;
 }
 
 .nr-pet-modal-dropup-trigger {
     padding: 4px 18px 4px 0;
+    height: 32px;
 }
 
 .nr-pet-modal-dropup-trigger .nr-dropup-text {
@@ -866,4 +939,86 @@
 .nr-pet-modal-btn-submit {
     background: #0ea68b;
     color: #fff;
+}
+
+.nr-pet-modal-btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Local typography override: this screen needs to stay readable despite global compact defaults. */
+.new-reception-page {
+    font-size: 14px !important;
+}
+
+.new-reception-page .nr-title {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+}
+
+.new-reception-page .nr-customer-name {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+.new-reception-page .nr-customer-phone,
+.new-reception-page .nr-customer-input,
+.new-reception-page .nr-order-count,
+.new-reception-page .nr-pet-chip,
+.new-reception-page .nr-pet-info-details,
+.new-reception-page .nr-pet-info-name,
+.new-reception-page .nr-pet-info-breed,
+.new-reception-page .nr-pet-info-stat,
+.new-reception-page .nr-input,
+.new-reception-page .nr-textarea,
+.new-reception-page .nr-input-suffix,
+.new-reception-page .nr-select,
+.new-reception-page .nr-dropup-text,
+.new-reception-page .nr-dropup-option,
+.new-reception-page .nr-shift-display,
+.new-reception-page .nr-toggle-label,
+.new-reception-page .nr-pet-modal-input,
+.new-reception-page .nr-pet-modal-select,
+.new-reception-page .nr-pet-modal-dropup-trigger .nr-dropup-text {
+    font-size: 14px !important;
+}
+
+.new-reception-page .nr-field-label,
+.new-reception-page .nr-pet-modal-label {
+    font-size: 13px !important;
+}
+
+.new-reception-page .nr-form-title {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+.new-reception-page .nr-btn-cancel,
+.new-reception-page .nr-btn-submit,
+.new-reception-page .nr-pet-modal-btn-cancel,
+.new-reception-page .nr-pet-modal-btn-submit {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+}
+
+@media (max-width: 360px) {
+    .nr-pet-modal-field-half {
+        flex: 1 0 100%;
+    }
+
+    .nr-pet-modal-form-row {
+        gap: 0;
+    }
+
+    .nr-pet-modal-actions {
+        flex-direction: column-reverse;
+    }
+}
+
+textarea.nr-input {
+    height: auto !important;
+    min-height: 80px;
+    resize: vertical;
+    line-height: 1.5;
+    padding-top: 14px !important;
 }

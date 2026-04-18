@@ -3,9 +3,8 @@ package com.petical.config;
 import com.github.javafaker.Faker;
 import com.petical.entity.Client;
 import com.petical.entity.Doctor;
-import com.petical.entity.ExamForm;
 import com.petical.entity.ExamResult;
-import com.petical.entity.ExamStatus;
+import com.petical.entity.ExamTypeOption;
 import com.petical.entity.Invoice;
 import com.petical.entity.MedicalRecord;
 import com.petical.entity.Medicine;
@@ -16,12 +15,13 @@ import com.petical.entity.PrescriptionDetail;
 import com.petical.entity.ReceptionRecord;
 import com.petical.entity.ReceptionService;
 import com.petical.entity.Receptionist;
+import com.petical.entity.ResultFile;
 import com.petical.entity.Service;
 import com.petical.entity.ServiceOrder;
 import com.petical.entity.ServiceResult;
 import com.petical.entity.Technician;
 import com.petical.entity.TreatmentDirection;
-import com.petical.enums.ExamType;
+import com.petical.enums.MedicalRecordStatus;
 import com.petical.enums.ReceptionServiceStatus;
 import com.petical.enums.ReceptionStatus;
 import jakarta.persistence.EntityManager;
@@ -78,17 +78,16 @@ public class DataSeeder implements CommandLineRunner {
         List<Doctor> doctors = seedDoctors(faker, encodedPassword);
         List<Receptionist> receptionists = seedReceptionists(faker, encodedPassword);
         List<Technician> technicians = seedTechnicians(faker, encodedPassword);
-        List<ExamStatus> examStatuses = seedExamStatuses();
         List<TreatmentDirection> directions = seedTreatmentDirections();
         List<PaymentMethod> paymentMethods = seedPaymentMethods();
-//        List<ExamForm> examForms = seedExamForms();
+//        List<ExamTypeOption> examTypeOptions = loadExamTypeOptions();
 //        List<Pet> pets = seedPets(faker, clients);
 //        List<Medicine> medicines = seedMedicines();
 //        List<Service> services = seedServices();
 
-//        List<ReceptionRecord> receptionRecords = seedReceptionRecords(clients, pets, receptionists, doctors, examForms);
+//        List<ReceptionRecord> receptionRecords = seedReceptionRecords(clients, pets, receptionists, doctors);
 //        List<ReceptionService> receptionServices = seedReceptionServices(receptionRecords, services);
-//        List<MedicalRecord> medicalRecords = seedMedicalRecords(receptionRecords, doctors, examStatuses);
+//        List<MedicalRecord> medicalRecords = seedMedicalRecords(receptionRecords, doctors);
 //        List<ExamResult> examResults = seedExamResults(medicalRecords, directions);
 //        List<Prescription> prescriptions = seedPrescriptions(examResults, receptionServices, services.getFirst().getId());
 //        seedPrescriptionDetails(prescriptions, medicines);
@@ -165,17 +164,6 @@ public class DataSeeder implements CommandLineRunner {
         return result;
     }
 
-    private List<ExamStatus> seedExamStatuses() {
-        List<String> statusNames = List.of("PENDING", "IN_PROGRESS", "COMPLETED");
-        List<ExamStatus> result = new ArrayList<>();
-        for (String statusName : statusNames) {
-            ExamStatus status = ExamStatus.builder().name(statusName).build();
-            entityManager.persist(status);
-            result.add(status);
-        }
-        return result;
-    }
-
     private List<TreatmentDirection> seedTreatmentDirections() {
         List<String> names = List.of(
                 "Cho về",
@@ -201,19 +189,6 @@ public class DataSeeder implements CommandLineRunner {
             PaymentMethod method = PaymentMethod.builder().name(name).build();
             entityManager.persist(method);
             result.add(method);
-        }
-        return result;
-    }
-
-    private List<ExamForm> seedExamForms() {
-        List<ExamForm> result = new ArrayList<>();
-        for (int i = 0; i < CLIENT_COUNT; i++) {
-            ExamForm form = ExamForm.builder()
-                    .examType(i % 3 == 0 ? ExamType.RE_EXAM : ExamType.NEW_EXAM)
-                    .isEmergency(i % 7 == 0)
-                    .build();
-            entityManager.persist(form);
-            result.add(form);
         }
         return result;
     }
@@ -333,8 +308,7 @@ public class DataSeeder implements CommandLineRunner {
             List<Client> clients,
             List<Pet> pets,
             List<Receptionist> receptionists,
-            List<Doctor> doctors,
-            List<ExamForm> examForms
+            List<Doctor> doctors
     ) {
         ReceptionStatus[] statusCycle = {
                 ReceptionStatus.WAITING_EXECUTION,
@@ -368,7 +342,6 @@ public class DataSeeder implements CommandLineRunner {
                     .pet(pets.get(i))
                     .receptionist(receptionists.get(i % receptionists.size()))
                     .doctor(doctors.get(i % doctors.size()))
-                    .examForm(examForms.get(i % examForms.size()))
                     .examReason(reasons[i % reasons.length])
                     .note(status == ReceptionStatus.WAITING_PAYMENT ? "Đã hoàn tất khám, chờ thu ngân xác nhận." : null)
                     .weight(weightKg)
@@ -455,18 +428,12 @@ public class DataSeeder implements CommandLineRunner {
 
     private List<MedicalRecord> seedMedicalRecords(
             List<ReceptionRecord> receptions,
-            List<Doctor> doctors,
-            List<ExamStatus> examStatuses
+            List<Doctor> doctors
     ) {
-        Map<String, ExamStatus> examStatusByName = new HashMap<>();
-        for (ExamStatus examStatus : examStatuses) {
-            examStatusByName.put(examStatus.getName(), examStatus);
-        }
-
         List<MedicalRecord> result = new ArrayList<>();
         for (int i = 0; i < receptions.size(); i++) {
             ReceptionRecord reception = receptions.get(i);
-            ExamStatus status = resolveExamStatus(examStatusByName, reception.getStatus());
+            MedicalRecordStatus status = resolveExamStatus(reception.getStatus());
 
             MedicalRecord medicalRecord = MedicalRecord.builder()
                     .receptionRecord(reception)
@@ -481,14 +448,14 @@ public class DataSeeder implements CommandLineRunner {
         return result;
     }
 
-    private ExamStatus resolveExamStatus(Map<String, ExamStatus> examStatusByName, ReceptionStatus receptionStatus) {
+    private MedicalRecordStatus resolveExamStatus(ReceptionStatus receptionStatus) {
         if (receptionStatus == ReceptionStatus.WAITING_EXECUTION) {
-            return examStatusByName.get("PENDING");
+            return MedicalRecordStatus.PENDING;
         }
         if (receptionStatus == ReceptionStatus.IN_PROGRESS) {
-            return examStatusByName.get("IN_PROGRESS");
+            return MedicalRecordStatus.IN_PROGRESS;
         }
-        return examStatusByName.get("COMPLETED");
+        return MedicalRecordStatus.COMPLETED;
     }
 
     private List<ExamResult> seedExamResults(List<MedicalRecord> medicalRecords, List<TreatmentDirection> directions) {
@@ -511,15 +478,23 @@ public class DataSeeder implements CommandLineRunner {
                     ? null
                     : "Theo dõi đáp ứng tốt, đề nghị tiếp tục phác đồ hiện tại.";
 
+            String evidencePath = endTime == null ? null : "./storage/exam-results/exam-result-seed-" + (i + 1) + ".jpg";
             ExamResult examResult = ExamResult.builder()
                     .medicalRecord(medicalRecord)
                     .treatmentDirection(direction)
                     .conclusion(conclusion)
-                    .evidencePath(endTime == null ? null : "./storage/exam-results/exam-result-seed-" + (i + 1) + ".jpg")
                     .startTime(startTime)
                     .endTime(endTime)
                     .build();
             entityManager.persist(examResult);
+            if (evidencePath != null) {
+                entityManager.persist(ResultFile.builder()
+                        .examResult(examResult)
+                        .filePath(evidencePath)
+                        .originalFileName("exam-result-seed-" + (i + 1) + ".jpg")
+                        .contentType("image/jpeg")
+                        .build());
+            }
             result.add(examResult);
         }
 
@@ -539,6 +514,7 @@ public class DataSeeder implements CommandLineRunner {
             long receptionId = examResult.getMedicalRecord().getReceptionRecord().getId();
             ReceptionService ownerService = clinicalServiceByReceptionId.get(receptionId);
             Prescription prescription = Prescription.builder()
+                    .medicalRecord(examResult.getMedicalRecord())
                     .examResult(examResult)
                     .receptionService(ownerService)
                     .build();
@@ -558,10 +534,10 @@ public class DataSeeder implements CommandLineRunner {
                     .prescription(prescription)
                     .medicine(primaryMedicine)
                     .quantity(1 + (i % 3))
-                    .morning(1)
-                    .noon(i % 2)
-                    .afternoon(1)
-                    .evening(i % 2)
+                    .morning(BigDecimal.ONE)
+                    .noon(BigDecimal.valueOf(i % 2))
+                    .afternoon(BigDecimal.ONE)
+                    .evening(BigDecimal.valueOf(i % 2))
                     .instruction(i % 4 == 0 ? "Uống sau ăn" : "Theo dõi phản ứng trong 24h")
                     .dosageUnit(primaryMedicine.getUnit())
                     .build();
@@ -573,10 +549,10 @@ public class DataSeeder implements CommandLineRunner {
                         .prescription(prescription)
                         .medicine(secondaryMedicine)
                         .quantity(1)
-                        .morning(1)
-                        .noon(0)
-                        .afternoon(0)
-                        .evening(1)
+                        .morning(BigDecimal.ONE)
+                        .noon(BigDecimal.ZERO)
+                        .afternoon(BigDecimal.ZERO)
+                        .evening(BigDecimal.ONE)
                         .instruction("Dùng khi có triệu chứng")
                         .dosageUnit(secondaryMedicine.getUnit())
                         .build();
@@ -635,14 +611,22 @@ public class DataSeeder implements CommandLineRunner {
                 case WAITING_EXECUTION -> null;
             };
 
+            String evidencePath = end == null ? null : "./storage/tech-results/tech-result-seed-" + (i + 1) + ".jpg";
             ServiceResult serviceResult = ServiceResult.builder()
                     .serviceOrder(serviceOrder)
                     .result(end == null ? null : "Kết quả ổn định, không ghi nhận bất thường lớn.")
-                    .evidencePath(end == null ? null : "./storage/tech-results/tech-result-seed-" + (i + 1) + ".jpg")
                     .startTime(receptionStatus == ReceptionStatus.WAITING_EXECUTION ? null : start)
                     .endTime(end)
                     .build();
             entityManager.persist(serviceResult);
+            if (evidencePath != null) {
+                entityManager.persist(ResultFile.builder()
+                        .serviceResult(serviceResult)
+                        .filePath(evidencePath)
+                        .originalFileName("tech-result-seed-" + (i + 1) + ".jpg")
+                        .contentType("image/jpeg")
+                        .build());
+            }
         }
     }
 

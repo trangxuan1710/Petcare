@@ -277,7 +277,8 @@ const Payment = () => {
 
         const toFeeRow = (item, index) => {
             const quantity = Math.max(Number(item?.quantity || 1), 1);
-            const unitLabel = toVietnameseUnit(item?.unit);
+            const isMedicine = String(item?.type || '').toUpperCase() === 'MEDICINE';
+            const unitLabel = isMedicine ? 'hộp' : toVietnameseUnit(item?.unit);
             const unitDisplay = `${String(quantity).padStart(2, '0')}/${unitLabel}`;
             return {
                 name: item?.name || `Dịch vụ #${index + 1}`,
@@ -292,50 +293,52 @@ const Payment = () => {
 
         const serviceItems = chargeItems.filter((item) => String(item?.type || '').toUpperCase() === 'SERVICE');
         const medicineItems = chargeItems.filter((item) => String(item?.type || '').toUpperCase() === 'MEDICINE');
-
-        if (serviceItems.length === 0) {
-            const medicineRows = medicineItems.map(toFeeRow);
-            const totalAmount = medicineRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
-            const insuranceAmount = medicineRows.reduce((sum, row) => sum + Number(row.insurance || 0), 0);
-            return [{
-                id: 'medicine-group',
-                title: 'Thuốc & vật tư',
-                subtitle: 'Thuốc & vật tư',
-                insuranceAmount,
-                totalAmount,
-                feeRows: medicineRows,
-            }];
-        }
+        const serviceNameById = new Map();
+        serviceItems.forEach((item, index) => {
+            const sid = Number(item?.serviceId || item?.id || 0);
+            if (!Number.isFinite(sid) || sid <= 0) return;
+            serviceNameById.set(sid, item?.serviceName || item?.name || `Dich vu #${index + 1}`);
+        });
 
         const serviceGroups = serviceItems.map((item, index) => {
             const feeRow = toFeeRow(item, index);
             return {
                 id: `${item?.type || 'SERVICE'}-${item?.id || index}`,
-                title: item?.name || `Dịch vụ #${index + 1}`,
-                subtitle: 'Dịch vụ',
+                title: item?.serviceName || item?.name || `Dich vu #${index + 1}`,
+                subtitle: 'Dich vu',
                 insuranceAmount: Number(item?.insurance || 0),
                 totalAmount: Number(item?.amount || 0),
                 feeRows: [feeRow],
             };
         });
 
-        if (medicineItems.length > 0) {
-            const targetServiceIndex = serviceGroups.findIndex((group) => /khám/i.test(String(group?.title || '')));
-            const attachIndex = targetServiceIndex >= 0 ? targetServiceIndex : 0;
-            const medicineRows = medicineItems.map(toFeeRow);
-            const medicineTotal = medicineRows.reduce((sum, row) => sum + Number(row.amount || 0), 0);
-            const medicineInsurance = medicineRows.reduce((sum, row) => sum + Number(row.insurance || 0), 0);
+        const medicineGroups = medicineItems.reduce((acc, item, index) => {
+            const sidRaw = Number(item?.serviceId || 0);
+            const hasService = Number.isFinite(sidRaw) && sidRaw > 0;
+            const key = hasService ? `service-${sidRaw}` : 'service-unknown';
 
-            serviceGroups[attachIndex] = {
-                ...serviceGroups[attachIndex],
-                subtitle: 'Dịch vụ & thuốc',
-                totalAmount: Number(serviceGroups[attachIndex].totalAmount || 0) + medicineTotal,
-                insuranceAmount: Number(serviceGroups[attachIndex].insuranceAmount || 0) + medicineInsurance,
-                feeRows: [...serviceGroups[attachIndex].feeRows, ...medicineRows],
-            };
-        }
+            if (!acc[key]) {
+                const serviceName = hasService
+                    ? (item?.serviceName || serviceNameById.get(sidRaw) || `Dich vu #${sidRaw}`)
+                    : 'Dich vu chua xac dinh';
+                acc[key] = {
+                    id: `medicine-group-${key}`,
+                    title: `Thuoc & vat tu - ${serviceName}`,
+                    subtitle: 'Ke don',
+                    insuranceAmount: 0,
+                    totalAmount: 0,
+                    feeRows: [],
+                };
+            }
 
-        return serviceGroups;
+            const row = toFeeRow(item, index);
+            acc[key].feeRows.push(row);
+            acc[key].insuranceAmount += Number(row.insurance || 0);
+            acc[key].totalAmount += Number(row.amount || 0);
+            return acc;
+        }, {});
+
+        return [...serviceGroups, ...Object.values(medicineGroups)];
     }, [chargeItems, invoicePreview]);
 
     const petInfo = useMemo(() => {
@@ -624,3 +627,5 @@ const Payment = () => {
 };
 
 export default Payment;
+
+

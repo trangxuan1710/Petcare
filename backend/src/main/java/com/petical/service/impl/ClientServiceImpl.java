@@ -13,6 +13,7 @@ import com.petical.repository.ReceptionRecordRepository;
 import com.petical.repository.projection.ClientSpentProjection;
 import com.petical.repository.projection.ClientVisitCountProjection;
 import com.petical.service.ClientService;
+import com.petical.util.TextFormatUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,7 +52,7 @@ public class ClientServiceImpl implements ClientService {
         }
         Client c = new Client();
         c.setPhoneNumber(req.getPhone());
-        c.setFullName(req.getName());
+        c.setFullName(TextFormatUtils.toTitleCase(req.getName()));
         return clientRepository.save(c);
     }
 

@@ -1,11 +1,14 @@
 package com.petical.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.petical.enums.ReceptionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.time.LocalDateTime;
 
 @Entity
@@ -36,18 +39,20 @@ public class ReceptionRecord {
     @JoinColumn(name = "doctor_id")
     private Doctor doctor;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "exam_form_id", nullable = false)
-    private ExamForm examForm;
-
     @Column(length = 1000)
-    private String examReason; // previously 'symptomDescription' renamed to 'examReason' and kept as text input
+    private String examReason;
 
     @Column(columnDefinition = "TEXT")
     private String note;
 
     @Column(name = "weight_kg", precision = 6, scale = 2)
     private BigDecimal weight;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exam_type_option_id")
+    private ExamTypeOption examTypeOption;
+
+    private boolean emergency;
 
     @Column(nullable = false)
     private ReceptionStatus status;
@@ -69,5 +74,15 @@ public class ReceptionRecord {
         if (status == null) {
             status = ReceptionStatus.WAITING_EXECUTION;
         }
+    }
+
+    @JsonProperty("examForm")
+    public Map<String, Object> getExamFormLegacy() {
+        Map<String, Object> form = new LinkedHashMap<>();
+        if (examTypeOption != null) {
+            form.put("examType", examTypeOption.getName());
+        }
+        form.put("emergency", emergency);
+        return form;
     }
 }

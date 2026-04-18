@@ -2,11 +2,12 @@ package com.petical.service.impl;
 
 import com.petical.dto.request.CreateReceptionSlipRequest;
 import com.petical.dto.request.UpdateReceptionSlipRequest;
+import com.petical.dto.response.ExamAggregateResponse;
 import com.petical.dto.response.ReceptionAssignedServiceResponse;
 import com.petical.dto.response.TechnicianUsedMedicineItemResponse;
 import com.petical.entity.*;
-import com.petical.enums.ExamType;
 import com.petical.enums.ErrorCode;
+import com.petical.enums.MedicalRecordStatus;
 import com.petical.enums.ReceptionServiceStatus;
 import com.petical.enums.ReceptionStatus;
 import com.petical.errors.AppException;
@@ -33,16 +34,15 @@ import java.util.stream.Collectors;
 public class ReceptionServiceImpl implements ReceptionService {
 
         private static final long DEFAULT_SERVICE_ID = 1L;
-        private static final String DEFAULT_EXAM_STATUS_NAME = "IN_PROGRESS";
+        private static final String DEFAULT_EXAM_TYPE_CODE = "khammoi";
 
     private final ClientRepository clientRepository;
     private final PetRepository petRepository;
     private final DoctorRepository doctorRepository;
     private final ReceptionistRepository receptionistRepository;
-    private final ExamFormRepository examFormRepository;
+        private final ExamTypeOptionRepository examTypeOptionRepository;
     private final ReceptionRecordRepository receptionRecordRepository;
         private final MedicalRecordRepository medicalRecordRepository;
-        private final ExamStatusRepository examStatusRepository;
         private final ServiceRepository serviceRepository;
         private final ReceptionServiceRepository receptionServiceRepository;
         private final ServiceOrderRepository serviceOrderRepository;
@@ -51,6 +51,7 @@ public class ReceptionServiceImpl implements ReceptionService {
         private final PrescriptionRepository prescriptionRepository;
         private final PrescriptionDetailRepository prescriptionDetailRepository;
         private final SseNotificationService sseNotificationService;
+        private final ResultFileRepository resultFileRepository;
 
     @Override
     @Transactional
@@ -76,38 +77,32 @@ public class ReceptionServiceImpl implements ReceptionService {
         Doctor doctor = doctorRepository.findById(request.getDoctorId())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        ExamForm examForm;
-        if (request.getExamFormId() != null && request.getExamFormId() > 0) {
-            examForm = examFormRepository.findById(request.getExamFormId())
-                    .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
-        } else {
-            examForm = ExamForm.builder()
-                                        .examType(request.getExamType() == null ? ExamType.NEW_EXAM : request.getExamType())
-                    .isEmergency(Boolean.TRUE.equals(request.getEmergency()))
-                    .build();
-            examForm = examFormRepository.save(examForm);
-        }
+        ExamTypeOption examTypeOption = resolveExamTypeOption(request);
+        boolean emergency = Boolean.TRUE.equals(request.getEmergency());
 
         ReceptionRecord receptionRecord = ReceptionRecord.builder()
                 .client(client)
                 .pet(pet)
                 .receptionist(receptionist)
                 .doctor(doctor)
-                .examForm(examForm)
                 .examReason(request.getExamReason().trim())
                 .note(request.getNote())
                 .weight(request.getWeight())
+                .examTypeOption(examTypeOption)
+                .emergency(emergency)
                 .receptionTime(request.getReceptionTime())
                 .status(ReceptionStatus.WAITING_EXECUTION)
                 .build();
 
         ReceptionRecord savedRecord = receptionRecordRepository.save(receptionRecord);
+        upsertMedicalRecordOnReceptionCreate(savedRecord, doctor, examTypeOption, emergency);
         ensureDefaultClinicalServicePending(savedRecord);
 
         sseNotificationService.sendNotificationToUser(doctor.getId(),
                 NotificationMessage.builder()
                         .title("Phiếu tiếp nhận mới")
                         .message("Bạn được phân công một phiếu tiếp nhận mới cho thú cưng " + pet.getName())
+                        .link("/doctors/tickets/" + savedRecord.getId())
                         .timestamp(LocalDateTime.now())
                         .type("NEW_RECEPTION")
                         .build());
@@ -181,6 +176,64 @@ public class ReceptionServiceImpl implements ReceptionService {
 
     @Override
     @Transactional(readOnly = true)
+    public ExamAggregateResponse getExamAggregate(long receptionId) {
+                ReceptionRecord receptionRecord = receptionRecordRepository.findById(receptionId)
+                                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+                MedicalRecord medicalRecord = medicalRecordRepository.findByReceptionRecordId(receptionId).orElse(null);
+                ExamResult examResult = medicalRecord == null
+                                ? null
+                                : examResultRepository.findFirstByMedicalRecordIdOrderByIdDesc(medicalRecord.getId()).orElse(null);
+                ExamTypeOption examTypeOption = resolveExamTypeOption(medicalRecord, receptionRecord);
+
+                List<String> evidencePaths = examResult == null
+                                ? List.of()
+                                : resultFileRepository.findByExamResultIdOrderByIdAsc(examResult.getId())
+                                                .stream()
+                                                .map(ResultFile::getFilePath)
+                                                .filter(path -> path != null && !path.isBlank())
+                                                .toList();
+
+                if (evidencePaths.isEmpty()) {
+                                evidencePaths = readEvidencePaths(examResult == null ? null : examResult.getEvidencePath());
+                }
+
+                return ExamAggregateResponse.builder()
+                                .receptionRecordId(receptionRecord.getId())
+                                .examTypeOptionId(examTypeOption == null
+                                                ? null
+                                                : examTypeOption.getId())
+                                .examTypeCode(examTypeOption == null
+                                                ? null
+                                                : examTypeOption.getCode())
+                                .examTypeName(examTypeOption == null
+                                                ? null
+                                                : examTypeOption.getName())
+                                .emergency(resolveEmergency(medicalRecord, receptionRecord))
+                                .medicalRecordId(medicalRecord == null ? null : medicalRecord.getId())
+                                .doctorId(medicalRecord != null && medicalRecord.getDoctor() != null
+                                                ? medicalRecord.getDoctor().getId()
+                                                : (receptionRecord.getDoctor() == null ? null : receptionRecord.getDoctor().getId()))
+                                .doctorName(medicalRecord != null && medicalRecord.getDoctor() != null
+                                                ? medicalRecord.getDoctor().getFullName()
+                                                : (receptionRecord.getDoctor() == null ? null : receptionRecord.getDoctor().getFullName()))
+                                .status(medicalRecord == null || medicalRecord.getStatus() == null ? null : medicalRecord.getStatus().name())
+                                .examDate(medicalRecord == null ? null : medicalRecord.getExamDate())
+                                .examResultId(examResult == null ? null : examResult.getId())
+                                .startTime(examResult == null ? null : examResult.getStartTime())
+                                .endTime(examResult == null ? null : examResult.getEndTime())
+                                .treatmentDirectionId(examResult == null || examResult.getTreatmentDirection() == null
+                                                ? null
+                                                : examResult.getTreatmentDirection().getId())
+                                .treatmentDirectionName(examResult == null || examResult.getTreatmentDirection() == null
+                                                ? null
+                                                : examResult.getTreatmentDirection().getName())
+                                .conclusion(examResult == null ? null : examResult.getConclusion())
+                                .evidencePaths(evidencePaths)
+                                .build();
+        }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<ReceptionAssignedServiceResponse> getAssignedServices(long receptionId) {
                 ReceptionRecord receptionRecord = receptionRecordRepository.findById(receptionId)
                                 .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
@@ -208,6 +261,14 @@ public class ReceptionServiceImpl implements ReceptionService {
                                 orderByServiceId.values().stream().map(ServiceOrder::getId).toList())
                                 .stream()
                                 .collect(Collectors.toMap(result -> result.getServiceOrder().getId(), Function.identity(), (left, right) -> left));
+
+                Map<Long, List<ResultFile>> filesByServiceResultId = resultByOrderId.values().isEmpty()
+                                ? Map.of()
+                                : resultFileRepository.findByServiceResultIdInOrderByIdAsc(
+                                                resultByOrderId.values().stream().map(ServiceResult::getId).toList()
+                                )
+                                .stream()
+                                .collect(Collectors.groupingBy(file -> file.getServiceResult().getId()));
 
                 Map<Long, Prescription> prescriptionByReceptionServiceId = prescriptionRepository
                                 .findByReceptionServiceIdIn(scopedServices.stream().map(com.petical.entity.ReceptionService::getId).toList())
@@ -259,7 +320,7 @@ public class ReceptionServiceImpl implements ReceptionService {
                                                         .status(status.getValue())
                                                         .startedAt(item.getStartedAt())
                                                         .result(serviceResult == null ? null : normalizeTextOrNull(serviceResult.getResult()))
-                                                        .evidencePaths(readEvidencePaths(serviceResult == null ? null : serviceResult.getEvidencePath()))
+                                                        .evidencePaths(readServiceEvidencePaths(serviceResult, filesByServiceResultId))
                                                         .medicines(medicines)
                                                         .build();
                                 })
@@ -327,6 +388,23 @@ public class ReceptionServiceImpl implements ReceptionService {
                                 .toList();
         }
 
+        private List<String> readServiceEvidencePaths(
+                        ServiceResult serviceResult,
+                        Map<Long, List<ResultFile>> filesByServiceResultId
+        ) {
+                if (serviceResult == null) {
+                        return List.of();
+                }
+
+                List<String> storedPaths = filesByServiceResultId.getOrDefault(serviceResult.getId(), List.of())
+                                .stream()
+                                .map(ResultFile::getFilePath)
+                                .filter(path -> path != null && !path.isBlank())
+                                .toList();
+
+                return storedPaths.isEmpty() ? readEvidencePaths(serviceResult.getEvidencePath()) : storedPaths;
+        }
+
         private List<TechnicianUsedMedicineItemResponse> loadUsedMedicines(
                         Prescription prescription,
                         List<PrescriptionDetail> details
@@ -338,12 +416,26 @@ public class ReceptionServiceImpl implements ReceptionService {
                 return details.stream()
                                 .sorted(Comparator.comparingLong(PrescriptionDetail::getId))
                                 .map(detail -> TechnicianUsedMedicineItemResponse.builder()
+                                                .serviceId(
+                                                                prescription.getReceptionService() != null
+                                                                                && prescription.getReceptionService().getService() != null
+                                                                                ? prescription.getReceptionService().getService().getId()
+                                                                                : null
+                                                )
+                                                .serviceName(
+                                                                prescription.getReceptionService() != null
+                                                                                && prescription.getReceptionService().getService() != null
+                                                                                ? prescription.getReceptionService().getService().getName()
+                                                                                : null
+                                                )
                                                 .medicineId(detail.getMedicine() == null ? null : detail.getMedicine().getId())
                                                 .medicineName(detail.getMedicine() == null ? null : detail.getMedicine().getName())
                                                 .description(detail.getMedicine() == null ? null : detail.getMedicine().getDescription())
                                                 .quantity(detail.getQuantity())
                                                 .dosageUnit(detail.getDosageUnit())
+                                                .price(detail.getMedicine() == null ? null : detail.getMedicine().getBoxPrice())
                                                 .instruction(detail.getInstruction())
+                                                .productType(detail.getMedicine() == null ? null : detail.getMedicine().getType())
                                                 .build())
                                 .toList();
         }
@@ -369,9 +461,18 @@ public class ReceptionServiceImpl implements ReceptionService {
                 if (request.getStatus() != null) {
                         record.setStatus(request.getStatus());
                 }
+                if (request.getExamTypeOptionId() != null) {
+                        ExamTypeOption option = examTypeOptionRepository.findById(request.getExamTypeOptionId())
+                                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+                        record.setExamTypeOption(option);
+                }
+                if (request.getEmergency() != null) {
+                        record.setEmergency(request.getEmergency());
+                }
+
                 if (request.getDoctorId() != null) {
                         Doctor doctor = doctorRepository.findById(request.getDoctorId())
-                                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+                                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
                         record.setDoctor(doctor);
                 }
 
@@ -394,9 +495,19 @@ public class ReceptionServiceImpl implements ReceptionService {
                                         .receptionRecord(receptionRecord)
                                         .doctor(assignedDoctor)
                                         .status(resolveDefaultExamStatus())
+                                        .examTypeOption(resolveExamTypeOption(null, receptionRecord))
+                                        .emergency(resolveEmergency(null, receptionRecord))
                                         .examDate(LocalDateTime.now())
                                         .build()
                         ));
+
+                if (medicalRecord.getExamTypeOption() == null) {
+                        medicalRecord.setExamTypeOption(resolveExamTypeOption(medicalRecord, receptionRecord));
+                }
+                if (!medicalRecord.isEmergency()) {
+                        medicalRecord.setEmergency(resolveEmergency(medicalRecord, receptionRecord));
+                }
+                medicalRecordRepository.save(medicalRecord);
 
                 com.petical.entity.Service clinicalService = serviceRepository.findById(DEFAULT_SERVICE_ID)
                         .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
@@ -443,12 +554,68 @@ public class ReceptionServiceImpl implements ReceptionService {
                 receptionServiceRepository.save(receptionService);
         }
 
-        private ExamStatus resolveDefaultExamStatus() {
-                return examStatusRepository.findFirstByNameIgnoreCase(DEFAULT_EXAM_STATUS_NAME)
-                        .orElseGet(() -> examStatusRepository.save(
-                                ExamStatus.builder()
-                                        .name(DEFAULT_EXAM_STATUS_NAME)
-                                        .build()
-                        ));
+        private MedicalRecordStatus resolveDefaultExamStatus() {
+                return MedicalRecordStatus.IN_PROGRESS;
+        }
+
+        private void upsertMedicalRecordOnReceptionCreate(
+                        ReceptionRecord receptionRecord,
+                        Doctor doctor,
+                        ExamTypeOption examTypeOption,
+                        boolean emergency
+        ) {
+                MedicalRecord medicalRecord = medicalRecordRepository.findByReceptionRecordId(receptionRecord.getId())
+                                .orElseGet(() -> MedicalRecord.builder()
+                                                .receptionRecord(receptionRecord)
+                                                .doctor(doctor)
+                                                .status(MedicalRecordStatus.PENDING)
+                                                .build());
+
+                medicalRecord.setDoctor(doctor);
+                if (medicalRecord.getStatus() == null) {
+                        medicalRecord.setStatus(MedicalRecordStatus.PENDING);
+                }
+                if (medicalRecord.getExamTypeOption() == null) {
+                        medicalRecord.setExamTypeOption(examTypeOption);
+                }
+                if (!medicalRecord.isEmergency()) {
+                        medicalRecord.setEmergency(emergency);
+                }
+                medicalRecordRepository.save(medicalRecord);
+        }
+
+        private ExamTypeOption resolveExamTypeOption(MedicalRecord medicalRecord, ReceptionRecord receptionRecord) {
+                if (medicalRecord != null && medicalRecord.getExamTypeOption() != null) {
+                        return medicalRecord.getExamTypeOption();
+                }
+                return null;
+        }
+
+        private boolean resolveEmergency(MedicalRecord medicalRecord, ReceptionRecord receptionRecord) {
+                if (medicalRecord != null) {
+                        return medicalRecord.isEmergency();
+                }
+                return false;
+        }
+
+        private ExamTypeOption resolveExamTypeOption(CreateReceptionSlipRequest request) {
+                if (request.getExamTypeOptionId() != null && request.getExamTypeOptionId() > 0) {
+                        return examTypeOptionRepository.findById(request.getExamTypeOptionId())
+                                        .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+                }
+
+                String examTypeCode = request.getExamType();
+                if (examTypeCode != null && !examTypeCode.isBlank()) {
+                        String trimmed = examTypeCode.trim();
+                        // Try by code first
+                        return examTypeOptionRepository.findByCodeIgnoreCase(trimmed)
+                                        .or(() -> examTypeOptionRepository.findAll().stream()
+                                                        .filter(o -> o.getName().equalsIgnoreCase(trimmed))
+                                                        .findFirst())
+                                        .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+                }
+
+                return examTypeOptionRepository.findByCodeIgnoreCase(DEFAULT_EXAM_TYPE_CODE)
+                                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
         }
 }

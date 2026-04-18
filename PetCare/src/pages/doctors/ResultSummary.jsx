@@ -135,12 +135,28 @@ const normalizeStatusLabel = (rawStatus) => {
 
 const mapMedicineItem = (item) => {
     const quantity = item?.quantity || item?.qty || 0;
-    const unit = item?.unit || item?.dosageUnit || 'đơn vị';
+    const unitPrice = Number(item?.price ?? item?.unitPrice ?? item?.boxPrice ?? 0);
+    const amount = item?.amount || (quantity * unitPrice);
+    const unit = firstNonEmptyString([
+        item?.dosageUnit,
+        item?.unit,
+        item?.selectedUnit,
+        item?.medicineUnit,
+        item?.medicine?.unit,
+    ]) || 'đơn vị';
+
+    const productType = item?.productType || item?.type || item?.medicine?.type || '';
+
     return {
         id: item?.medicineId || item?.id || item?.medicine?.id || `${item?.medicineName || item?.name || 'medicine'}-${quantity}`,
+        serviceId: Number(item?.serviceId || item?.receptionServiceId || item?.service?.id || 0) || null,
+        serviceName: item?.serviceName || item?.service?.name || '',
         name: item?.medicineName || item?.name || item?.medicine?.name || 'Thuốc/Vật tư',
         quantity,
         unit,
+        unitPrice,
+        productType,
+        amount,
         dosage: item?.dosage || item?.instruction || item?.note || '',
     };
 };
@@ -165,6 +181,29 @@ const buildServiceCards = ({ assignedServices, selectedServices, treatmentDetail
     ).map(mapMedicineItem);
 
     const clinicalMedicines = medicinesFromHistory.length > 0 ? medicinesFromHistory : medicinesFromTreatment;
+    const resolveMedicinesByService = (serviceId, service, selectedService) => {
+        const byAssignedService = toArray(service?.medicines).map(mapMedicineItem);
+        const bySelectedService = toArray(selectedService?.medicines).map(mapMedicineItem);
+        const direct = [...byAssignedService, ...bySelectedService];
+        if (direct.length > 0) {
+            const scopedDirect = direct.filter((medicine) => {
+                if (medicine?.serviceId == null || medicine?.serviceId <= 0) {
+                    return true;
+                }
+                return Number(medicine.serviceId) === Number(serviceId);
+            });
+            if (scopedDirect.length > 0) {
+                return scopedDirect;
+            }
+        }
+
+        return clinicalMedicines.filter((medicine) => {
+            if (medicine?.serviceId == null || medicine?.serviceId <= 0) {
+                return Number(serviceId) === 1;
+            }
+            return Number(medicine.serviceId) === Number(serviceId);
+        });
+    };
     const clinicalSummary = firstNonEmptyString([
         historyItem?.conclusion,
         treatmentDetail?.plan,
@@ -196,9 +235,7 @@ const buildServiceCards = ({ assignedServices, selectedServices, treatmentDetail
                 ...extractAttachmentPaths(selectedService),
             ];
 
-        const medicines = serviceId === 1
-            ? clinicalMedicines
-            : toArray(service?.medicines || selectedService?.medicines).map(mapMedicineItem);
+        const medicines = resolveMedicinesByService(serviceId, service, selectedService);
 
         return {
             id: `${serviceId || index}-${service?.serviceName || selectedService?.serviceName || 'service'}`,
@@ -355,7 +392,7 @@ const ResultSummary = () => {
                         </div>
 
                         <div className="rs-block">
-                            <h4 className="rs-block-files-title">File và ảnh tải lên</h4>
+                            <h4 className="rs-block-files-title">Ảnh trước và sau khi khám`</h4>
                             {card.attachments.length > 0 ? (
                                 <div className="rs-attachments-grid">
                                     {card.attachments.map((attachment) => (
@@ -392,8 +429,11 @@ const ResultSummary = () => {
                                     <div className="rs-med-item" key={`${card.id}-${item.id}`}>
                                         <div className="rs-med-info">
                                             <strong>{item.name}</strong>
-                                            <p>Số lượng: {item.quantity || 0} {item.unit || 'đơn vị'}</p>
-                                            {isNonEmptyString(item.dosage) && <p>Liều dùng: {item.dosage}</p>}
+                                            <div onClick={() => console.log(item)} className="rs-med-finance">
+                                                <span>Đơn giá: {Number(item.unitPrice || 0).toLocaleString('vi-VN')}đ{item.unit ? `/${item.productType === 'THUOC' ? 'Hộp' : item.unit}` : ''}</span>
+                                                <span>Số lượng: {item.quantity} {item.productType === 'THUOC' ? 'Hộp' : item.unit}</span>
+                                            </div>
+                                            {isNonEmptyString(item.dosage) && <p className="rs-med-dosage">Liều dùng / Chỉ định: {item.dosage}</p>}
                                         </div>
                                     </div>
                                 )) : <p>Chưa có dữ liệu thuốc/vật tư sử dụng.</p>}
@@ -415,3 +455,6 @@ const ResultSummary = () => {
 };
 
 export default ResultSummary;
+
+
+

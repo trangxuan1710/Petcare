@@ -7,6 +7,7 @@ import customerService from '../../api/customerService';
 import petService from '../../api/petService';
 import receptionService from '../../api/receptionService';
 import userService from '../../api/userService';
+import lookupService from '../../api/lookupService';
 import { toTitleCase } from '../../utils/textFormat';
 import './NewReception.css';
 
@@ -43,11 +44,20 @@ const PET_BREED_OPTIONS = {
 const SPECIES_LABELS = {
     cho: 'Chó',
     meo: 'Mèo',
-    khac: 'Khác',
 };
 
 const RECEPTION_ALREADY_OPEN_CODE = 1020;
 const RECEPTION_ALREADY_OPEN_MESSAGE = 'There is an existing open reception for this pet';
+
+const DEFAULT_EXAM_TYPE_OPTIONS = [
+    { value: 'khammoi', label: 'Khám mới' },
+    { value: 'taikham', label: 'Tái khám' },
+];
+
+const DEFAULT_SPECIES_OPTIONS = [
+    { value: 'cho', label: 'Chó' },
+    { value: 'meo', label: 'Mèo' },
+];
 
 const extractApiErrorMessage = (error, fallbackMessage) => {
     const apiCode = Number(error?.response?.data?.code);
@@ -100,6 +110,19 @@ const resolvePetHasHistory = (pet) => {
     );
 };
 
+const PET_NAME_ALLOWED_PATTERN = /^[\p{L}\p{M}\s]+$/u;
+const normalizePetName = (value = '') => String(value).replace(/\s+/g, ' ').trim();
+const validatePetName = (value = '') => {
+    const normalized = normalizePetName(value);
+    if (!normalized) {
+        return 'Vui lòng nhập tên thú cưng.';
+    }
+    if (!PET_NAME_ALLOWED_PATTERN.test(normalized)) {
+        return 'Tên thú chỉ được chứa chữ tiếng Việt và khoảng trắng.';
+    }
+    return '';
+};
+
 
 const DropupSelect = ({
     value,
@@ -148,13 +171,14 @@ const DropupSelect = ({
                         <button
                             key={option.value}
                             type="button"
+                            ref={el => el && el.style.setProperty('font-weight', '400', 'important')}
                             className={`nr-dropup-option ${String(option.value) === String(value) ? 'active' : ''}`}
                             onClick={() => {
                                 onChange(option.value);
                                 setIsOpen(false);
                             }}
                         >
-                            {option.label}
+                            {option.content || option.label}
                         </button>
                     ))}
                 </div>
@@ -177,7 +201,12 @@ const NewReception = () => {
     const [newPetName, setNewPetName] = useState('');
     const [newPetSpecies, setNewPetSpecies] = useState('');
     const [newPetBreed, setNewPetBreed] = useState('');
+    const [newPetGender, setNewPetGender] = useState('Male');
     const [newPetDateOfBirth, setNewPetDateOfBirth] = useState('');
+    const [newPetErrors, setNewPetErrors] = useState({
+        name: '',
+    });
+    const [isCreatingPet, setIsCreatingPet] = useState(false);
 
     const [isEmergency, setIsEmergency] = useState(false);
     const [weight, setWeight] = useState('');
@@ -187,6 +216,9 @@ const NewReception = () => {
     const [doctorOptions, setDoctorOptions] = useState([]);
     const [isLoadingDoctors, setIsLoadingDoctors] = useState(false);
     const [doctorsError, setDoctorsError] = useState('');
+    const [speciesOptions, setSpeciesOptions] = useState(DEFAULT_SPECIES_OPTIONS);
+    const [breedOptionsBySpecies, setBreedOptionsBySpecies] = useState({});
+    const [examTypeOptions, setExamTypeOptions] = useState(DEFAULT_EXAM_TYPE_OPTIONS);
     const [notes, setNotes] = useState('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -196,6 +228,10 @@ const NewReception = () => {
     const selectedDoctorInfo = useMemo(
         () => doctorOptions.find((item) => String(item?.id) === String(assignedDoctor)),
         [doctorOptions, assignedDoctor]
+    );
+    const selectedExamTypeInfo = useMemo(
+        () => examTypeOptions.find((item) => String(item?.value) === String(examType)),
+        [examTypeOptions, examType]
     );
 
     const assignedCasesLabel = useMemo(() => {
@@ -230,9 +266,21 @@ const NewReception = () => {
         return formatDisplayDate(selectedPetInfo.dateOfBirth);
     }, [selectedPetInfo]);
 
+    const speciesLabelMap = useMemo(() => {
+        const fromLookup = speciesOptions.reduce((acc, option) => {
+            acc[String(option.value || option.code || '').toLowerCase()] = option.label;
+            return acc;
+        }, {});
+        return { ...SPECIES_LABELS, ...fromLookup };
+    }, [speciesOptions]);
+
     const selectedBreedOptions = useMemo(() => {
-        return PET_BREED_OPTIONS[newPetSpecies] || [];
-    }, [newPetSpecies]);
+        const speciesKey = String(newPetSpecies || '').toLowerCase();
+        return breedOptionsBySpecies[speciesKey] || PET_BREED_OPTIONS[speciesKey] || [];
+    }, [breedOptionsBySpecies, newPetSpecies]);
+    const isCreatePetFormInvalid = useMemo(() => Boolean(validatePetName(newPetName)), [newPetName]);
+
+    const hasBreedDropdown = selectedBreedOptions.length > 0;
 
     const isPetSelected = Boolean(selectedPet);
 
@@ -240,6 +288,50 @@ const NewReception = () => {
         setToast({ type, message });
         setTimeout(() => setToast(null), 2800);
     };
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const hydrateLookups = async () => {
+            try {
+                const [species, breeds, examTypes] = await Promise.all([
+                    lookupService.listPetSpecies(),
+                    lookupService.listPetBreeds(),
+                    lookupService.listExamTypes(),
+                ]);
+
+                if (!isMounted) return;
+
+                const selectableSpecies = species.filter((option) => String(option?.value || option?.code || '').toLowerCase() !== 'khac');
+                if (selectableSpecies.length > 0) {
+                    setSpeciesOptions(selectableSpecies);
+                }
+                if (examTypes.length > 0) {
+                    setExamTypeOptions(examTypes);
+                }
+                if (breeds.length > 0) {
+                    const grouped = breeds.reduce((acc, breed) => {
+                        const speciesKey = String(breed.parentCode || '').toLowerCase();
+                        if (!speciesKey) return acc;
+                        if (!acc[speciesKey]) acc[speciesKey] = [];
+                        acc[speciesKey].push(breed.label || breed.value);
+                        return acc;
+                    }, {});
+                    setBreedOptionsBySpecies(grouped);
+                }
+            } catch {
+                if (isMounted) {
+                    setSpeciesOptions(DEFAULT_SPECIES_OPTIONS);
+                    setExamTypeOptions(DEFAULT_EXAM_TYPE_OPTIONS);
+                }
+            }
+        };
+
+        hydrateLookups();
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     useEffect(() => {
         const customer = location.state?.customer;
@@ -350,8 +442,28 @@ const NewReception = () => {
         navigate(-1);
     };
 
+    const openAddPetModal = () => {
+        setNewPetErrors({ name: '' });
+        setShowAddPetModal(true);
+    };
+
+    const closeAddPetModal = () => {
+        if (isCreatingPet) return;
+        setShowAddPetModal(false);
+    };
+
     const handleCreatePet = async () => {
-        if (!newPetName.trim() || !newPetSpecies || !newPetBreed.trim() || !newPetDateOfBirth) {
+        if (isCreatingPet) return;
+
+        const normalizedPetName = normalizePetName(newPetName);
+        const nameError = validatePetName(normalizedPetName);
+        setNewPetErrors({ name: nameError });
+        if (nameError) {
+            showToast('error', nameError);
+            return;
+        }
+
+        if (!normalizedPetName || !newPetSpecies || !newPetBreed.trim() || !newPetDateOfBirth) {
             showToast('error', 'Vui lòng nhập đủ thông tin thú cưng, gồm cả ngày sinh.');
             return;
         }
@@ -369,12 +481,14 @@ const NewReception = () => {
             return;
         }
 
+        setIsCreatingPet(true);
         try {
             const response = await petService.createPet({
                 clientId: customerId,
-                name: newPetName.trim(),
+                name: normalizedPetName,
                 species: newPetSpecies,
                 breed: newPetBreed.trim(),
+                gender: newPetGender,
                 dateOfBirth: newPetDateOfBirth,
             });
             const pet = response?.data?.data;
@@ -384,12 +498,12 @@ const NewReception = () => {
 
             const createdPet = {
                 id: pet.id,
-                name: toTitleCase(pet.name || newPetName.trim()) || 'Thú cưng',
+                name: toTitleCase(pet.name || normalizedPetName) || 'Thú cưng',
                 species: pet.species || newPetSpecies,
                 breed: toTitleCase(pet.breed || newPetBreed.trim()),
                 dateOfBirth: pet.dateOfBirth || newPetDateOfBirth,
                 weight: pet.weight || '',
-                gender: pet.gender || '',
+                gender: pet.gender || newPetGender,
                 hasHistory: false,
             };
 
@@ -399,15 +513,18 @@ const NewReception = () => {
             setNewPetName('');
             setNewPetSpecies('');
             setNewPetBreed('');
+            setNewPetGender('Male');
             setNewPetDateOfBirth('');
+            setNewPetErrors({ name: '' });
             showToast('success', 'Tạo thú cưng thành công.');
         } catch (error) {
             const message = extractApiErrorMessage(error, 'Không thể tạo thú cưng mới. Vui lòng thử lại.');
             setSubmitError(message);
             showToast('error', message);
+        } finally {
+            setIsCreatingPet(false);
         }
     };
-
     const handleCreateReception = async () => {
         if (isSubmitting) return;
 
@@ -433,11 +550,20 @@ const NewReception = () => {
                 throw new Error('Vui lòng nhập cân nặng hợp lệ lớn hơn 0.');
             }
             if (!description || !description.trim()) {
-                throw new Error('Vui lòng nhập lý do khám.');
+                throw new Error('Vui lòng nhập Mô tả triệu chứng.');
             }
             if (!selectedPet) {
                 throw new Error('Vui lòng chọn thú cưng hoặc tạo mới thú cưng trước khi tạo phiếu.');
             }
+
+            // Robust resolution of exam type info
+            const fallbackOption = examTypeOptions[0];
+            const currentExamType = selectedPetInfo?.hasHistory === false 
+                ? 'khammoi' 
+                : (examType || fallbackOption?.value || 'khammoi');
+            
+            const effectiveOption = examTypeOptions.find(opt => String(opt.value) === String(currentExamType));
+            const examTypeOptionId = effectiveOption?.id || null;
 
             await receptionService.createReception({
                 clientId: customerId,
@@ -447,7 +573,8 @@ const NewReception = () => {
                 examReason: description.trim(),
                 note: notes || '',
                 weight: weightValue,
-                examType: selectedPetInfo?.hasHistory === false ? 'khammoi' : (examType || null),
+                examTypeOptionId,
+                examType: currentExamType,
                 emergency: isEmergency,
             });
 
@@ -509,7 +636,7 @@ const NewReception = () => {
                                 <span>{toTitleCase(pet.name) || pet.name}</span>
                             </button>
                         ))}
-                        <button type="button" className="nr-pet-chip-add" onClick={() => setShowAddPetModal(true)}>
+                        <button type="button" className="nr-pet-chip-add" onClick={openAddPetModal}>
                             <CirclePlus size={36} color="#209D80" />
                         </button>
                     </div>
@@ -519,7 +646,7 @@ const NewReception = () => {
                             <div className="nr-pet-info-details nr-pet-info-details-single-line">
                                 <span className="nr-pet-info-name">{toTitleCase(selectedPetInfo?.name) || '---'}</span>
                                 <span className="nr-pet-info-breed">
-                                    {(SPECIES_LABELS[String(selectedPetInfo?.species || '').toLowerCase()] || selectedPetInfo?.species || '').trim()} {toTitleCase(selectedPetInfo?.breed || '')}
+                                    {(speciesLabelMap[String(selectedPetInfo?.species || '').toLowerCase()] || selectedPetInfo?.species || '').trim()} {toTitleCase(selectedPetInfo?.breed || '')}
                                 </span>
                                 {String(selectedPetInfo?.gender || '').trim() && (
                                     <span className="nr-pet-info-stat">
@@ -561,18 +688,18 @@ const NewReception = () => {
                             </div>
                         </div>
 
-                        {/* Removed categorical reason select. Use single-line text input below as 'Lý do khám' */}
+                        {/* Removed categorical reason select. Use single-line text input below as 'Mô tả triệu chứng' */}
 
                         <div className="nr-field">
-                            <label className="nr-field-label">Lý do khám <span className="nr-required">*</span></label>
+                            <label className="nr-field-label">Mô tả triệu chứng <span className="nr-required">*</span></label>
                             <div className="nr-input-wrapper">
-                                <input
-                                    type="text"
-                                    className="nr-input"
+                                <textarea
+                                    className="nr-input nr-textarea-auto"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
                                     disabled={!isPetSelected}
-                                    placeholder={isPetSelected ? 'Nhập lý do khám' : 'Chọn thú cưng để nhập lý do khám'}
+                                    placeholder={isPetSelected ? 'Nhập Mô tả triệu chứng' : 'Chọn thú cưng để nhập Mô tả triệu chứng'}
+                                    rows={3}
                                 />
                             </div>
                         </div>
@@ -584,10 +711,7 @@ const NewReception = () => {
                                     value={examType}
                                     onChange={setExamType}
                                     placeholder="-- Chọn hình thức khám --"
-                                    options={[
-                                        { value: 'khammoi', label: 'Khám mới' },
-                                        { value: 'taikham', label: 'Tái khám' },
-                                    ]}
+                                    options={examTypeOptions}
                                     disabled={!isPetSelected || (selectedPetInfo && selectedPetInfo.hasHistory === false)}
                                 />
                             </div>
@@ -607,6 +731,12 @@ const NewReception = () => {
                                             options={doctorOptions.map((doctor) => ({
                                                 value: String(doctor.id),
                                                 label: doctor.fullName,
+                                                content: (
+                                                    <span className="nr-doctor-option">
+                                                        <span>{doctor.fullName}</span>
+                                                        <span className="nr-doctor-option-count">{Number(doctor.waitingCases || 0)} ca</span>
+                                                    </span>
+                                                ),
                                             }))}
                                             disabled={!isPetSelected}
                                         />
@@ -626,7 +756,16 @@ const NewReception = () => {
 
                         <div className="nr-field">
                             <label className="nr-field-label">Lưu ý</label>
-                            <textarea className="nr-textarea" value={notes} onChange={(e) => setNotes(e.target.value)} rows={1} readOnly={!isPetSelected} />
+                            <div className="nr-input-wrapper">
+                                <input 
+                                    type="text" 
+                                    className="nr-input" 
+                                    value={notes} 
+                                    onChange={(e) => setNotes(e.target.value)} 
+                                    placeholder="Nhập lưu ý (nếu có)"
+                                    disabled={!isPetSelected} 
+                                />
+                            </div>
                         </div>
 
                         <div className="nr-toggle-row">
@@ -657,46 +796,58 @@ const NewReception = () => {
 
                 {showAddPetModal && (
                     <>
-                        <div className="nr-pet-modal-overlay" onClick={() => setShowAddPetModal(false)}></div>
+                        <div className="nr-pet-modal-overlay" onClick={closeAddPetModal}></div>
                         <div className="nr-pet-modal">
                             <div className="nr-pet-modal-handle"></div>
                             <h3 className="nr-pet-modal-title">Tạo mới thú cưng</h3>
 
                             <div className="nr-pet-modal-form-row">
-                                <div className="nr-pet-modal-field nr-pet-modal-field-half">
-                                    <label className="nr-pet-modal-label">Thú cưng <span className="nr-required">*</span></label>
-                                    <input
-                                        type="text"
-                                        className="nr-pet-modal-input"
-                                        value={newPetName}
-                                        onChange={(e) => setNewPetName(e.target.value)}
-                                    />
-                                </div>
-
-                                <div className="nr-pet-modal-field nr-pet-modal-field-half">
-                                    <label className="nr-pet-modal-label">Loài <span className="nr-required">*</span></label>
-                                    <div className="nr-pet-modal-select-wrapper">
-                                        <DropupSelect
-                                            value={newPetSpecies}
-                                            onChange={(value) => {
-                                                setNewPetSpecies(value);
-                                                setNewPetBreed('');
+                                <div className="nr-pet-modal-field-group nr-pet-modal-field-half">
+                                    <div className={`nr-pet-modal-field ${newPetErrors.name ? 'is-invalid' : ''}`}>
+                                        <label className="nr-pet-modal-label">Thú cưng <span className="nr-required">*</span></label>
+                                        <input
+                                            type="text"
+                                            className="nr-pet-modal-input"
+                                            value={newPetName}
+                                            onChange={(e) => {
+                                                const nextName = e.target.value;
+                                                setNewPetName(nextName);
+                                                setNewPetErrors({ name: validatePetName(nextName) });
                                             }}
-                                            placeholder="-- Chọn loài --"
-                                            triggerClassName="nr-pet-modal-dropup-trigger"
-                                            options={[
-                                                { value: 'cho', label: 'Chó' },
-                                                { value: 'meo', label: 'Mèo' },
-                                                { value: 'khac', label: 'Khác' },
-                                            ]}
+                                            onBlur={(e) => {
+                                                setNewPetErrors({ name: validatePetName(e.target.value) });
+                                            }}
+                                            required
+                                            aria-required="true"
+                                            aria-invalid={Boolean(newPetErrors.name)}
                                         />
+                                    </div>
+                                    {newPetErrors.name && (
+                                        <p className="nr-pet-modal-field-error">{newPetErrors.name}</p>
+                                    )}
+                                </div>
+                                <div className="nr-pet-modal-field-group nr-pet-modal-field-half">
+                                    <div className="nr-pet-modal-field">
+                                        <label className="nr-pet-modal-label">Loài <span className="nr-required">*</span></label>
+                                        <div className="nr-pet-modal-select-wrapper">
+                                            <DropupSelect
+                                                value={newPetSpecies}
+                                                onChange={(value) => {
+                                                    setNewPetSpecies(value);
+                                                    setNewPetBreed('');
+                                                }}
+                                                placeholder="-- Chọn loài --"
+                                                triggerClassName="nr-pet-modal-dropup-trigger"
+                                                options={speciesOptions}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="nr-pet-modal-field">
                                 <label className="nr-pet-modal-label">Giống <span className="nr-required">*</span></label>
-                                {(newPetSpecies === 'cho' || newPetSpecies === 'meo') && (
+                                {hasBreedDropdown && (
                                     <div className="nr-pet-modal-select-wrapper">
                                         <DropupSelect
                                             value={newPetBreed}
@@ -710,13 +861,15 @@ const NewReception = () => {
                                         />
                                     </div>
                                 )}
-                                {newPetSpecies === 'khac' && (
+                                {newPetSpecies && !hasBreedDropdown && (
                                     <input
                                         type="text"
                                         className="nr-pet-modal-input"
                                         placeholder="Nhập giống thú cưng"
                                         value={newPetBreed}
                                         onChange={(e) => setNewPetBreed(e.target.value)}
+                                        required
+                                        aria-required="true"
                                     />
                                 )}
                                 {!newPetSpecies && (
@@ -731,6 +884,22 @@ const NewReception = () => {
                             </div>
 
                             <div className="nr-pet-modal-field">
+                                <label className="nr-pet-modal-label">Giới tính <span className="nr-required">*</span></label>
+                                <div className="nr-pet-modal-select-wrapper">
+                                    <DropupSelect
+                                        value={newPetGender}
+                                        onChange={setNewPetGender}
+                                        placeholder="-- Chọn giới tính --"
+                                        triggerClassName="nr-pet-modal-dropup-trigger"
+                                        options={[
+                                            { value: 'Male', label: 'Đực' },
+                                            { value: 'Female', label: 'Cái' },
+                                        ]}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="nr-pet-modal-field">
                                 <label className="nr-pet-modal-label">Ngày sinh <span className="nr-required">*</span></label>
                                 <input
                                     type="date"
@@ -738,12 +907,21 @@ const NewReception = () => {
                                     value={newPetDateOfBirth}
                                     onChange={(e) => setNewPetDateOfBirth(e.target.value)}
                                     max={new Date().toISOString().split('T')[0]}
+                                    required
+                                    aria-required="true"
                                 />
                             </div>
 
                             <div className="nr-pet-modal-actions">
-                                <button type="button" className="nr-pet-modal-btn-cancel" onClick={() => setShowAddPetModal(false)}>Hủy bỏ</button>
-                                <button type="button" className="nr-pet-modal-btn-submit" onClick={handleCreatePet}>Tạo mới</button>
+                                <button type="button" className="nr-pet-modal-btn-cancel" onClick={closeAddPetModal}>Hủy bỏ</button>
+                                <button
+                                    type="button"
+                                    className="nr-pet-modal-btn-submit"
+                                    onClick={handleCreatePet}
+                                    disabled={isCreatingPet || isCreatePetFormInvalid}
+                                >
+                                    {isCreatingPet ? 'Đang tạo...' : 'Tạo mới'}
+                                </button>
                             </div>
                         </div>
                     </>

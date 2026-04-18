@@ -26,4 +26,10 @@ public class UpdateReceptionSlipRequest {
 
     @Schema(description = "Đổi bác sĩ phụ trách", example = "4")
     private Long doctorId;
+
+    @Schema(description = "Id option loại khám", example = "1")
+    private Long examTypeOptionId;
+
+    @Schema(description = "Đánh dấu ca cấp cứu", example = "false")
+    private Boolean emergency;
 }

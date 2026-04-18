@@ -3,6 +3,7 @@ package com.petical.controller;
 import com.petical.dto.request.CreateReceptionSlipRequest;
 import com.petical.dto.request.UpdateReceptionSlipRequest;
 import com.petical.dto.response.ApiResponse;
+import com.petical.dto.response.ExamAggregateResponse;
 import com.petical.dto.response.ReceptionAssignedServiceResponse;
 import com.petical.entity.ReceptionRecord;
 import com.petical.enums.ReceptionStatus;
@@ -67,6 +68,14 @@ public class ReceptionSlipController {
                 .data(receptionService.getReceptionSlip(id))
                 .build();
     }
+
+        @GetMapping("/{id}/exam")
+        @Operation(summary = "Láº¥y aggregate kháº£o sÃ¡t khÃ¡m", description = "Gá»™p ExamForm + MedicalRecord + ExamResult thÃ nh má»™t response duy nháº¥t")
+        public ApiResponse<ExamAggregateResponse> examAggregate(@PathVariable long id) {
+                return ApiResponse.<ExamAggregateResponse>builder()
+                                .data(receptionService.getExamAggregate(id))
+                                .build();
+        }
 
         @GetMapping("/{id}/services")
         @Operation(summary = "Lấy dịch vụ đã chỉ định", description = "Trả về danh sách dịch vụ đã được bác sĩ chỉ định cho phiếu tiếp đón")

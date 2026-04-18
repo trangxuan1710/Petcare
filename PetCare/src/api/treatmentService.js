@@ -38,6 +38,9 @@ const treatmentService = {
     },
     getPrescriptionAutofill(receptionId) {
         return authApi.get(`/reception-slips/${receptionId}/prescription-autofill`);
+    },
+    getPrescriptionAutofillByContext(payload) {
+        return authApi.post('/prescription-autofill/recommendations', payload || {});
     }
 }
 

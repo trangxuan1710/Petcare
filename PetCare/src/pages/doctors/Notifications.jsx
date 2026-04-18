@@ -51,16 +51,19 @@ const Notifications = () => {
                 )));
             }
         } catch {
-            // Keep UI responsive even when mark-read fails.
+            // Keep UI responsive
         }
 
-        if (notif?.link) {
-            navigate(notif.link);
+        // 1. Prioritize direct ID navigation to Ticket Details
+        if (notif?.receptionId) {
+            navigate(`/doctors/tickets/${notif.receptionId}`);
             return;
         }
 
-        if (notif?.receptionId) {
-            navigate(`/doctors/tickets/${notif.receptionId}`);
+        // 2. Fallback to mapped link if available
+        if (notif?.link) {
+            navigate(notif.link);
+            return;
         }
     };
 

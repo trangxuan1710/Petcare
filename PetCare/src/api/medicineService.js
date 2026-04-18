@@ -16,12 +16,7 @@ const getPriceNumber = (item) => {
     return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const formatVnd = (value) => `${Number(value || 0).toLocaleString('vi-VN')}đ`;
-
-const getQuantityPerBox = (item) => {
-    const parsed = Number(item?.quantityPerBox ?? item?.boxQuantity ?? 1);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-};
+const formatVnd = (value) => `${Number(value || 0).toLocaleString('vi-VN')}d`;
 
 const getStockValue = (item) => {
     const rawStock = item?.stock
@@ -35,26 +30,37 @@ const getStockValue = (item) => {
     return Number.isNaN(Number(rawStock)) ? rawStock : Number(rawStock);
 };
 
+const normalizeUnit = (value) => String(value || '').replace(/^\//, '').trim();
+
 const mapMedicineItem = (item) => {
+    const itemType = String(item?.type || 'THUOC').toUpperCase().trim();
+
     const unitPrice = getPriceNumber({ price: item?.unitPrice ?? item?.price });
-    const quantityPerBox = getQuantityPerBox(item);
-    const boxPrice = getPriceNumber({ price: item?.boxPrice }) || unitPrice * quantityPerBox;
+    const quantityPerBox = Math.max(1, Number(item?.quantityPerBox ?? item?.boxQuantity ?? 1));
+    const boxPrice = getPriceNumber({ price: item?.boxPrice }) || (unitPrice * quantityPerBox);
+
+    const selectedUnit = normalizeUnit(item?.unit || item?.dosageUnit || 'don v?');
+    const normalizedUnit = selectedUnit.toLowerCase();
+    const isBoxUnit = normalizedUnit === 'h?p' || normalizedUnit === 'hop' || normalizedUnit === 'box';
+    const displayPrice = isBoxUnit ? boxPrice : unitPrice;
 
     return {
         id: item?.id,
-        name: item?.name || 'Thuoc vat tu',
-        desc: item?.description || item?.desc || item?.type || '',
-        type: item?.type || 'THUOC',
-        price: formatVnd(boxPrice),
+        name: item?.name || 'Thu?c v?t tu',
+        desc: item?.description || item?.desc || itemType || '',
+        type: itemType,
+        speciesCodes: Array.isArray(item?.speciesCodes) ? item.speciesCodes : [],
+        speciesLabels: Array.isArray(item?.speciesLabels) ? item.speciesLabels : [],
+        price: formatVnd(displayPrice),
         unitPrice,
         quantityPerBox,
         boxPrice,
-        unit: item?.unit ? `/${item.unit}` : '/don vi',
+        unit: `/${selectedUnit}`,
         stock: getStockValue(item),
         image: item?.imageUrl || 'https://placehold.co/80x80/f4f4f5/a1a1aa?text=Med',
         selected: false,
         qty: 1,
-        selectedUnit: item?.unit || 'Don vi',
+        selectedUnit,
         expanded: false,
         dosage: {
             morning: 1,
@@ -72,6 +78,7 @@ const medicineService = {
             params: {
                 keyword: params?.keyword,
                 type: params?.type,
+                species: params?.species || params?.objective,
                 limit: params?.limit || 50,
             },
         });

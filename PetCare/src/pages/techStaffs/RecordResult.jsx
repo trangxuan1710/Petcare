@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { useNotificationSSE } from '../../hooks/useNotificationSSE';
+import { useNotificationSSE } from '../../hooks/useNotificationSSE.jsx';
 import { ChevronLeft, ChevronUp, ChevronDown, Plus, Minus, Camera, Bell, PencilLine } from 'lucide-react';
 import { TECH_PATHS, buildTechRecordResultPath } from '../../routes/techPaths';
 import techService from '../../api/techService';
@@ -216,14 +216,14 @@ const TechRecordResult = () => {
     );
 
     const statusLabel = STATUS_LABEL[taskDetail?.status] || '--';
-    const hasRequiredEvidence = existingEvidence.length > 0 || selectedImages.length > 0;
+    const hasRequiredImage = existingImageEvidence.length > 0 || selectedImageFiles.length > 0;
     const hasRequiredMedicine = selectedMedicines.some((medicine) => (
         Number(medicine?.medicineId || 0) > 0 && Number(medicine?.quantity || 0) > 0
     ));
     const isFormComplete = Boolean(
         taskDetail?.serviceOrderId
         && summary.trim()
-        && hasRequiredEvidence
+        && hasRequiredImage
         && hasRequiredMedicine
     );
 
@@ -290,8 +290,8 @@ const TechRecordResult = () => {
             return;
         }
 
-        if (!hasRequiredEvidence) {
-            setErrorMessage('Vui lòng tải lên file hoặc ảnh kết quả.');
+        if (!hasRequiredImage) {
+            setErrorMessage('Vui lòng tải lên ít nhất một ảnh kết quả.');
             return;
         }
 
@@ -337,7 +337,7 @@ const TechRecordResult = () => {
                     <button className="icon-btn-back" type="button" onClick={() => navigate(TECH_PATHS.HOME)} aria-label="Quay lại" style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px', margin: '-4px' }}>
                         <ChevronLeft size={24} color="#1a1a1a" />
                     </button>
-                    <h1 style={{ fontSize: '18px', fontWeight: '600', color: '#1a1a1a', margin: 0, lineHeight: 1.25 }}>Ghi nhận kết quả</h1>
+                    <h1 className="trs-title">Ghi nhận kết quả</h1>
                 </div>
                 <button type="button" className="tech-top-bell" onClick={() => { clearUnread(); navigate(TECH_PATHS.NOTIFICATIONS); }} aria-label="Thong bao" style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a' }}>
                     <Bell size={24} strokeWidth={2} />
@@ -481,7 +481,7 @@ const TechRecordResult = () => {
                                 <label className="trs-file-upload-btn">
                                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="4" ry="4"></rect><path d="M12 16v-8"></path><path d="M8 12l4-4 4 4"></path></svg>
                                     <span>Tải lên file kết quả khám bệnh</span>
-                                    <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple onChange={handleAddImages} required={!hasRequiredEvidence} aria-required="true" hidden />
+                                    <input type="file" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" multiple onChange={handleAddImages} required={!hasRequiredImage} aria-required="true" hidden />
                                 </label>
                             </div>
                         </div>
@@ -499,7 +499,7 @@ const TechRecordResult = () => {
                                                 const quantity = Number(med?.quantity ?? 1) || 1;
                                                 const isThuoc = med?.type === 'THUOC' || med?.type === 'MEDICINE';
                                                 const originalUnit = med?.selectedUnit || med?.dosageUnit || 'Đơn vị';
-                                                const quantityUnit = isThuoc ? 'hộp' : originalUnit;
+                                                const quantityUnit = originalUnit;
                                                 return (
                                                     <div key={`${med?.medicineId || 'medicine'}-${index}`} className="rr-med-item-minimal">
                                                         <div className="rr-med-row-header">

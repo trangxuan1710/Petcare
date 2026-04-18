@@ -14,6 +14,7 @@ import com.petical.entity.PrescriptionDetail;
 import com.petical.entity.Pet;
 import com.petical.entity.ReceptionRecord;
 import com.petical.entity.ReceptionService;
+import com.petical.entity.ResultFile;
 import com.petical.enums.ErrorCode;
 import com.petical.errors.AppException;
 import com.petical.repository.ClientRepository;
@@ -24,15 +25,19 @@ import com.petical.repository.PrescriptionDetailRepository;
 import com.petical.repository.PrescriptionRepository;
 import com.petical.repository.ReceptionRecordRepository;
 import com.petical.repository.ReceptionServiceRepository;
+import com.petical.repository.ResultFileRepository;
 import com.petical.service.PetService;
+import com.petical.util.TextFormatUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -48,6 +53,7 @@ public class PetServiceImpl implements PetService {
     private final ExamResultRepository examResultRepository;
     private final PrescriptionRepository prescriptionRepository;
     private final PrescriptionDetailRepository prescriptionDetailRepository;
+    private final ResultFileRepository resultFileRepository;
 
     @Override
     public Pet createPet(CreatePetRequest pet) {
@@ -55,8 +61,9 @@ public class PetServiceImpl implements PetService {
         if(c==null) {
             throw new AppException(ErrorCode.USER_NOT_FOUND);
         }
-        Pet p = Pet.builder().name(pet.getName()).species(pet.getSpecies())
-                .breed(pet.getBreed())
+        Pet p = Pet.builder().name(TextFormatUtils.toTitleCase(pet.getName()))
+                .species(normalizeSpeciesCode(pet.getSpecies()))
+                .breed(TextFormatUtils.toTitleCase(pet.getBreed()))
             .dateOfBirth(pet.getDateOfBirth())
                 .build();
         p.setClient(c);
@@ -120,6 +127,14 @@ public class PetServiceImpl implements PetService {
                 (left, right) -> left.getId() >= right.getId() ? left : right
             ));
 
+        Map<Long, List<ResultFile>> filesByExamResultId = examResultByMedicalRecordId.values().isEmpty()
+            ? Collections.emptyMap()
+            : resultFileRepository.findByExamResultIdInOrderByIdAsc(
+                    examResultByMedicalRecordId.values().stream().map(ExamResult::getId).toList()
+            )
+            .stream()
+            .collect(Collectors.groupingBy(file -> file.getExamResult().getId()));
+
         List<Long> prescriptionIds = prescriptionByReceptionServiceId.values().stream().map(Prescription::getId).toList();
         Map<Long, List<PrescriptionDetail>> prescriptionDetailsByPrescriptionId = prescriptionIds.isEmpty()
             ? Collections.emptyMap()
@@ -160,10 +175,10 @@ public class PetServiceImpl implements PetService {
                 .map(detail -> {
                 String dosage = null;
                 if (detail.getMorning() != null || detail.getNoon() != null || detail.getAfternoon() != null || detail.getEvening() != null) {
-                    dosage = "Sáng:" + Math.max(0, detail.getMorning() == null ? 1 : detail.getMorning())
-                        + ", Trưa:" + Math.max(0, detail.getNoon() == null ? 1 : detail.getNoon())
-                        + ", Chiều:" + Math.max(0, detail.getAfternoon() == null ? 1 : detail.getAfternoon())
-                        + ", Tối:" + Math.max(0, detail.getEvening() == null ? 1 : detail.getEvening());
+                    dosage = "Sáng:" + toDoseText(detail.getMorning(), BigDecimal.ONE)
+                        + ", Trưa:" + toDoseText(detail.getNoon(), BigDecimal.ONE)
+                        + ", Chiều:" + toDoseText(detail.getAfternoon(), BigDecimal.ONE)
+                        + ", Tối:" + toDoseText(detail.getEvening(), BigDecimal.ONE);
                     if (detail.getInstruction() != null && !detail.getInstruction().isBlank()) {
                         dosage += " | Chỉ định: " + detail.getInstruction().trim();
                     }
@@ -191,9 +206,7 @@ public class PetServiceImpl implements PetService {
             return PetExamHistoryItemResponse.builder()
                 .receptionRecordId(reception.getId())
                 .medicalRecordId(medicalRecord == null ? null : medicalRecord.getId())
-                .examType(reception.getExamForm() == null || reception.getExamForm().getExamType() == null
-                    ? null
-                    : reception.getExamForm().getExamType().getValue())
+                .examType(resolveExamTypeName(medicalRecord, reception))
                 .status(reception.getStatus() == null ? null : reception.getStatus().getValue())
                 .receptionTime(reception.getReceptionTime())
                 .examDate(examDate)
@@ -203,7 +216,7 @@ public class PetServiceImpl implements PetService {
                 .treatmentDirection(examResult == null || examResult.getTreatmentDirection() == null
                     ? null
                     : examResult.getTreatmentDirection().getName())
-                .evidencePaths(readEvidencePaths(examResult == null ? null : examResult.getEvidencePath()))
+                .evidencePaths(readExamEvidencePaths(examResult, filesByExamResultId))
                 .mainDoctorName(mainDoctorName)
                 .assistantDoctorName(assistantDoctorName)
                 .serviceCount(services.size())
@@ -233,6 +246,39 @@ public class PetServiceImpl implements PetService {
                 .toList();
     }
 
+    private String toDoseText(BigDecimal value, BigDecimal defaultValue) {
+        BigDecimal safeValue = value == null ? defaultValue : value.max(BigDecimal.ZERO);
+        return safeValue.stripTrailingZeros().toPlainString();
+    }
+    private String normalizeSpeciesCode(String species) {
+        if (species == null) {
+            return null;
+        }
+        return species.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private String resolveExamTypeName(MedicalRecord medicalRecord, ReceptionRecord receptionRecord) {
+        if (medicalRecord != null && medicalRecord.getExamTypeOption() != null) {
+            return medicalRecord.getExamTypeOption().getName();
+        }
+        return null;
+    }
+
+    private List<String> readExamEvidencePaths(ExamResult examResult, Map<Long, List<ResultFile>> filesByExamResultId) {
+        if (examResult == null) {
+            return List.of();
+        }
+
+        List<String> storedPaths = filesByExamResultId.getOrDefault(examResult.getId(), List.of())
+                .stream()
+                .map(ResultFile::getFilePath)
+                .filter(path -> path != null && !path.isBlank())
+                .toList();
+
+        return storedPaths.isEmpty() ? readEvidencePaths(examResult.getEvidencePath()) : storedPaths;
+    }
+
 
 
 }
+
