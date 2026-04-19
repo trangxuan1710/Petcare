@@ -201,7 +201,6 @@ const NewReception = () => {
     const [newPetName, setNewPetName] = useState('');
     const [newPetSpecies, setNewPetSpecies] = useState('');
     const [newPetBreed, setNewPetBreed] = useState('');
-    const [newPetGender, setNewPetGender] = useState('Male');
     const [newPetDateOfBirth, setNewPetDateOfBirth] = useState('');
     const [newPetErrors, setNewPetErrors] = useState({
         name: '',
@@ -488,7 +487,6 @@ const NewReception = () => {
                 name: normalizedPetName,
                 species: newPetSpecies,
                 breed: newPetBreed.trim(),
-                gender: newPetGender,
                 dateOfBirth: newPetDateOfBirth,
             });
             const pet = response?.data?.data;
@@ -503,7 +501,7 @@ const NewReception = () => {
                 breed: toTitleCase(pet.breed || newPetBreed.trim()),
                 dateOfBirth: pet.dateOfBirth || newPetDateOfBirth,
                 weight: pet.weight || '',
-                gender: pet.gender || newPetGender,
+                gender: pet.gender || '',
                 hasHistory: false,
             };
 
@@ -513,7 +511,6 @@ const NewReception = () => {
             setNewPetName('');
             setNewPetSpecies('');
             setNewPetBreed('');
-            setNewPetGender('Male');
             setNewPetDateOfBirth('');
             setNewPetErrors({ name: '' });
             showToast('success', 'Tạo thú cưng thành công.');
@@ -881,22 +878,6 @@ const NewReception = () => {
                                         readOnly
                                     />
                                 )}
-                            </div>
-
-                            <div className="nr-pet-modal-field">
-                                <label className="nr-pet-modal-label">Giới tính <span className="nr-required">*</span></label>
-                                <div className="nr-pet-modal-select-wrapper">
-                                    <DropupSelect
-                                        value={newPetGender}
-                                        onChange={setNewPetGender}
-                                        placeholder="-- Chọn giới tính --"
-                                        triggerClassName="nr-pet-modal-dropup-trigger"
-                                        options={[
-                                            { value: 'Male', label: 'Đực' },
-                                            { value: 'Female', label: 'Cái' },
-                                        ]}
-                                    />
-                                </div>
                             </div>
 
                             <div className="nr-pet-modal-field">

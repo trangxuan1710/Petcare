@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import './TreatmentHistoryTimeline.css';
 import petService from '../../api/petService';
@@ -66,6 +66,43 @@ const normalizePlainText = (value) =>
         .replace(/[\u0300-\u036f]/g, '')
         .trim();
 
+const toSentenceCaseVi = (value, fallback = 'Đang thực hiện') => {
+    const normalized = String(value || fallback).trim().toLocaleLowerCase('vi-VN');
+    return normalized.replace(/\p{L}/u, (ch) => ch.toLocaleUpperCase('vi-VN'));
+};
+
+const normalizeMedicineType = (medicine) => {
+    const rawType = [
+        medicine?.type,
+        medicine?.productType,
+        medicine?.product_type,
+        medicine?.itemType,
+        medicine?.item_type,
+        medicine?.medicineType,
+        medicine?.medicine_type,
+        medicine?.medicine?.type,
+        medicine?.medicine?.productType,
+        medicine?.medicine?.product_type,
+    ].find((v) => String(v || '').trim() !== '');
+
+    const normalized = String(rawType || '').trim().toUpperCase();
+    if (normalized === 'THUOC' || normalized === 'MEDICINE') return 'THUOC';
+    if (normalized === 'VAT_TU' || normalized === 'VATTU' || normalized === 'MATERIAL' || normalized === 'SUPPLY') return 'VAT_TU';
+
+    const hintText = String(
+        medicine?.unit ||
+        medicine?.dosageUnit ||
+        medicine?.medicineUnit ||
+        medicine?.dosage ||
+        medicine?.instruction ||
+        medicine?.note ||
+        ''
+    ).toLowerCase();
+
+    if (/(viên|ml|mg|gói|ống|chai|lọ)/i.test(hintText)) return 'THUOC';
+    return 'VAT_TU';
+};
+
 const mapExamTypeLabel = (rawExamType) => {
     const normalized = normalizePlainText(rawExamType);
 
@@ -76,10 +113,10 @@ const mapExamTypeLabel = (rawExamType) => {
         normalized.includes('follow') ||
         normalized.includes('tai')
     ) {
-        return 'tái khám';
+        return 'Tái khám';
     }
 
-    return 'khám mới';
+    return 'Khám mới';
 };
 
 const mapHistoryBlock = (item, index) => {
@@ -101,13 +138,16 @@ const mapHistoryBlock = (item, index) => {
         };
     });
 
-    const medicines = toArray(item?.medicines).map((medicine, medicineIndex) => ({
-        id: medicine?.medicineId || `${item?.receptionRecordId || index}-medicine-${medicineIndex}`,
-        name: safeText(medicine?.medicineName || medicine?.name, 'Thuốc/Vật tư'),
-        quantity: medicine?.quantity ? `x${medicine.quantity}` : '--',
-        unit: safeText(medicine?.unit, ''),
-        dosage: safeText(medicine?.dosage, ''),
-    }));
+    const medicines = toArray(item?.medicines).map((medicine, medicineIndex) => {
+        return {
+            id: medicine?.medicineId || `${item?.receptionRecordId || index}-medicine-${medicineIndex}`,
+            name: safeText(medicine?.medicineName || medicine?.name, 'Thuốc/Vật tư'),
+            quantity: medicine?.quantity ? `x${medicine.quantity}` : '--',
+            type: normalizeMedicineType(medicine),
+            unit: safeText(medicine?.unit || medicine?.dosageUnit || medicine?.medicineUnit, ''),
+            dosage: safeText(medicine?.dosage || medicine?.instruction || medicine?.note, ''),
+        };
+    });
 
     const referenceTime = item?.examDate || item?.receptionTime || item?.createdAt || item?.updatedAt;
     const serviceCount = Number(item?.serviceCount || services.length || 0);
@@ -207,12 +247,12 @@ const TreatmentHistoryTimeline = ({ petId }) => {
             return next;
         });
     };
-
+    const formatStatus = (str) => toSentenceCaseVi(str, 'Đang thực hiện');
     return (
         <section className="th-wrapper">
             <div className="th-header">
                 <h3>Quá trình khám & điều trị</h3>
-                <span className="th-header-status">{historyData[0]?.status || 'Đang thực hiện'}</span>
+                <span className="th-header-status">{formatStatus(historyData[0]?.status)}</span>
             </div>
             <p className="th-date-range">{dateRangeText}</p>
             <p className="th-summary">{summaryText}</p>
@@ -228,8 +268,8 @@ const TreatmentHistoryTimeline = ({ petId }) => {
                             <div className="th-node" />
                             <div className="th-card">
                                 <div className="th-card-header">
-                                    <div className="th-tag">{block.title}</div>
-                                    <span className={statusClassName(block.statusType)}>{block.status}</span>
+                                    <div className="th-tag">{toSentenceCaseVi(block.title, 'Khám mới')}</div>
+                                    <span className={statusClassName(block.statusType)}>{formatStatus(block.status)}</span>
                                 </div>
 
                                 <div className="th-doctors">
@@ -247,7 +287,7 @@ const TreatmentHistoryTimeline = ({ petId }) => {
                                             <div className="th-service" key={service.id}>
                                                 <div className="th-service-title-row">
                                                     <h4>{service.name}</h4>
-                                                    <span className={statusClassName(service.statusType)}>{service.status}</span>
+                                                    <span className={statusClassName(service.statusType)}>{formatStatus(service.status)}</span>
                                                 </div>
                                                 {service.performer && <div className="th-row"><span>Người thực hiện</span><strong>{service.performer}</strong></div>}
                                             </div>
@@ -257,9 +297,9 @@ const TreatmentHistoryTimeline = ({ petId }) => {
                                             <div className="th-sub-list">
                                                 <p>Thuốc & vật tư đã dùng ({block.medicines.length})</p>
                                                 {block.medicines.map((medicine) => (
-                                                    <div className="th-row" key={medicine.id}>
+                                                    <div onClick={()=> console.log(medicine)} className="th-row" key={medicine.id}>
                                                         <span>{medicine.name}</span>
-                                                        <strong>{`${medicine.quantity} ${medicine.unit ? `hộp` : ''}`}</strong>
+                                                        <strong>{`${medicine.quantity} ${medicine.type === 'THUOC' ? `hộp` : medicine.unit}`}</strong>
                                                     </div>
                                                 ))}
                                             </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, MoreVertical, Phone, Eye, Mars, Weight, Plus, TriangleAlert, ChevronUp, ChevronDown, PencilLine } from 'lucide-react';
 import ServiceAccordion from '../../components/doctor/ServiceAccordion';
@@ -106,6 +106,7 @@ const normalizeDoseValue = (value) => {
 const mapMedicineToUi = (item) => ({
     id: item?.id || item?.medicineId,
     serviceId: item?.serviceId || item?.receptionServiceId || 1,
+    serviceName: item?.serviceName || item?.service?.name || '',
     name: item?.name || item?.medicineName || 'Thuốc/Vật tư',
     desc: item?.description || item?.desc || '',
     price: item?.price && String(item.price).includes('đ') ? item.price : formatVnd(getPriceNumber(item)),
@@ -212,6 +213,7 @@ export default function ServiceOrder() {
     );
     const [isMedsExpanded, setIsMedsExpanded] = useState(serviceOrderDraft?.isMedsExpanded ?? true);
     const [isStartingService, setIsStartingService] = useState(false);
+    const goToTickets = () => navigate('/doctors/tickets', { replace: true });
 
     const mapParaclinicalItem = (item) => ({
         id: item?.id || item?.serviceId || item?.service?.id || item?.paraclinicalServiceId,
@@ -406,12 +408,16 @@ export default function ServiceOrder() {
         });
     };
 
-    const openMedicineSelector = () => {
+    const openMedicineSelector = (focusMedicineId = null) => {
         if (isReadonlyMode) return;
+        const normalizedFocusMedicineId = Number(focusMedicineId);
         navigate('/doctors/medicine-selector', {
             state: {
                 receptionId: id,
                 treatmentSlipId: treatmentDetail?.id || null,
+                focusMedicineId: Number.isFinite(normalizedFocusMedicineId) && normalizedFocusMedicineId > 0
+                    ? normalizedFocusMedicineId
+                    : null,
                 selectedMedicines: medsList,
                 recordResultDraft: {
                     activeTab: 'Kết luận phiếu khám',
@@ -478,7 +484,7 @@ export default function ServiceOrder() {
         <div className="service-order-page">
             {/* Header */}
             <div className="so-header">
-                <button className="so-btn-icon" onClick={() => navigate(-1)}><ChevronLeft size={24} color="#1a1a1a" /></button>
+                <button className="so-btn-icon" onClick={goToTickets}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="so-title">Đơn dịch vụ</h1>
                 {/* <button className="so-btn-icon"><MoreVertical size={24} color="#1a1a1a" /></button> */}
             </div>
@@ -629,7 +635,7 @@ export default function ServiceOrder() {
                                         },
                                     })}
                                 >
-                                    <span>Xem dịch vụ</span>
+                                    <span>Xem kết quả</span>
                                     <Eye size={18} />
                                 </button>
                             </div>
@@ -654,7 +660,6 @@ export default function ServiceOrder() {
                                                     paraclinicalServices.forEach((s) => {
                                                         serviceNameMap.set(Number(s.serviceId || s.id), s.name || s.serviceName);
                                                     });
-                                                    serviceNameMap.set(1, 'Khám lâm sàng');
 
                                                     const groups = medsList.reduce((acc, med) => {
                                                         const sid = Number(med.serviceId || 1);
@@ -664,10 +669,12 @@ export default function ServiceOrder() {
                                                     }, {});
 
                                                     return Object.entries(groups).map(([sid, items]) => {
-                                                        const serviceName = serviceNameMap.get(Number(sid)) || `Dịch vụ #${sid}`;
+                                                        const serviceName = serviceNameMap.get(Number(sid))
+                                                            || items.find((item) => item?.serviceName)?.serviceName
+                                                            || 'Dịch vụ';
                                                         return (
                                                             <div key={`group-${sid}`} className="so-med-group">
-                                                                <h5 className="so-med-group-title">{serviceName}</h5>
+                                                                {/* <h5 className="so-med-group-title">{serviceName}</h5> */}
                                                                 {items.map((med, index) => {
                                                                     const quantity = Number(med?.qty ?? med?.quantity ?? 1) || 1;
                                                                     const isThuoc = med?.type === 'THUOC' || med?.type === 'MEDICINE';
@@ -687,7 +694,7 @@ export default function ServiceOrder() {
                                                                                 <button
                                                                                     type="button"
                                                                                     className="so-medicine-edit"
-                                                                                    onClick={openMedicineSelector}
+                                                                                    onClick={() => openMedicineSelector(med?.id)}
                                                                                     disabled={isReadonlyMode}
                                                                                     aria-label={`Chỉnh thuốc và vật tư cho ${med.name}`}
                                                                                 >
@@ -696,7 +703,7 @@ export default function ServiceOrder() {
                                                                             </div>
                                                                             <div className="so-medicine-row">
                                                                                 <span>Số lượng</span>
-                                                                                <strong>{quantity} {quantityUnit}</strong>
+                                                                                <strong>{quantity} {!isThuoc ? quantityUnit : 'Hộp'}</strong>
                                                                             </div>
                                                                             {isThuoc && dosageRows.length > 0 && dosageRows.map((dosage) => (
                                                                                 <div key={`${med?.id || med?.medicineId}-${dosage.label}`} className="so-medicine-row">
@@ -724,7 +731,7 @@ export default function ServiceOrder() {
                                             <button
                                                 type="button"
                                                 className="so-medicine-add"
-                                                onClick={openMedicineSelector}
+                                                onClick={() => openMedicineSelector()}
                                                 disabled={isReadonlyMode}
                                                 aria-label="Thêm thuốc và vật tư"
                                             >
@@ -792,7 +799,7 @@ export default function ServiceOrder() {
                 <div className="so-bottom-actions">
                     <button
                         className="so-btn-cancel"
-                        onClick={() => navigate('/doctors/tickets', { replace: true })}
+                        onClick={goToTickets}
                         disabled={isReadonlyMode}
                     >
                         Hủy bỏ
@@ -811,3 +818,4 @@ export default function ServiceOrder() {
         </div>
     );
 }
+

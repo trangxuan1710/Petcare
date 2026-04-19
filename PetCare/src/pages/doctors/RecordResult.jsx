@@ -89,6 +89,21 @@ const normalizeServiceStatus = (rawStatus) => {
     return { label: 'Chưa bắt đầu', className: 'rr-status-pending' };
 };
 
+const toSentenceCaseStatus = (rawStatus, fallback = 'Đang thực hiện') => {
+    const value = String(rawStatus || '').trim();
+    if (!value) return fallback;
+
+    const normalized = value
+        .replace(/[_-]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLocaleLowerCase('vi-VN');
+
+    return normalized
+        ? `${normalized.charAt(0).toLocaleUpperCase('vi-VN')}${normalized.slice(1)}`
+        : fallback;
+};
+
 const isCompletedReceptionStatus = (rawStatus) => {
     const status = String(rawStatus || '').trim().toLowerCase();
     return (
@@ -185,6 +200,7 @@ export const RecordResult = () => {
     const [toast, setToast] = useState(null);
     const [isClinicalCompleted, setIsClinicalCompleted] = useState(false);
     const [clinicalStartedAt, setClinicalStartedAt] = useState(null);
+    const [clinicalServiceName, setClinicalServiceName] = useState('Khám lâm sàng');
 
     const showToast = (type, message) => {
         setToast({ type, message });
@@ -214,6 +230,10 @@ export const RecordResult = () => {
                     ? toArray(assignedServicesResponse.value?.normalizedData)
                     : [];
                 const defaultClinicalService = assignedServices.find((service) => Number(service?.serviceId || service?.id) === 1) || null;
+                const defaultClinicalServiceName = defaultClinicalService?.serviceName
+                    || defaultClinicalService?.name
+                    || defaultClinicalService?.service?.name
+                    || 'Khám lâm sàng';
                 const medicinesFromApi = toArray(
                     treatmentData?.medicines
                     || treatmentData?.medicineItems
@@ -252,6 +272,7 @@ export const RecordResult = () => {
                             : ensureMedicineService(medicinesFromApi)
                 );
                 setClinicalStartedAt(defaultClinicalService?.startedAt || null);
+                setClinicalServiceName(defaultClinicalServiceName);
 
                 if (hasDraftConclusion) {
                     setConclusionText(String(recordResultDraft?.conclusionText || ''));
@@ -280,6 +301,7 @@ export const RecordResult = () => {
                 setReceptionDetail(null);
                 setTreatmentDetail(null);
                 setClinicalStartedAt(null);
+                setClinicalServiceName('Khám lâm sàng');
             }
         };
 
@@ -532,12 +554,12 @@ export const RecordResult = () => {
                 <div className="rr-exam-details-card">
                     <div className="rr-exam-row">
                         <div>
-                            <span className="rr-exam-title">Khám lâm sàng</span>
+                            <span className="rr-exam-title">{clinicalServiceName}</span>
                             <span className="rr-exam-time">{receptionDetail?.receptionTime ? new Date(receptionDetail.receptionTime).toLocaleString('vi-VN') : '--:-- - --/--/----'}</span>
 
                         </div>
                         <div className="rr-exam-status-box">
-                            <span className="rr-exam-status">{receptionDetail?.status || 'Đang thực hiện'}</span>
+                            <span className="rr-exam-status">{toSentenceCaseStatus(receptionDetail?.status, 'Đang thực hiện')}</span>
                         </div>
                     </div>
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search, Minus, Plus, ChevronDown, PencilLine } from 'lucide-react';
 import './MedicineSelector.css';
@@ -103,6 +103,28 @@ const isMedicineType = (type) => {
 const normalizeDoseValue = (rawValue) => {
     const parsed = Number(rawValue);
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : 1;
+};
+
+const DOSE_STEP = 0.25;
+const DOSE_FIELDS = ['morning', 'noon', 'afternoon', 'evening'];
+
+const roundDose = (value) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed) || parsed < 0) return 0;
+    return Math.round((parsed + Number.EPSILON) * 100) / 100;
+};
+
+const parseDoseInput = (rawValue) => {
+    const normalizedRaw = String(rawValue ?? '').trim().replace(',', '.');
+    if (normalizedRaw === '') return 0;
+    const parsed = Number(normalizedRaw);
+    if (!Number.isFinite(parsed) || parsed < 0) return null;
+    return roundDose(parsed);
+};
+
+const formatDoseInput = (value) => {
+    const parsed = parseDoseInput(value);
+    return String(parsed == null ? 0 : parsed);
 };
 
 const normalizeSpeciesKey = (rawSpecies) => {
@@ -249,6 +271,7 @@ const MedicineSelector = () => {
     const returnPath = location.state?.returnPath;
     const treatmentSlipId = location.state?.treatmentSlipId;
     const receptionId = location.state?.receptionId;
+    const focusMedicineId = Number(location.state?.focusMedicineId);
     const petSpeciesIdRaw = location.state?.petSpeciesId;
     const petSpeciesRaw = location.state?.petSpecies;
     const petWeightRaw = location.state?.petWeight;
@@ -264,12 +287,20 @@ const MedicineSelector = () => {
         note: '',
         unit: 'đơn vị',
     });
+    const [dosageInputDraft, setDosageInputDraft] = useState({
+        morning: '1',
+        noon: '1',
+        afternoon: '1',
+        evening: '1',
+    });
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [highlightMedicineId, setHighlightMedicineId] = useState(null);
 
     const [medsList, setMedsList] = useState([]);
     const [autofillByMedicineId, setAutofillByMedicineId] = useState({});
     const [resolvedSpeciesId, setResolvedSpeciesId] = useState(null);
+    const hasAutoFocusedRef = useRef(false);
 
     const petSpeciesText = useMemo(() => getSpeciesTextCandidate(petSpeciesRaw), [petSpeciesRaw]);
 
@@ -471,31 +502,91 @@ const MedicineSelector = () => {
     const openDosageModal = (id) => {
         const target = medsList.find((med) => med.id === id);
         if (!target) return;
-        setActiveDosageMedId(id);
-        setDosageDraft({
+        const nextDosageDraft = {
             morning: normalizeDoseValue(target?.dosage?.morning),
             noon: normalizeDoseValue(target?.dosage?.noon),
             afternoon: normalizeDoseValue(target?.dosage?.afternoon),
             evening: normalizeDoseValue(target?.dosage?.evening),
             note: target?.dosage?.note || '',
             unit: target?.selectedUnit || String(target?.unit || '').replace(/^\//, '') || 'đơn vị',
+        };
+        setActiveDosageMedId(id);
+        setDosageDraft(nextDosageDraft);
+        setDosageInputDraft({
+            morning: formatDoseInput(nextDosageDraft.morning),
+            noon: formatDoseInput(nextDosageDraft.noon),
+            afternoon: formatDoseInput(nextDosageDraft.afternoon),
+            evening: formatDoseInput(nextDosageDraft.evening),
         });
         setShowDosageModal(true);
     };
 
     const updateDosageValue = (field, delta) => {
+        setDosageDraft((prev) => {
+            const nextValue = roundDose(Math.max(0, Number(prev?.[field] ?? 0) + delta));
+            setDosageInputDraft((prevInput) => ({
+                ...prevInput,
+                [field]: formatDoseInput(nextValue),
+            }));
+            return {
+                ...prev,
+                [field]: nextValue,
+            };
+        });
+    };
+
+    const updateDosageInputValue = (field, rawValue) => {
+        const normalizedRaw = String(rawValue ?? '').replace(',', '.');
+        if (!/^\d*(\.\d{0,4})?$/.test(normalizedRaw)) return;
+
+        setDosageInputDraft((prev) => ({
+            ...prev,
+            [field]: normalizedRaw,
+        }));
+
+        if (normalizedRaw === '' || normalizedRaw === '.') {
+            setDosageDraft((prev) => ({ ...prev, [field]: 0 }));
+            return;
+        }
+
+        const parsed = parseDoseInput(normalizedRaw);
+        if (parsed == null) return;
+
         setDosageDraft((prev) => ({
             ...prev,
-            [field]: Math.max(0, Number(prev?.[field] ?? 1) + delta)
+            [field]: parsed,
         }));
+    };
+
+    const handleDosageInputBlur = (field) => {
+        setDosageInputDraft((prev) => {
+            const parsed = parseDoseInput(prev?.[field]);
+            return {
+                ...prev,
+                [field]: formatDoseInput(parsed == null ? 0 : parsed),
+            };
+        });
     };
 
     const saveDosage = () => {
         if (!activeDosageMedId) return;
+        const normalizedDosage = DOSE_FIELDS.reduce((acc, field) => {
+            const parsed = parseDoseInput(dosageInputDraft?.[field]);
+            acc[field] = parsed == null ? roundDose(dosageDraft?.[field] ?? 0) : parsed;
+            return acc;
+        }, {});
         setMedsList((prevList) =>
             prevList.map((med) =>
                 med.id === activeDosageMedId
-                    ? { ...med, dosage: { ...dosageDraft }, expanded: true, selected: true }
+                    ? {
+                        ...med,
+                        dosage: {
+                            ...dosageDraft,
+                            ...normalizedDosage,
+                        },
+                        expanded: true,
+                        selected: true,
+                    }
                     : med
             )
         );
@@ -508,6 +599,30 @@ const MedicineSelector = () => {
         if (!keyword) return true;
         return `${med.name} ${med.desc}`.toLowerCase().includes(keyword);
     });
+
+    useEffect(() => {
+        if (!Number.isFinite(focusMedicineId) || focusMedicineId <= 0) return;
+        if (hasAutoFocusedRef.current) return;
+        if (filteredMeds.length === 0) return;
+
+        const targetExists = filteredMeds.some((med) => Number(med?.id) === focusMedicineId);
+        if (!targetExists) return;
+
+        const timer = setTimeout(() => {
+            const targetElement = document.querySelector(`[data-med-id="${focusMedicineId}"]`);
+            if (!targetElement) return;
+
+            targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setHighlightMedicineId(focusMedicineId);
+            hasAutoFocusedRef.current = true;
+
+            setTimeout(() => {
+                setHighlightMedicineId((prev) => (prev === focusMedicineId ? null : prev));
+            }, 1800);
+        }, 120);
+
+        return () => clearTimeout(timer);
+    }, [filteredMeds, focusMedicineId]);
 
     const getSelectedMedicines = () => medsList.filter((med) => med.selected).map((med) => ({
         ...med,
@@ -563,7 +678,12 @@ const MedicineSelector = () => {
             <div className="ms-content">
                 <div className="ms-meds-list">
                     {filteredMeds.map(med => (
-                        <article onClick={() => console.log(med)} key={med.id} className={`ms-lite-card ${med.selected ? 'selected' : ''}`}>
+                        <article
+                            onClick={() => console.log(med)}
+                            key={med.id}
+                            data-med-id={Number(med.id)}
+                            className={`ms-lite-card ${med.selected ? 'selected' : ''} ${highlightMedicineId === Number(med.id) ? 'focused' : ''}`}
+                        >
                             <div className="ms-lite-head">
                                 <label className="ms-lite-check" aria-label={`Chọn ${med.name}`}>
                                     <input
@@ -670,26 +790,36 @@ const MedicineSelector = () => {
                                                 type="button"
                                                 onClick={() => updateDosageValue(
                                                     idx === 0 ? 'morning' : idx === 1 ? 'noon' : idx === 2 ? 'afternoon' : 'evening',
-                                                    -1
+                                                    -DOSE_STEP
                                                 )}
                                             >
                                                 <Minus size={16} color="#666" />
                                             </button>
-                                            <span className="dosage-step-val">
-                                                {idx === 0
-                                                    ? dosageDraft.morning
+                                            <input
+                                                className="dosage-step-input"
+                                                type="text"
+                                                inputMode="decimal"
+                                                value={idx === 0
+                                                    ? dosageInputDraft.morning
                                                     : idx === 1
-                                                        ? dosageDraft.noon
+                                                        ? dosageInputDraft.noon
                                                         : idx === 2
-                                                            ? dosageDraft.afternoon
-                                                            : dosageDraft.evening}
-                                            </span>
+                                                            ? dosageInputDraft.afternoon
+                                                            : dosageInputDraft.evening}
+                                                onChange={(event) => updateDosageInputValue(
+                                                    idx === 0 ? 'morning' : idx === 1 ? 'noon' : idx === 2 ? 'afternoon' : 'evening',
+                                                    event.target.value
+                                                )}
+                                                onBlur={() => handleDosageInputBlur(
+                                                    idx === 0 ? 'morning' : idx === 1 ? 'noon' : idx === 2 ? 'afternoon' : 'evening'
+                                                )}
+                                            />
                                             <button
                                                 className="dosage-step-btn"
                                                 type="button"
                                                 onClick={() => updateDosageValue(
                                                     idx === 0 ? 'morning' : idx === 1 ? 'noon' : idx === 2 ? 'afternoon' : 'evening',
-                                                    1
+                                                    DOSE_STEP
                                                 )}
                                             >
                                                 <Plus size={16} color="#666" />
