@@ -733,13 +733,13 @@ export const RecordResult = () => {
                                                 <div className="rr-med-row-price">
                                                     <div onClick={() => console.log(med)}>
                                                         <span className="rr-med-price-min">{med.price}</span>
-                                                        <span className="rr-med-unit-min">/Hộp</span>
+                                                        <span className="rr-med-unit-min">{med.type ==='VAT_TU' ? med.unit : '/Hộp'}</span>
                                                     </div>
                                                 </div>
 
                                                 <div className="rr-med-row-note">
                                                     <span className="rr-note-lbl">Số lượng</span>
-                                                    <span className="rr-note-val">{quantity} Hộp</span>
+                                                    <span className="rr-note-val">{quantity} {med.type ==='VAT_TU' ? med.selectedUnit : 'Hộp'}</span>
                                                 </div>
 
                                                 {isThuoc && [
