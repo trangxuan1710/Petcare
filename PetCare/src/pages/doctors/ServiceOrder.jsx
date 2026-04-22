@@ -6,9 +6,6 @@ import TreatmentHistoryTimeline from '../../components/doctor/TreatmentHistoryTi
 import FeatureDevelopingModal from '../../components/common/FeatureDevelopingModal';
 import './ServiceOrder.css';
 import '../../components/doctor/TicketCard.css';
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/600.css";
 import { Divider } from "semantic-ui-react";
 import receptionService from '../../api/receptionService';
 import treatmentService from '../../api/treatmentService';
@@ -193,6 +190,8 @@ export default function ServiceOrder() {
     const navigate = useNavigate();
     const location = useLocation();
     const { id } = useParams();
+    const returnPath = location.state?.returnPath;
+    const returnState = location.state?.returnState;
     const serviceOrderDraft = location.state?.recordResultDraft || null;
     const selectedMedicinesFromState = useMemo(
         () => toArray(location.state?.selectedMedicines).map(mapMedicineToUi),
@@ -212,8 +211,17 @@ export default function ServiceOrder() {
             : toArray(serviceOrderDraft?.medsList).map(mapMedicineToUi)
     );
     const [isMedsExpanded, setIsMedsExpanded] = useState(serviceOrderDraft?.isMedsExpanded ?? true);
+    const [hasConfirmedResultSummary, setHasConfirmedResultSummary] = useState(
+        Boolean(serviceOrderDraft?.hasConfirmedResultSummary)
+    );
     const [isStartingService, setIsStartingService] = useState(false);
-    const goToTickets = () => navigate('/doctors/tickets', { replace: true });
+    const goToTickets = () => {
+        if (returnPath) {
+            navigate(returnPath, { replace: true, state: returnState });
+            return;
+        }
+        navigate('/doctors/tickets', { replace: true });
+    };
 
     const mapParaclinicalItem = (item) => ({
         id: item?.id || item?.serviceId || item?.service?.id || item?.paraclinicalServiceId,
@@ -248,6 +256,9 @@ export default function ServiceOrder() {
         }
         if (Object.prototype.hasOwnProperty.call(serviceOrderDraft || {}, 'isMedsExpanded')) {
             setIsMedsExpanded(Boolean(serviceOrderDraft?.isMedsExpanded));
+        }
+        if (Object.prototype.hasOwnProperty.call(serviceOrderDraft || {}, 'hasConfirmedResultSummary')) {
+            setHasConfirmedResultSummary(Boolean(serviceOrderDraft?.hasConfirmedResultSummary));
         }
         if (selectedMedicinesFromState.length > 0) {
             setMedsList(selectedMedicinesFromState);
@@ -289,6 +300,9 @@ export default function ServiceOrder() {
                 const mergedServices = mergeUsedServices(assignedServices, selectedServices);
 
                 setReceptionDetail(receptionData || null);
+                if (!Object.prototype.hasOwnProperty.call(serviceOrderDraft || {}, 'hasConfirmedResultSummary')) {
+                    setHasConfirmedResultSummary(Boolean(receptionData?.resultSummaryConfirmed));
+                }
                 setTreatmentDetail(treatmentData || null);
                 setParaclinicalServices(mergedServices);
 
@@ -382,6 +396,11 @@ export default function ServiceOrder() {
             navigate(`/doctors/record-result/${id ?? 1}`, {
                 state: {
                     treatmentSlipId: treatmentDetail?.id || null,
+                    returnPath: `/doctors/service-order/${id ?? 1}`,
+                    returnState: {
+                        returnPath,
+                        returnState,
+                    },
                 },
             });
             return;
@@ -404,6 +423,11 @@ export default function ServiceOrder() {
         navigate(`/doctors/record-result/${id ?? 1}`, {
             state: {
                 treatmentSlipId: treatmentDetail?.id || null,
+                returnPath: `/doctors/service-order/${id ?? 1}`,
+                returnState: {
+                    returnPath,
+                    returnState,
+                },
             },
         });
     };
@@ -425,6 +449,7 @@ export default function ServiceOrder() {
                     selectedConclusion,
                     isMedsExpanded,
                     medsList,
+                    hasConfirmedResultSummary,
                 },
                 returnPath: `/doctors/service-order/${id ?? 1}`,
             },
@@ -457,7 +482,7 @@ export default function ServiceOrder() {
                 })),
         };
 
-        return treatmentService.recordExamResult(id, payload, []);
+        return treatmentService.recordExamResultWithConfirmedSummary(id, payload, []);
     };
 
     const handleFinish = async () => {
@@ -610,6 +635,11 @@ export default function ServiceOrder() {
                                     onClick={() => navigate('/doctors/clinical-services', {
                                         state: {
                                             receptionId: id,
+                                            returnPath: `/doctors/service-order/${id ?? 1}`,
+                                            returnState: {
+                                                returnPath,
+                                                returnState,
+                                            },
                                         },
                                     })}
                                 >
@@ -632,6 +662,16 @@ export default function ServiceOrder() {
                                         state: {
                                             receptionId: id,
                                             treatmentSlipId: treatmentDetail?.id || null,
+                                            returnPath: `/doctors/service-order/${id ?? 1}`,
+                                            returnTab: 'Kết luận phiếu khám',
+                                            returnDraft: {
+                                                activeTab: 'Kết luận phiếu khám',
+                                                conclusionText,
+                                                selectedConclusion,
+                                                isMedsExpanded,
+                                                medsList,
+                                                hasConfirmedResultSummary,
+                                            },
                                         },
                                     })}
                                 >
@@ -761,26 +801,26 @@ export default function ServiceOrder() {
 
                             <div className="so-conclusion-block">
                                 <h3 className="so-conclusion-title">Kết luận <span className="so-required">*</span></h3>
-                                <div className="so-conclusion-options">
-                                    {conclusionOptions.map((option) => (
-                                        <label
-                                            key={option}
-                                            className="so-option-item"
-                                        >
-                                            <input
-                                                type="radio"
-                                                name="service-order-conclusion"
-                                                value={option}
-                                                checked={selectedConclusion === option}
-                                                onChange={() => setSelectedConclusion(option)}
-                                                disabled={isReadonlyMode}
-                                                required
-                                                aria-required="true"
-                                            />
-                                            <span className="so-option-dot" />
-                                            <span>{option}</span>
+                                <div className="so-conclusion-options" onClick={()=> console.log(conclusionOptions)}>
+                                    {conclusionOptions
+                                    .filter(option => option !== 'Cận lâm sàng')
+                                    .map((option) => (
+                                        <label key={option} className="so-option-item">
+                                        <input
+                                            type="radio"
+                                            name="service-order-conclusion"
+                                            value={option}
+                                            checked={selectedConclusion === option}
+                                            onChange={() => setSelectedConclusion(option)}
+                                            disabled={isReadonlyMode}
+                                            required
+                                            aria-required="true"
+                                        />
+                                        <span className="so-option-dot" />
+                                        <span>{option}</span>
                                         </label>
-                                    ))}
+                                    ))
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -791,7 +831,7 @@ export default function ServiceOrder() {
             {/* Bottom Actions */}
             {!isReadonlyMode && (activeTab === 'Kết luận phiếu khám' ? (
                 <div className="so-bottom-actions so-bottom-actions-single">
-                    <button className="so-btn-finish" onClick={handleFinish} disabled={isReadonlyMode || !conclusionText.trim() || !selectedConclusion}>
+                    <button className="so-btn-finish" onClick={handleFinish} disabled={isReadonlyMode || !conclusionText.trim() || !selectedConclusion || !hasConfirmedResultSummary}>
                         Kết thúc
                     </button>
                 </div>

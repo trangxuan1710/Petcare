@@ -5,9 +5,6 @@ import { ChevronLeft, ChevronUp, ChevronDown, Plus, Minus, Camera, Bell, PencilL
 import { TECH_PATHS, buildTechRecordResultPath } from '../../routes/techPaths';
 import techService from '../../api/techService';
 import './RecordResult.css';
-import '@fontsource/roboto/400.css';
-import '@fontsource/roboto/500.css';
-import '@fontsource/roboto/600.css';
 
 const STATUS_LABEL = {
     queued: 'Chờ thực hiện',

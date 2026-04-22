@@ -19,6 +19,10 @@ import java.util.Map;
 public class DashboardServiceImpl implements DashboardService {
 
     private static final List<ReceptionStatus> PENDING_EXAM_STATUSES = List.of(ReceptionStatus.WAITING_EXECUTION);
+    private static final List<ReceptionStatus> IN_PROGRESS_GROUP_STATUSES = List.of(
+            ReceptionStatus.IN_PROGRESS,
+            ReceptionStatus.WAITING_CONCLUSION
+    );
 
     private final ReceptionRecordRepository receptionRecordRepository;
     private final MedicalRecordRepository medicalRecordRepository;
@@ -47,7 +51,8 @@ public class DashboardServiceImpl implements DashboardService {
                 .filter(record -> PENDING_EXAM_STATUSES.contains(record.getStatus()))
                 .count();
         long waitingConclusionCases = records.stream()
-                .filter(record -> record.getStatus() == ReceptionStatus.WAITING_CONCLUSION)
+                // Keep this metric aligned with FE "Đang thực hiện" grouping.
+                .filter(record -> IN_PROGRESS_GROUP_STATUSES.contains(record.getStatus()))
                 .count();
         long completedCases = records.stream()
                 .filter(record -> record.getStatus() == ReceptionStatus.PAID)

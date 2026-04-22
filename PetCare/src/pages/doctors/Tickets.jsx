@@ -4,7 +4,6 @@ import DoctorLayout from '../../layouts/DoctorLayout';
 import TicketCard from '../../components/doctor/TicketCard';
 import TabStatus from '../../components/doctor/TabStatus';
 import './Tickets.css';
-import "@fontsource/roboto/500.css";
 
 import { Search } from 'lucide-react';
 import receptionService from '../../api/receptionService';
@@ -296,11 +295,26 @@ const Tickets = () => {
     const handleOpenTicket = (ticket) => {
         console.log('Opening ticket', ticket);
         const status = ticket?.status || 'pending';
+        const returnState = {
+            initialTab: activeTab,
+            emergencyOnly: emergencyOnlyFilter,
+        };
+
         if (status === 'in_progress' || status === 'completed') {
-            navigate(`/doctors/service-order/${ticket.id}`);
+            navigate(`/doctors/service-order/${ticket.id}`, {
+                state: {
+                    returnPath: '/doctors/tickets',
+                    returnState,
+                },
+            });
             return;
         }
-        navigate(`/doctors/tickets/${ticket.id}`);
+        navigate(`/doctors/tickets/${ticket.id}`, {
+            state: {
+                returnPath: '/doctors/tickets',
+                returnState,
+            },
+        });
     };
 
     const tabItems = useMemo(() => {
@@ -327,7 +341,15 @@ const Tickets = () => {
                     notificationCount={unreadCount}
                     onNotificationClick={() => {
                         clearUnread();
-                        navigate('/doctors/notifications');
+                        navigate('/doctors/notifications', {
+                            state: {
+                                returnPath: '/doctors/tickets',
+                                returnState: {
+                                    initialTab: activeTab,
+                                    emergencyOnly: emergencyOnlyFilter,
+                                },
+                            },
+                        });
                     }}
                 />
 

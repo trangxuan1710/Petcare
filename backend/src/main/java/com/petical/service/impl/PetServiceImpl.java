@@ -15,6 +15,7 @@ import com.petical.entity.Pet;
 import com.petical.entity.ReceptionRecord;
 import com.petical.entity.ReceptionService;
 import com.petical.entity.ResultFile;
+import com.petical.entity.ServiceOrder;
 import com.petical.enums.ErrorCode;
 import com.petical.errors.AppException;
 import com.petical.repository.ClientRepository;
@@ -26,6 +27,7 @@ import com.petical.repository.PrescriptionRepository;
 import com.petical.repository.ReceptionRecordRepository;
 import com.petical.repository.ReceptionServiceRepository;
 import com.petical.repository.ResultFileRepository;
+import com.petical.repository.ServiceOrderRepository;
 import com.petical.service.PetService;
 import com.petical.util.TextFormatUtils;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +56,7 @@ public class PetServiceImpl implements PetService {
     private final PrescriptionRepository prescriptionRepository;
     private final PrescriptionDetailRepository prescriptionDetailRepository;
     private final ResultFileRepository resultFileRepository;
+    private final ServiceOrderRepository serviceOrderRepository;
 
     @Override
     public Pet createPet(CreatePetRequest pet) {
@@ -144,15 +147,33 @@ public class PetServiceImpl implements PetService {
 
         List<PetExamHistoryItemResponse> timeline = receptions.stream().map(reception -> {
             MedicalRecord medicalRecord = medicalRecordByReceptionId.get(reception.getId());
+            Map<Long, ServiceOrder> serviceOrderByServiceId = (medicalRecord == null)
+                    ? Collections.emptyMap()
+                    : serviceOrderRepository.findByMedicalRecordId(medicalRecord.getId())
+                    .stream()
+                    .filter(order -> order.getService() != null && order.getService().getId() > 0)
+                    .collect(Collectors.toMap(
+                            order -> order.getService().getId(),
+                            Function.identity(),
+                            (left, right) -> left.getId() >= right.getId() ? left : right
+                    ));
 
             List<PetExamHistoryServiceResponse> services = receptionServiceByReceptionId
                 .getOrDefault(reception.getId(), List.of())
                 .stream()
-                .map(rs -> PetExamHistoryServiceResponse.builder()
-                    .serviceId(rs.getService().getId())
-                    .serviceName(rs.getService().getName())
-                    .status(rs.getStatus() != null ? rs.getStatus().getValue() : null)
-                    .build())
+                .map(rs -> {
+                    ServiceOrder mappedOrder = serviceOrderByServiceId.get(rs.getService().getId());
+                    String performerName = mappedOrder != null && mappedOrder.getTechnician() != null
+                            ? mappedOrder.getTechnician().getFullName()
+                            : (reception.getDoctor() != null ? reception.getDoctor().getFullName() : null);
+
+                    return PetExamHistoryServiceResponse.builder()
+                            .serviceId(rs.getService().getId())
+                            .serviceName(rs.getService().getName())
+                            .status(rs.getStatus() != null ? rs.getStatus().getValue() : null)
+                            .performerName(performerName)
+                            .build();
+                })
                 .toList();
 
             ExamResult examResult = medicalRecord == null ? null : examResultByMedicalRecordId.get(medicalRecord.getId());

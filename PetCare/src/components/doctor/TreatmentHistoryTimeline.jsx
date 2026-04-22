@@ -134,7 +134,12 @@ const mapHistoryBlock = (item, index) => {
             status: statusLabel,
             statusType,
             prescriber: safeText(service?.prescriber?.fullName || service?.prescriberName || item?.mainDoctorName),
-            performer: safeText(service?.performer?.fullName || service?.performerName || service?.technicianName || item?.assistantDoctorName),
+            performer: String(
+                service?.performer?.fullName
+                || service?.performerName
+                || service?.technicianName
+                || ''
+            ).trim(),
         };
     });
 
@@ -284,7 +289,7 @@ const TreatmentHistoryTimeline = ({ petId }) => {
                                 {expandedIds.has(block.id) && (
                                     <div className="th-services">
                                         {block.services.map((service) => (
-                                            <div className="th-service" key={service.id}>
+                                            <div onClick={() => console.log(service)} className="th-service" key={service.id}>
                                                 <div className="th-service-title-row">
                                                     <h4>{service.name}</h4>
                                                     <span className={statusClassName(service.statusType)}>{formatStatus(service.status)}</span>

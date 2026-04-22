@@ -40,6 +40,8 @@ const ClinicalServices = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const receptionId = location.state?.receptionId;
+    const returnPath = location.state?.returnPath;
+    const returnState = location.state?.returnState;
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [assignees, setAssignees] = useState({});
@@ -47,6 +49,19 @@ const ClinicalServices = () => {
     const [technicians, setTechnicians] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+
+    const navigateBack = (extraState = {}) => {
+        const mergedState = { ...(returnState || {}), ...extraState };
+        if (returnPath) {
+            navigate(returnPath, { replace: true, state: mergedState });
+            return;
+        }
+        if (receptionId) {
+            navigate(`/doctors/service-order/${receptionId}`, { replace: true, state: mergedState });
+            return;
+        }
+        navigate('/doctors/tickets', { replace: true });
+    };
 
     useEffect(() => {
         let isMounted = true;
@@ -146,7 +161,7 @@ const ClinicalServices = () => {
 
     const handleConfirm = async () => {
         if (!receptionId || isSaving) {
-            navigate(-1);
+            navigateBack();
             return;
         }
 
@@ -164,11 +179,7 @@ const ClinicalServices = () => {
                 await receptionService.saveSelectedParaclinicalServices(receptionId, { items });
             }
 
-            navigate(`/doctors/service-order/${receptionId}`, {
-                state: {
-                    refreshParaclinical: Date.now(),
-                },
-            });
+            navigateBack({ refreshParaclinical: Date.now() });
         } finally {
             setIsSaving(false);
         }
@@ -177,7 +188,7 @@ const ClinicalServices = () => {
     return (
         <div className="cs-page">
             <div className="cs-header">
-                <button className="cs-icon-btn" type="button" onClick={() => navigate(-1)} aria-label="Quay lại">
+                <button className="cs-icon-btn" type="button" onClick={() => navigateBack()} aria-label="Quay lại">
                     <ChevronLeft size={24} color="#222" />
                 </button>
                 <h1 className="cs-title">Dịch vụ</h1>
@@ -244,7 +255,7 @@ const ClinicalServices = () => {
             </div>
 
             <div className="cs-bottom-bar">
-                <button className="cs-btn-skip" type="button" onClick={() => navigate(-1)}>Bỏ qua</button>
+                <button className="cs-btn-skip" type="button" onClick={() => navigateBack()}>Bỏ qua</button>
                 <button
                     className="cs-btn-confirm"
                     type="button"

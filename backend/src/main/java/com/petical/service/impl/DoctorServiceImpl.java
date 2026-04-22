@@ -31,6 +31,10 @@ public class DoctorServiceImpl implements DoctorService {
 
         private static final List<ReceptionStatus> PENDING_EXAM_STATUSES = List.of(ReceptionStatus.WAITING_EXECUTION);
         private static final List<ReceptionStatus> WAITING_TREATMENT_STATUSES = List.of(ReceptionStatus.IN_PROGRESS);
+        private static final List<ReceptionStatus> IN_PROGRESS_GROUP_STATUSES = List.of(
+                ReceptionStatus.IN_PROGRESS,
+                ReceptionStatus.WAITING_CONCLUSION
+        );
         private static final List<ReceptionStatus> ACTIVE_WORKLOAD_STATUSES = List.of(
                 ReceptionStatus.WAITING_EXECUTION,
                 ReceptionStatus.IN_PROGRESS,
@@ -109,7 +113,8 @@ public class DoctorServiceImpl implements DoctorService {
                 .count();
 
         long waitingConclusionCases = doctorRecords.stream()
-                .filter(record -> record.getStatus() == ReceptionStatus.WAITING_CONCLUSION)
+                // Keep this metric aligned with the "Đang thực hiện" tab grouping on FE.
+                .filter(record -> IN_PROGRESS_GROUP_STATUSES.contains(record.getStatus()))
                 .count();
 
         long waitingTreatmentCases = doctorRecords.stream()

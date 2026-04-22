@@ -2,9 +2,6 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronUp, FileText } from 'lucide-react';
 import './ResultSummary.css';
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/600.css";
 import { authApi } from '../../api/baseApi';
 import petService from '../../api/petService';
 import receptionService from '../../api/receptionService';
@@ -284,6 +281,9 @@ const ResultSummary = () => {
     const location = useLocation();
     const receptionId = location.state?.receptionId;
     const treatmentSlipId = location.state?.treatmentSlipId;
+    const returnPath = location.state?.returnPath;
+    const returnTab = location.state?.returnTab || 'Kết luận phiếu khám';
+    const returnDraft = location.state?.returnDraft || {};
 
     const [receptionDetail, setReceptionDetail] = useState(null);
     const [treatmentDetail, setTreatmentDetail] = useState(null);
@@ -291,6 +291,7 @@ const ResultSummary = () => {
     const [selectedParaclinicalServices, setSelectedParaclinicalServices] = useState([]);
     const [historyItem, setHistoryItem] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isConfirming, setIsConfirming] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -360,10 +361,59 @@ const ResultSummary = () => {
         historyItem,
     }), [assignedServices, selectedParaclinicalServices, treatmentDetail, receptionDetail, historyItem]);
 
+    const navigateBackToServiceOrder = (isConfirmed) => {
+        const nextDraft = {
+            ...returnDraft,
+            activeTab: returnTab,
+            hasConfirmedResultSummary: Boolean(isConfirmed) || Boolean(returnDraft?.hasConfirmedResultSummary),
+        };
+
+        if (returnPath) {
+            navigate(returnPath, {
+                replace: true,
+                state: {
+                    recordResultDraft: nextDraft,
+                },
+            });
+            return;
+        }
+
+        if (receptionId) {
+            navigate(`/doctors/service-order/${receptionId}`, {
+                replace: true,
+                state: {
+                    recordResultDraft: nextDraft,
+                },
+            });
+            return;
+        }
+
+        navigate(-1);
+    };
+
+    const handleBackToConclusionTab = () => navigateBackToServiceOrder(false);
+    const handleConfirmResultSummary = async () => {
+        if (isConfirming) return;
+        if (!receptionId) {
+            navigateBackToServiceOrder(true);
+            return;
+        }
+
+        setIsConfirming(true);
+        try {
+            await treatmentService.confirmResultSummary(receptionId);
+            navigateBackToServiceOrder(true);
+        } catch {
+            window.alert('Xác nhận xem kết quả thất bại. Vui lòng thử lại.');
+        } finally {
+            setIsConfirming(false);
+        }
+    };
+
     return (
         <div className="rs-page">
             <div className="rs-header">
-                <button className="rs-icon-btn" type="button" onClick={() => navigate(-1)} aria-label="Quay lại">
+                <button className="rs-icon-btn" type="button" onClick={handleBackToConclusionTab} aria-label="Quay lại">
                     <ChevronLeft size={24} />
                 </button>
                 <h1>Tổng hợp kết quả</h1>
@@ -448,7 +498,9 @@ const ResultSummary = () => {
             </main>
 
             <footer className="rs-footer">
-                <button type="button" onClick={() => navigate(-1)}>Xác nhận</button>
+                <button type="button" onClick={handleConfirmResultSummary} disabled={isConfirming}>
+                    {isConfirming ? 'Đang xác nhận...' : 'Xác nhận'}
+                </button>
             </footer>
         </div>
     );

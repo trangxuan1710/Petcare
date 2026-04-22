@@ -81,7 +81,12 @@ const Home = () => {
         {
             id: 3,
             title: 'Ca khám cần kết luận',
-            count: readMetric(['waitingConclusionCases']),
+            count: readMetric([
+                'waitingConclusionCases',
+                'inProgressCases',
+                'inProgressCount',
+                'waitingTreatmentCases',
+            ]),
             unit: 'đơn',
             variant: 'success',
             onClick: () => navigate('/doctors/tickets', { state: { initialTab: 'in_progress' } })

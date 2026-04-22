@@ -294,7 +294,10 @@ const TechMedicineSelector = () => {
 
     const getSelectedMedicines = () => medsList.filter((med) => med.selected);
 
-    const navigateBackToRecordResult = (selectedMedicines) => {
+    const getInitialSelectedMedicines = () => selectedFromState.map((med) => ({ ...med }));
+
+    const navigateBackToRecordResult = (selectedMedicines, options = {}) => {
+        const { preservePrevious = false } = options;
         if (!returnPath) {
             navigate(-1);
             return;
@@ -321,7 +324,12 @@ const TechMedicineSelector = () => {
                     evening: med.dosage?.evening || 1,
                 })),
                 selectedImagesDraft,
-                recordDraft,
+                recordDraft: {
+                    ...(recordDraft || {}),
+                    medsList: preservePrevious
+                        ? (recordDraft?.medsList ?? selectedMedicines)
+                        : selectedMedicines,
+                },
             },
         });
     };
@@ -342,7 +350,7 @@ const TechMedicineSelector = () => {
         <div className="med-selector-page">
             {/* Header */}
             <div className="ms-header">
-                <button className="ms-btn-icon" onClick={() => navigateBackToRecordResult(getSelectedMedicines())}><ChevronLeft size={24} color="#1a1a1a" /></button>
+                <button className="ms-btn-icon" onClick={() => navigateBackToRecordResult(getInitialSelectedMedicines(), { preservePrevious: true })}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="ms-title">Vật tư đi kèm</h1>
                 <div style={{ width: 32 }}></div>
             </div>
@@ -416,7 +424,7 @@ const TechMedicineSelector = () => {
 
             {/* Bottom Actions */}
             <div className="ms-bottom-actions">
-                <button className="ms-btn-skip" onClick={() => navigateBackToRecordResult(getSelectedMedicines())}>Bỏ qua</button>
+                <button className="ms-btn-skip" onClick={() => navigateBackToRecordResult(getInitialSelectedMedicines(), { preservePrevious: true })}>Bỏ qua</button>
                 <button className="ms-btn-confirm" onClick={handleConfirm}>{isSubmitting ? 'Đang lưu...' : 'Xác nhận'}</button>
             </div>
 

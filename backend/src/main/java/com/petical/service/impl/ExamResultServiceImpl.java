@@ -2,7 +2,10 @@ package com.petical.service.impl;
 
 import com.petical.dto.request.AddExamPrescriptionItemRequest;
 import com.petical.dto.request.RecordExamResultRequest;
+import com.petical.dto.response.RecordResultContextResponse;
 import com.petical.dto.response.RecordExamResultResponse;
+import com.petical.dto.response.ParaclinicalSelectedServiceResponse;
+import com.petical.dto.response.ReceptionAssignedServiceResponse;
 import com.petical.entity.Doctor;
 import com.petical.entity.ExamResult;
 import com.petical.entity.MedicalRecord;
@@ -13,6 +16,7 @@ import com.petical.entity.ReceptionRecord;
 import com.petical.entity.ReceptionService;
 import com.petical.entity.ResultFile;
 import com.petical.entity.TreatmentDirection;
+import com.petical.entity.TreatmentSlip;
 import com.petical.enums.ErrorCode;
 import com.petical.enums.MedicalRecordStatus;
 import com.petical.enums.ReceptionServiceStatus;
@@ -31,7 +35,9 @@ import com.petical.repository.ResultFileRepository;
 import com.petical.repository.ServiceRepository;
 import com.petical.repository.TreatmentDirectionRepository;
 import com.petical.service.ExamResultService;
+import com.petical.service.ParaclinicalService;
 import com.petical.service.SseNotificationService;
+import com.petical.service.TreatmentSlipService;
 import com.petical.dto.response.NotificationMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -70,10 +76,59 @@ public class ExamResultServiceImpl implements ExamResultService {
     private final MedicineRepository medicineRepository;
     private final SseNotificationService sseNotificationService;
     private final ResultFileRepository resultFileRepository;
+    private final com.petical.service.ReceptionService receptionService;
+    private final ParaclinicalService paraclinicalService;
+    private final TreatmentSlipService treatmentSlipService;
+
+    @Override
+    @Transactional(readOnly = true)
+    public RecordResultContextResponse getRecordResultContext(long receptionRecordId, Long treatmentSlipId) {
+        ReceptionRecord receptionRecord = receptionRecordRepository.findById(receptionRecordId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        List<ReceptionAssignedServiceResponse> assignedServices = receptionService.getAssignedServices(receptionRecordId);
+        List<ParaclinicalSelectedServiceResponse> selectedParaclinicalServices = paraclinicalService.getSelectedServices(receptionRecordId);
+
+        TreatmentSlip treatmentSlip = resolveTreatmentSlip(receptionRecordId, treatmentSlipId);
+
+        return RecordResultContextResponse.builder()
+                .receptionRecordId(receptionRecordId)
+                .reception(receptionRecord)
+                .treatmentSlip(treatmentSlip)
+                .selectedParaclinicalServices(selectedParaclinicalServices)
+                .assignedServices(assignedServices)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public void confirmResultSummary(long receptionRecordId) {
+        ReceptionRecord receptionRecord = receptionRecordRepository.findById(receptionRecordId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        receptionRecord.setResultSummaryConfirmed(true);
+        receptionRecord.setResultSummaryConfirmedAt(LocalDateTime.now());
+        receptionRecordRepository.save(receptionRecord);
+    }
 
     @Override
     @Transactional
     public RecordExamResultResponse recordResult(long receptionRecordId, RecordExamResultRequest request, List<MultipartFile> images) {
+        return recordResultInternal(receptionRecordId, request, images, false);
+    }
+
+    @Override
+    @Transactional
+    public RecordExamResultResponse recordResultWithConfirmedSummary(long receptionRecordId, RecordExamResultRequest request, List<MultipartFile> images) {
+        return recordResultInternal(receptionRecordId, request, images, true);
+    }
+
+    private RecordExamResultResponse recordResultInternal(
+            long receptionRecordId,
+            RecordExamResultRequest request,
+            List<MultipartFile> images,
+            boolean requireConfirmedSummary
+    ) {
         if (request == null) {
             throw new AppException(ErrorCode.ERROR_INPUT);
         }
@@ -87,6 +142,14 @@ public class ExamResultServiceImpl implements ExamResultService {
 
         if (receptionRecord.getStatus() == null) {
             receptionRecord.setStatus(ReceptionStatus.WAITING_EXECUTION);
+        }
+
+        if (requireConfirmedSummary && !receptionRecord.isResultSummaryConfirmed()) {
+            throw new AppException(ErrorCode.RESULT_SUMMARY_NOT_CONFIRMED);
+        }
+        if (requireConfirmedSummary) {
+            receptionRecord.setResultSummaryConfirmed(false);
+            receptionRecord.setResultSummaryConfirmedAt(null);
         }
 
         Doctor doctor = resolveDoctor(receptionRecord, request.getDoctorId());
@@ -499,6 +562,25 @@ public class ExamResultServiceImpl implements ExamResultService {
     }
 
     private record StoredEvidenceFile(String filePath, String originalFileName, String contentType, Long fileSize) {
+    }
+
+    private TreatmentSlip resolveTreatmentSlip(long receptionRecordId, Long treatmentSlipId) {
+        if (treatmentSlipId != null && treatmentSlipId > 0) {
+            try {
+                TreatmentSlip treatmentSlip = treatmentSlipService.getTreatmentSlip(treatmentSlipId);
+                Long belongsToReceptionId = treatmentSlip.getMedicalRecord() == null || treatmentSlip.getMedicalRecord().getReceptionRecord() == null
+                        ? null
+                        : treatmentSlip.getMedicalRecord().getReceptionRecord().getId();
+                if (belongsToReceptionId != null && belongsToReceptionId == receptionRecordId) {
+                    return treatmentSlip;
+                }
+            } catch (AppException ignored) {
+                // Keep context API resilient if FE sends a stale treatmentSlipId.
+            }
+        }
+
+        List<TreatmentSlip> treatmentSlips = treatmentSlipService.getTreatmentSlipsByReceptionId(receptionRecordId);
+        return treatmentSlips.isEmpty() ? null : treatmentSlips.get(0);
     }
 }
 

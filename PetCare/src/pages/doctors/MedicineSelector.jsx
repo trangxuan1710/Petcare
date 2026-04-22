@@ -269,6 +269,7 @@ const MedicineSelector = () => {
     );
 
     const returnPath = location.state?.returnPath;
+    const returnState = location.state?.returnState;
     const treatmentSlipId = location.state?.treatmentSlipId;
     const receptionId = location.state?.receptionId;
     const focusMedicineId = Number(location.state?.focusMedicineId);
@@ -301,6 +302,7 @@ const MedicineSelector = () => {
     const [autofillByMedicineId, setAutofillByMedicineId] = useState({});
     const [resolvedSpeciesId, setResolvedSpeciesId] = useState(null);
     const hasAutoFocusedRef = useRef(false);
+    const medicineCardRefs = useRef(new Map());
 
     const petSpeciesText = useMemo(() => getSpeciesTextCandidate(petSpeciesRaw), [petSpeciesRaw]);
 
@@ -608,20 +610,36 @@ const MedicineSelector = () => {
         const targetExists = filteredMeds.some((med) => Number(med?.id) === focusMedicineId);
         if (!targetExists) return;
 
-        const timer = setTimeout(() => {
-            const targetElement = document.querySelector(`[data-med-id="${focusMedicineId}"]`);
-            if (!targetElement) return;
+        let isCancelled = false;
+        const maxRetries = 10;
+        const retryDelayMs = 120;
+
+        const scrollToFocusedMedicine = (attempt = 0) => {
+            if (isCancelled) return;
+
+            const targetElement = medicineCardRefs.current.get(focusMedicineId);
+            if (!targetElement) {
+                if (attempt < maxRetries) {
+                    setTimeout(() => scrollToFocusedMedicine(attempt + 1), retryDelayMs);
+                }
+                return;
+            }
 
             targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
             setHighlightMedicineId(focusMedicineId);
             hasAutoFocusedRef.current = true;
 
             setTimeout(() => {
-                setHighlightMedicineId((prev) => (prev === focusMedicineId ? null : prev));
+                if (!isCancelled) {
+                    setHighlightMedicineId((prev) => (prev === focusMedicineId ? null : prev));
+                }
             }, 1800);
-        }, 120);
+        };
 
-        return () => clearTimeout(timer);
+        scrollToFocusedMedicine(0);
+        return () => {
+            isCancelled = true;
+        };
     }, [filteredMeds, focusMedicineId]);
 
     const getSelectedMedicines = () => medsList.filter((med) => med.selected).map((med) => ({
@@ -629,20 +647,30 @@ const MedicineSelector = () => {
         price: med.boxPrice ?? med.rawBoxPrice ?? med.price,
     }));
 
-    const navigateBackToRecordResult = (selectedMedicines) => {
+    const getInitialSelectedMedicines = () => selectedFromState.map((med) => ({
+        ...med,
+        price: med.boxPrice ?? med.rawBoxPrice ?? med.price,
+    }));
+
+    const navigateBackToRecordResult = (selectedMedicines, options = {}) => {
+        const { preservePrevious = false } = options;
         if (!returnPath) {
-            navigate(-1);
+            navigate('/doctors/tickets', { replace: true });
             return;
         }
 
         navigate(returnPath, {
+            replace: true,
             state: {
+                ...(returnState || {}),
                 receptionId,
                 treatmentSlipId,
                 selectedMedicines,
                 recordResultDraft: {
                     ...(recordResultDraft || {}),
-                    medsList: selectedMedicines,
+                    medsList: preservePrevious
+                        ? (recordResultDraft?.medsList ?? selectedMedicines)
+                        : selectedMedicines,
                 },
             },
         });
@@ -663,7 +691,7 @@ const MedicineSelector = () => {
     return (
         <div className="med-selector-page">
             <div className="ms-header">
-                <button className="ms-btn-icon" onClick={() => navigate(-1)}><ChevronLeft size={24} color="#1a1a1a" /></button>
+                <button className="ms-btn-icon" onClick={() => navigateBackToRecordResult(getInitialSelectedMedicines(), { preservePrevious: true })}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="ms-title">Thuốc & Vật tư đi kèm</h1>
                 <div style={{ width: 32 }}></div>
             </div>
@@ -682,6 +710,15 @@ const MedicineSelector = () => {
                             onClick={() => console.log(med)}
                             key={med.id}
                             data-med-id={Number(med.id)}
+                            ref={(node) => {
+                                const normalizedId = Number(med.id);
+                                if (!Number.isFinite(normalizedId) || normalizedId <= 0) return;
+                                if (node) {
+                                    medicineCardRefs.current.set(normalizedId, node);
+                                } else {
+                                    medicineCardRefs.current.delete(normalizedId);
+                                }
+                            }}
                             className={`ms-lite-card ${med.selected ? 'selected' : ''} ${highlightMedicineId === Number(med.id) ? 'focused' : ''}`}
                         >
                             <div className="ms-lite-head">
@@ -697,26 +734,27 @@ const MedicineSelector = () => {
 
                                 <div className="ms-lite-main">
                                     <div className="ms-lite-top">
-                                        <strong className="ms-lite-name">{med.name}</strong>
-                                        <strong>
-                                            {new Intl.NumberFormat('vi-VN', {
-                                                style: 'currency',
-                                                currency: 'VND',
-                                            }).format(med.boxPrice)}
-                                        </strong>
-                                    </div>
+                                        <div className="ms-lite-left">
+                                            <strong className="ms-lite-name">{med.name}</strong>
+                                            {med.desc ? <span className="ms-lite-desc">{med.desc == 'VAT_TU' ? 'Vật tư y tế' : med.desc}</span> : null}
+                                        </div>
 
-                                    {med.desc ? <p className="ms-lite-desc">{med.desc}</p> : null}
-
-                                    <div className="ms-lite-meta">
-                                        <span>Tồn: {formatStock(med.stock)}</span>
+                                        <div className="ms-lite-right">
+                                            <strong className="ms-lite-price">
+                                                {new Intl.NumberFormat('vi-VN', {
+                                                    style: 'currency',
+                                                    currency: 'VND',
+                                                }).format(med.boxPrice)}
+                                            </strong>
+                                            <span className="ms-lite-stock">Tồn: {formatStock(med.stock)}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
                             {med.selected && (
                                 <>
-                                    <div className="ms-lite-controls">
+                                    <div onClick={() => console.log(med)} className="ms-lite-controls">
                                         <div className="ms-lite-stepper">
                                             <button onClick={() => updateQty(med.id, -1)} type="button">
                                                 <Minus size={16} />
@@ -727,7 +765,7 @@ const MedicineSelector = () => {
                                             </button>
                                         </div>
 
-                                        <div className="ms-lite-unit-text"> Hộp</div>
+                                        <div className="ms-lite-unit-text"> {med.type == 'THUOC' ? 'Hộp' : med.selectedUnit}</div>
 
                                         {isMedicineType(med.type) && (
                                             <button className="ms-lite-dosage" type="button" onClick={() => openDosageModal(med.id)}>
@@ -768,7 +806,7 @@ const MedicineSelector = () => {
             </div>
 
             <div className="ms-bottom-actions">
-                <button className="ms-btn-skip" onClick={() => navigateBackToRecordResult(getSelectedMedicines())}>Bỏ qua</button>
+                <button className="ms-btn-skip" onClick={() => navigateBackToRecordResult(getInitialSelectedMedicines(), { preservePrevious: true })}>Bỏ qua</button>
                 <button className="ms-btn-confirm" onClick={handleConfirm}>{isSubmitting ? 'Đang lưu...' : 'Xác nhận'}</button>
             </div>
 

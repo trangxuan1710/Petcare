@@ -16,4 +16,6 @@ public class PetExamHistoryServiceResponse {
     private String serviceName;
     @Schema(description = "Trạng thái dịch vụ", example = "completed")
     private String status;
+    @Schema(description = "Nguoi thuc hien dich vu", example = "Cao Minh Tri")
+    private String performerName;
 }

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, Phone, Mars, Weight, ChevronUp, ChevronDown, Plus, Upload, Minus, PencilLine, Venus, Box } from 'lucide-react';
-import receptionService from '../../api/receptionService';
 import treatmentService from '../../api/treatmentService';
 import './RecordResult.css';
 
@@ -177,6 +176,8 @@ export const RecordResult = () => {
     const location = useLocation();
     const { id } = useParams();
     const treatmentSlipId = location.state?.treatmentSlipId;
+    const returnPath = location.state?.returnPath;
+    const returnState = location.state?.returnState;
     const recordResultDraft = location.state?.recordResultDraft;
     const fileInputRef = useRef(null);
     const [isMedsExpanded, setIsMedsExpanded] = useState(true);
@@ -202,6 +203,19 @@ export const RecordResult = () => {
     const [clinicalStartedAt, setClinicalStartedAt] = useState(null);
     const [clinicalServiceName, setClinicalServiceName] = useState('Khám lâm sàng');
 
+    const navigateBack = (extraState = {}) => {
+        const mergedState = { ...(returnState || {}), ...extraState };
+        if (returnPath) {
+            navigate(returnPath, { replace: true, state: mergedState });
+            return;
+        }
+        if (id) {
+            navigate(`/doctors/service-order/${id}`, { replace: true, state: mergedState });
+            return;
+        }
+        navigate('/doctors/tickets', { replace: true });
+    };
+
     const showToast = (type, message) => {
         setToast({ type, message });
         setTimeout(() => setToast(null), 2600);
@@ -212,23 +226,14 @@ export const RecordResult = () => {
 
         const fetchData = async () => {
             try {
-                const [receptionResponse, treatmentResponse, paraclinicalResponse, assignedServicesResponse] = await Promise.allSettled([
-                    receptionService.getReceptionById(id),
-                    treatmentSlipId ? treatmentService.getTreatmentSlipById(treatmentSlipId) : Promise.resolve(null),
-                    id ? receptionService.getSelectedParaclinicalServices(id) : Promise.resolve(null),
-                    id ? receptionService.getAssignedServices(id) : Promise.resolve(null),
-                ]);
-
+                const contextResponse = await treatmentService.getRecordResultContext(id, treatmentSlipId);
                 if (!isMounted) return;
 
-                const receptionData = receptionResponse.status === 'fulfilled' ? receptionResponse.value?.normalizedData : null;
-                const treatmentData = treatmentResponse.status === 'fulfilled' ? treatmentResponse.value?.data?.data : null;
-                const paraclinicalData = paraclinicalResponse.status === 'fulfilled'
-                    ? (paraclinicalResponse.value?.normalizedData || [])
-                    : [];
-                const assignedServices = assignedServicesResponse.status === 'fulfilled'
-                    ? toArray(assignedServicesResponse.value?.normalizedData)
-                    : [];
+                const contextData = contextResponse?.data?.data || {};
+                const receptionData = contextData?.reception || null;
+                const treatmentData = contextData?.treatmentSlip || null;
+                const paraclinicalData = toArray(contextData?.selectedParaclinicalServices);
+                const assignedServices = toArray(contextData?.assignedServices);
                 const defaultClinicalService = assignedServices.find((service) => Number(service?.serviceId || service?.id) === 1) || null;
                 const defaultClinicalServiceName = defaultClinicalService?.serviceName
                     || defaultClinicalService?.name
@@ -410,13 +415,25 @@ export const RecordResult = () => {
                     setIsClinicalCompleted(true);
                     showToast('success', 'Đã ghi nhận kết quả. Dịch vụ khám mặc định đã hoàn thành.');
                     setTimeout(() => {
-                        navigate(`/doctors/service-order/${id}`, { state: { refreshParaclinical: true } });
+                        navigate(`/doctors/service-order/${id}`, {
+                            state: {
+                                refreshParaclinical: true,
+                                returnPath,
+                                returnState,
+                            },
+                        });
                     }, 900);
                     return;
                 }
                 showToast('success', 'Đã ghi nhận kết quả khám thành công.');
                 setTimeout(() => {
-                    navigate(`/doctors/service-order/${id}`, { state: { refreshParaclinical: true } });
+                    navigate(`/doctors/service-order/${id}`, {
+                        state: {
+                            refreshParaclinical: true,
+                            returnPath,
+                            returnState,
+                        },
+                    });
                 }, 900);
             } else {
                 await treatmentService.createTreatmentSlip({
@@ -452,6 +469,35 @@ export const RecordResult = () => {
 
         setUploadedFiles((prev) => [...prev, ...nextItems]);
         event.target.value = '';
+    };
+
+    const openMedicineSelector = (focusMedicineId = null) => {
+        if (isReadonlyMode) return;
+        const normalizedFocusMedicineId = Number(focusMedicineId);
+        navigate('/doctors/medicine-selector', {
+            state: {
+                receptionId: id,
+                petSpeciesId: receptionDetail?.pet?.speciesId ?? receptionDetail?.pet?.species?.id ?? null,
+                petSpecies: receptionDetail?.pet?.species || receptionDetail?.pet?.speciesLabel || receptionDetail?.pet?.speciesCode,
+                petWeight: receptionDetail?.weight ?? receptionDetail?.pet?.weight ?? null,
+                treatmentSlipId,
+                focusMedicineId: Number.isFinite(normalizedFocusMedicineId) && normalizedFocusMedicineId > 0
+                    ? normalizedFocusMedicineId
+                    : null,
+                selectedMedicines: medsList,
+                recordResultDraft: {
+                    conclusionText,
+                    selectedConclusion,
+                    uploadedFiles: serializeUploadedFilesForDraft(uploadedFiles),
+                    isMedsExpanded,
+                    medsList,
+                },
+                returnPath: `/doctors/record-result/${id ?? 1}`,
+                returnState: {
+                    ...(returnState || {}),
+                },
+            },
+        });
     };
 
     const handleRemoveSelectedImage = (targetKey) => {
@@ -524,7 +570,7 @@ export const RecordResult = () => {
     return (
         <div className="record-result-page">
             <div className="rr-header">
-                <button className="rr-btn-icon" onClick={() => navigate('/doctors/tickets')}><ChevronLeft size={24} color="#1a1a1a" /></button>
+                <button className="rr-btn-icon" onClick={() => navigateBack()}><ChevronLeft size={24} color="#1a1a1a" /></button>
                 <h1 className="rr-title">Ghi nhận kết quả</h1>
             </div>
 
@@ -677,8 +723,8 @@ export const RecordResult = () => {
                                                     <button
                                                         type="button"
                                                         className="rr-med-edit-btn"
-                                                        onClick={() => openDosageModal(med)}
-                                                        aria-label={`Chỉnh liều dùng cho ${med.name}`}
+                                                        onClick={() => openMedicineSelector(med?.id)}
+                                                        aria-label={`Chỉnh thuốc và vật tư cho ${med.name}`}
                                                         disabled={isReadonlyMode}
                                                     >
                                                         <PencilLine size={16} color="#209D80" className="rr-med-edit-icon" />
@@ -724,24 +770,7 @@ export const RecordResult = () => {
                                     className="rr-add-btn"
                                     type="button"
                                     aria-label="Thêm thuốc và vật tư"
-                                    onClick={() => navigate('/doctors/medicine-selector', {
-                                        state: {
-                                            receptionId: id,
-                                            petSpeciesId: receptionDetail?.pet?.speciesId ?? receptionDetail?.pet?.species?.id ?? null,
-                                            petSpecies: receptionDetail?.pet?.species || receptionDetail?.pet?.speciesLabel || receptionDetail?.pet?.speciesCode,
-                                            petWeight: receptionDetail?.weight ?? receptionDetail?.pet?.weight ?? null,
-                                            treatmentSlipId,
-                                            selectedMedicines: medsList,
-                                            recordResultDraft: {
-                                                conclusionText,
-                                                selectedConclusion,
-                                                uploadedFiles: serializeUploadedFilesForDraft(uploadedFiles),
-                                                isMedsExpanded,
-                                                medsList,
-                                            },
-                                            returnPath: `/doctors/record-result/${id ?? useParams().id}`,
-                                        },
-                                    })}
+                                    onClick={() => openMedicineSelector()}
                                     disabled={isReadonlyMode}
                                 >
                                     <Plus size={34} strokeWidth={1.6} />
@@ -777,7 +806,7 @@ export const RecordResult = () => {
             </div>
 
             <div className="rr-bottom-actions">
-                <button className="rr-btn-cancel" onClick={() => navigate('/doctors/tickets')} disabled={isReadonlyMode}>Hủy bỏ</button>
+                <button className="rr-btn-cancel" onClick={() => navigateBack()} disabled={isReadonlyMode}>Hủy bỏ</button>
                 <button className="rr-btn-confirm" onClick={handleConfirm} disabled={isReadonlyMode || isSaving || !conclusionText.trim() || !selectedConclusion}>
                     {isSaving ? 'Đang lưu...' : (selectedConclusion === 4 ? 'Kết thúc' : 'Xác nhận')}
                 </button>

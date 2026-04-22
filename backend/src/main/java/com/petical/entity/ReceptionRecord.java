@@ -57,6 +57,12 @@ public class ReceptionRecord {
     @Column(nullable = false)
     private ReceptionStatus status;
 
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean resultSummaryConfirmed = false;
+
+    private LocalDateTime resultSummaryConfirmedAt;
+
     private LocalDateTime receptionTime;
 
     @PrePersist

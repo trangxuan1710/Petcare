@@ -23,6 +23,13 @@ const treatmentService = {
     patchTreatmentSlipById(treatmentSlipId, payload) {
         return authApi.patch(`/treatment-slips/${treatmentSlipId}`, payload);
     },
+    getRecordResultContext(receptionId, treatmentSlipId) {
+        return authApi.get(`/reception-slips/${receptionId}/exam-results/context`, {
+            params: {
+                treatmentSlipId: treatmentSlipId || undefined,
+            },
+        });
+    },
     recordExamResult(receptionId, payload, images = []) {
         const formData = new FormData();
         formData.append('payload', JSON.stringify(payload || {}));
@@ -35,6 +42,22 @@ const treatmentService = {
                 'Content-Type': 'multipart/form-data',
             },
         });
+    },
+    recordExamResultWithConfirmedSummary(receptionId, payload, images = []) {
+        const formData = new FormData();
+        formData.append('payload', JSON.stringify(payload || {}));
+        images.forEach((file) => {
+            formData.append('images', file);
+        });
+
+        return authApi.post(`/reception-slips/${receptionId}/exam-results/confirmed`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+    },
+    confirmResultSummary(receptionId) {
+        return authApi.post(`/reception-slips/${receptionId}/result-summary-confirmation`);
     },
     getPrescriptionAutofill(receptionId) {
         return authApi.get(`/reception-slips/${receptionId}/prescription-autofill`);

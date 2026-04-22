@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Bell, ChevronLeft } from 'lucide-react';
 import DoctorLayout from '../../layouts/DoctorLayout';
 import './Notifications.css';
@@ -7,6 +7,9 @@ import notificationService from '../../api/notificationService';
 
 const Notifications = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const returnPath = location.state?.returnPath;
+    const returnState = location.state?.returnState;
     const [notifications, setNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorText, setErrorText] = useState('');
@@ -40,6 +43,14 @@ const Notifications = () => {
         };
     }, []);
 
+    const goBack = () => {
+        if (returnPath) {
+            navigate(returnPath, { replace: true, state: returnState });
+            return;
+        }
+        navigate('/doctors/tickets', { replace: true });
+    };
+
     const handleOpenNotification = async (notif) => {
         try {
             if (!notif?.isRead) {
@@ -56,7 +67,14 @@ const Notifications = () => {
 
         // 1. Prioritize direct ID navigation to Ticket Details
         if (notif?.receptionId) {
-            navigate(`/doctors/tickets/${notif.receptionId}`);
+            navigate(`/doctors/tickets/${notif.receptionId}`, {
+                state: {
+                    returnPath: '/doctors/notifications',
+                    returnState: {
+                        ...(location.state || {}),
+                    },
+                },
+            });
             return;
         }
 
@@ -71,7 +89,7 @@ const Notifications = () => {
         <DoctorLayout>
             <div className="notifications-page">
                 <div className="notif-page-toolbar">
-                    <button className="notif-back-btn" type="button" onClick={() => navigate(-1)} aria-label="Quay lai trang truoc">
+                    <button className="notif-back-btn" type="button" onClick={goBack} aria-label="Quay lai trang truoc">
                         <ChevronLeft size={22} color="#1f2937" />
                     </button>
                     <h1 className="notif-page-title">Thông báo</h1>

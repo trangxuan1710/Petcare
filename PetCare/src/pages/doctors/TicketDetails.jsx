@@ -1,8 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import './TicketDetails.css';
 import '../../components/doctor/TicketCard.css';
-import "@fontsource/roboto/600.css";
 import receptionService from '../../api/receptionService';
 
 import { ChevronLeft, MoreVertical, Phone, TriangleAlert, Weight, Mars } from 'lucide-react';
@@ -59,7 +58,10 @@ const NoteModal = ({ note, onClose }) => {
 
 const TicketDetails = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams();
+    const returnPath = location.state?.returnPath;
+    const returnState = location.state?.returnState;
     const [showModal, setShowModal] = useState(false);
     const [ticketDetail, setTicketDetail] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -107,6 +109,14 @@ const TicketDetails = () => {
     const hasWarningNote = normalizedNote.length > 0;
     const displayNote = hasWarningNote ? normalizedNote : '';
 
+    const goBack = () => {
+        if (returnPath) {
+            navigate(returnPath, { replace: true, state: returnState });
+            return;
+        }
+        navigate('/doctors/tickets', { replace: true });
+    };
+
     const goToServiceOrder = async () => {
         if (id) {
             try {
@@ -122,7 +132,12 @@ const TicketDetails = () => {
                 // Continue navigation to avoid blocking doctor workflow.
             }
         }
-        navigate(`/doctors/service-order/${id ?? 1}`);
+        navigate(`/doctors/service-order/${id ?? 1}`, {
+            state: {
+                returnPath: '/doctors/tickets',
+                returnState: returnState || { initialTab: 'pending' },
+            },
+        });
     };
 
     const handleStartClick = () => {
@@ -143,7 +158,7 @@ const TicketDetails = () => {
             {showModal && <NoteModal note={displayNote} onClose={handleCloseModal} />}
             {/* Header */}
             <div className="details-header">
-                <button className="icon-btn-back" onClick={() => navigate(-1)}><BackIcon /></button>
+                <button className="icon-btn-back" onClick={goBack}><BackIcon /></button>
                 <h1 className="details-title">Chi tiết phiếu khám</h1>
                 {/* <button className="icon-btn-more"><MoreVerticalIcon /></button> */}
             </div>

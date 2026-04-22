@@ -2,11 +2,7 @@ export const toTitleCase = (value) => {
     const text = String(value || '').trim();
     if (!text) return '';
 
-    return text
-        .toLocaleLowerCase('vi-VN')
-        .split(/\s+/)
-        .map((word) => word.charAt(0).toLocaleUpperCase('vi-VN') + word.slice(1))
-        .join(' ');
+    return text[0].toLocaleUpperCase('vi-VN') + text.slice(1);
 };
 
 export const toSentenceCase = (value) => {
