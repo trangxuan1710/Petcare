@@ -21,10 +21,12 @@
     margin: 0;
     font-size: 14px;
     font-weight: 600;
+    
 }
 
 .trs-title {
     margin: 0;
+    height: 100%;
     color: #1a1a1a;
     font-size: 16px;
     font-weight: 600;
@@ -82,10 +84,10 @@
     gap: 10px;
 }
 
-.trs-card-title-row h3 {
+.trs-card-title-row  h3 {
     margin: 0;
-    font-size: 16px;
-    font-weight: 600;
+    font-size: 15px !important;
+    font-weight: 500;
     color: #16222b;
     line-height: 1.25;
 }
@@ -577,25 +579,6 @@
     cursor: not-allowed;
 }
 
-@media (max-width: 640px) {
-    .trs-content {
-        padding: 12px;
-        padding-bottom: 102px;
-    }
-
-    .trs-card-title-row h3 {
-        font-size: 15px;
-    }
-
-    .trs-meds-item-main {
-        min-width: 0;
-    }
-
-    .trs-meds-item-controls {
-        padding-left: 0;
-        grid-template-columns: minmax(0, 1fr) 108px;
-    }
-}
 
 .record-result-page {
     display: flex;

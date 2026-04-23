@@ -264,12 +264,13 @@ const TechRecordResult = () => {
         });
     };
 
-    const handleOpenMedicineSelector = () => {
+    const handleOpenMedicineSelector = (focusMedicineId) => {
         navigate(TECH_PATHS.MEDICINE_SELECTOR, {
             state: {
                 selectedMedicines,
                 selectedImagesDraft: serializeUploadDraftItems(selectedImages),
                 returnPath: buildTechRecordResultPath(id),
+                focusMedicineId: Number(focusMedicineId || 0) || undefined,
                 recordDraft: {
                     summary,
                 },
@@ -329,37 +330,52 @@ const TechRecordResult = () => {
 
     return (
         <div className="trs-page">
-            <header className="tech-record-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: '#fff', borderBottom: '1px solid #e0e7e4' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <button className="icon-btn-back" type="button" onClick={() => navigate(TECH_PATHS.HOME)} aria-label="Quay lại" style={{ background: 'transparent', border: 'none', cursor: 'pointer', display: 'flex', padding: '4px', margin: '-4px' }}>
-                        <ChevronLeft size={24} color="#1a1a1a" />
-                    </button>
-                    <h1 className="trs-title">Ghi nhận kết quả</h1>
-                </div>
-                <button type="button" className="tech-top-bell" onClick={() => { clearUnread(); navigate(TECH_PATHS.NOTIFICATIONS); }} aria-label="Thong bao" style={{ position: 'relative', background: 'none', border: 'none', cursor: 'pointer', color: '#1a1a1a' }}>
-                    <Bell size={24} strokeWidth={2} />
-                    {unreadCount > 0 && (
-                        <span style={{
-                            position: 'absolute',
-                            top: -4,
-                            right: -4,
-                            backgroundColor: 'red',
-                            color: 'white',
-                            borderRadius: '50%',
-                            width: 18,
-                            height: 18,
-                            fontSize: 12,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            fontWeight: 'bold'
-                        }}>
-                            {unreadCount > 99 ? '99+' : unreadCount}
-                        </span>
-                    )}
-                </button>
-            </header>
+            <header
+  className="tech-record-header"
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    height: '56px',
+    justifyContent: 'flex-start',
+    background: '#ffffff',
+    padding: '16px 20px',
+    borderBottom: '1px solid #e5e7eb',
+    gap: '12px'
+  }}
+>
+  <button
+    className="icon-btn-back"
+    type="button"
+    onClick={() => navigate(TECH_PATHS.HOME)}
+    aria-label="Quay lại"
+    style={{
+      background: 'transparent',
+      border: 'none',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}
+  >
+    <ChevronLeft size={24} color="#111827" />
+  </button>
 
+  <h1
+    className="trs-title"
+    style={{
+        display: 'flex',
+        alignItems: 'center',
+      margin: 0,
+      fontSize: '18px',
+      fontWeight: 600,
+      color: '#111827',
+      height: '24px',
+      marginTop:'3px'
+    }}
+  >
+    Ghi nhận kết quả
+  </h1>
+</header>
             <main className="trs-content">
                 {isLoading && <div className="trs-card trs-loading">Đang tải thông tin công việc...</div>}
                 {!isLoading && errorMessage && <div className="trs-card trs-error">{errorMessage}</div>}
@@ -504,7 +520,7 @@ const TechRecordResult = () => {
                                                             <button
                                                                 type="button"
                                                                 className="rr-med-edit-btn"
-                                                                onClick={handleOpenMedicineSelector}
+                                                                onClick={() => handleOpenMedicineSelector(med?.medicineId)}
                                                                 aria-label={`Chỉnh sửa cho ${med.medicineName}`}
                                                             >
                                                                 <PencilLine size={16} color="#209D80" className="rr-med-edit-icon" />

@@ -105,9 +105,17 @@ const normalizeDoseValue = (rawValue) => {
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : 1;
 };
 
+const getMedicineId = (item) => Number(item?.id ?? item?.medicineId ?? 0);
+
 const resolvePriceBySelectedUnit = (item, selectedUnit) => {
-    const boxPrice = Number(item?.boxPrice ?? item?.rawBoxPrice ?? 0);
-    const unitPrice = Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item));
+    const boxPrice = getPriceNumber({
+        price: item?.boxPrice ?? item?.rawBoxPrice,
+        unitPrice: item?.boxPrice ?? item?.rawBoxPrice,
+    });
+    const unitPrice = getPriceNumber({
+        price: item?.unitPrice ?? item?.rawUnitPrice ?? item?.price,
+        unitPrice: item?.unitPrice ?? item?.rawUnitPrice,
+    });
     const normalizedUnit = String(selectedUnit || '').trim().toLowerCase();
 
     if (normalizedUnit === 'hộp' || normalizedUnit === 'hop' || normalizedUnit === 'box') {
@@ -115,26 +123,44 @@ const resolvePriceBySelectedUnit = (item, selectedUnit) => {
             return boxPrice;
         }
     }
-    return Number.isFinite(unitPrice) && unitPrice > 0 ? unitPrice : 0;
+    if (Number.isFinite(unitPrice) && unitPrice > 0) {
+        return unitPrice;
+    }
+    return getPriceNumber(item);
 };
 
 const normalizeMedicine = (item) => {
+    const medicineId = getMedicineId(item);
     const baseUnit = item?.unit || item?.selectedUnit || '';
     const normalizedSelectedUnit = toVietnameseUnit(baseUnit);
     const selectedUnit = normalizedSelectedUnit || 'đơn vị';
-    const rawUnitPrice = Number(item?.unitPrice ?? item?.rawUnitPrice ?? getPriceNumber(item));
+    const rawUnitPrice = getPriceNumber({
+        price: item?.unitPrice ?? item?.rawUnitPrice ?? item?.price,
+        unitPrice: item?.unitPrice ?? item?.rawUnitPrice,
+    });
     const quantityPerBox = Math.max(1, Number(item?.quantityPerBox ?? item?.boxQuantity ?? 1) || 1);
-    const rawBoxPrice = Number(item?.boxPrice ?? item?.rawBoxPrice ?? 0) || rawUnitPrice * quantityPerBox;
+    const parsedRawBoxPrice = getPriceNumber({
+        price: item?.boxPrice ?? item?.rawBoxPrice,
+        unitPrice: item?.boxPrice ?? item?.rawBoxPrice,
+    });
+    const rawBoxPrice = parsedRawBoxPrice > 0 ? parsedRawBoxPrice : rawUnitPrice * quantityPerBox;
 
     const type = String(item?.type || 'THUOC').toUpperCase().trim();
+    const desc = isMaterialType(type) ? 'Vật tư y tế' : (item?.desc || item?.description || type || '');
+    const displayPrice = resolvePriceBySelectedUnit(
+        { ...item, rawUnitPrice, rawBoxPrice },
+        selectedUnit
+    );
     return {
         ...item,
+        id: medicineId,
+        medicineId,
         type,
-        desc: item?.desc || item?.description || type || '',
+        desc,
         rawUnitPrice,
         rawBoxPrice,
         quantityPerBox,
-        price: formatVnd(rawBoxPrice),
+        price: formatVnd(displayPrice),
         unit: `/${selectedUnit}`,
         stock: item?.stock ?? item?.stockQuantity ?? item?.availableStock ?? '--',
         qty: Math.max(1, Number(item?.qty ?? item?.quantity ?? 1)),
@@ -187,17 +213,24 @@ const TechMedicineSelector = () => {
     const location = useLocation();
     const selectedFromState = useMemo(
         () => toArray(location.state?.selectedMedicines)
-            .map(normalizeMedicine)
-            .filter((item) => isMaterialType(item?.type))
-            .filter((item) => Boolean(item?.selected)),
+            .map((item) => normalizeMedicine({
+                ...item,
+                id: item?.id ?? item?.medicineId,
+                medicineId: item?.medicineId ?? item?.id,
+                selected: item?.selected ?? true,
+            }))
+            .filter((item) => !item?.type || isMaterialType(item?.type))
+            .filter((item) => getMedicineId(item) > 0),
         [location.state?.selectedMedicines]
     );
     const returnPath = location.state?.returnPath;
+    const focusMedicineIdFromState = Number(location.state?.focusMedicineId || 0) || null;
     const selectedImagesDraft = location.state?.selectedImagesDraft;
     const recordDraft = location.state?.recordDraft;
     
     const [searchTerm, setSearchTerm] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [pendingScrollMedicineId, setPendingScrollMedicineId] = useState(focusMedicineIdFromState);
 
     const [medsList, setMedsList] = useState([]);
     const [autofillByMedicineId, setAutofillByMedicineId] = useState({});
@@ -226,7 +259,7 @@ const TechMedicineSelector = () => {
 
         return {
             ...mergedMedicine,
-            price: formatVnd(mergedMedicine.rawBoxPrice || resolvePriceBySelectedUnit(mergedMedicine, 'hộp')),
+            price: formatVnd(resolvePriceBySelectedUnit(mergedMedicine, selectedUnit)),
             unit: `/${selectedUnit}`,
         };
     };
@@ -254,6 +287,28 @@ const TechMedicineSelector = () => {
             isMounted = false;
         };
     }, [selectedFromState]);
+
+    useEffect(() => {
+        if (!pendingScrollMedicineId || medsList.length === 0) return;
+
+        const targetExists = medsList.some(
+            (item) => Number(item?.id || item?.medicineId || 0) === pendingScrollMedicineId
+        );
+        if (!targetExists) {
+            setPendingScrollMedicineId(null);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            const targetElement = document.querySelector(`[data-medicine-id="${pendingScrollMedicineId}"]`);
+            if (targetElement && typeof targetElement.scrollIntoView === 'function') {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+            setPendingScrollMedicineId(null);
+        }, 80);
+
+        return () => clearTimeout(timer);
+    }, [pendingScrollMedicineId, medsList]);
 
     const toggleSelection = (id) => {
         setMedsList(prevList =>
@@ -370,7 +425,11 @@ const TechMedicineSelector = () => {
             <div className="ms-content">
                 <div className="ms-meds-list">
                     {filteredMeds.map(med => (
-                        <article key={med.id} className={`ms-lite-card ${med.selected ? 'selected' : ''}`}>
+                        <article
+                            key={med.id}
+                            className={`ms-lite-card ${med.selected ? 'selected' : ''}`}
+                            data-medicine-id={med.id}
+                        >
                             <div className="ms-lite-head">
                                 <label className="ms-lite-check" aria-label={`Chọn ${med.name}`}>
                                     <input
@@ -385,7 +444,7 @@ const TechMedicineSelector = () => {
                                 <div className="ms-lite-main">
                                     <div className="ms-lite-top">
                                         <strong className="ms-lite-name">{med.name}</strong>
-                                        <strong>{med.price}</strong>
+                                        <strong>{med.boxPrice.toLocaleString('vi-VN')}đ</strong>
                                     </div>
 
                                     {med.desc ? <p className="ms-lite-desc">{med.desc}</p> : null}
