@@ -105,7 +105,7 @@ const StaffCostSummaryCard = ({
                                 </div>
                             </div>
                             <div className="group-amounts">
-                                <strong>{formatNumber(group.totalAmount)}</strong>
+                                <strong>{formatNumber(group.totalAmount)} đ</strong>
                             </div>
                         </button>
 
@@ -114,8 +114,8 @@ const StaffCostSummaryCard = ({
                                 <strong className="fee-item-name">{row?.name || '--'}</strong>
                                 <div className="fee-row">
                                     <span className="fee-unit">{row?.unit || '--'}</span>
-                                    <span>{formatNumber(row?.price)}</span>
-                                    <span>{formatNumber(row?.amount)}</span>
+                                    <span>{formatNumber(row?.price)} đ</span>
+                                    <span>{formatNumber(row?.amount)} đ</span>
                                 </div>
                             </div>
                         )) : null}
